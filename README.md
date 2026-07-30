@@ -200,11 +200,6 @@ L'ordre suit les dépendances réelles du MCD : une entité ne peut être dével
 - Double réservation sur un même livre, exemplaire déjà emprunté, paiement sur abonnement expiré
 - Cohérence des statuts (`Emprunt.Statut`, `Reservation.Statut`, `Amende.Statut`, `Paiement.Statut`)
 
-### Étape 10 — Documentation et soutenance
-
-- Diagramme de classes UML graphique (à produire, pas seulement le MCD texte)
-- Rapport final et préparation de la démonstration
-
 ## Installation
 
 ### Prérequis

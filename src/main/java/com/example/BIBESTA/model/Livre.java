@@ -31,6 +31,9 @@ public class Livre {
     @Column(name = "edition", length = 255)
     private String edition;
 
+    @Column(name = "categorie", length = 100)
+    private String categorie;
+
     @Column(name = "annee_publication")
     private Integer anneePublication;
 
