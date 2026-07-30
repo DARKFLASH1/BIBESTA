@@ -7,18 +7,18 @@
 --   5. exemplaire.livre_id passé en ON DELETE RESTRICT (cohérence avec emprunt.exemplaire_id en RESTRICT :
 --      évite qu'une suppression de livre parte en cascade puis échoue sur un exemplaire encore emprunté)
 --   6. utilisateur.email passé en UNIQUE (évite les doublons de compte)
-
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */
+;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */
+;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */
+;
+/*!40101 SET NAMES utf8mb4 */
+;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `utilisateur`
 --
@@ -34,18 +34,53 @@ CREATE TABLE IF NOT EXISTS `utilisateur` (
   `identifiant` varchar(50) NOT NULL,
   `contact` varchar(20) DEFAULT NULL,
   `motDePasse` varchar(255) NOT NULL,
-  `role` enum('BIBLIOTHECAIRE','ETUDIANT','ENSEIGNANT','PUBLIC') NOT NULL,
+  `role` enum(
+    'BIBLIOTHECAIRE',
+    'ETUDIANT',
+    'ENSEIGNANT',
+    'PUBLIC'
+  ) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `identifiant` (`identifiant`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `utilisateur` (`id`, `nom`, `prenom`, `date_naissance`, `sexe`, `email`, `identifiant`, `contact`, `motDePasse`, `role`) VALUES
-(1, 'Admin', 'Bibliotheque', '1990-01-01', 'M', 'admin@bibliotheque.com', 'admin', '+226 00 00 00 00', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'BIBLIOTHECAIRE'),
-(2, 'TINGUIERI', 'Bachar', '2004-01-01', 'masculin', 'mohamad@gmail.com', 'yellowflash', '+226 06 78 27 25', '2d93cad3b769a719805864cd676d62f66c96f33a7393f285fb5c285bfe099bc1', 'ETUDIANT');
-
+) ENGINE = InnoDB AUTO_INCREMENT = 3 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+INSERT INTO `utilisateur` (
+    `id`,
+    `nom`,
+    `prenom`,
+    `date_naissance`,
+    `sexe`,
+    `email`,
+    `identifiant`,
+    `contact`,
+    `motDePasse`,
+    `role`
+  )
+VALUES (
+    1,
+    'Admin',
+    'Bibliotheque',
+    '1990-01-01',
+    'M',
+    'admin@bibliotheque.com',
+    'admin',
+    '+226 00 00 00 00',
+    '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+    'BIBLIOTHECAIRE'
+  ),
+  (
+    2,
+    'TINGUIERI',
+    'Bachar',
+    '2004-01-01',
+    'masculin',
+    'mohamad@gmail.com',
+    'yellowflash',
+    '+226 06 78 27 25',
+    '2d93cad3b769a719805864cd676d62f66c96f33a7393f285fb5c285bfe099bc1',
+    'ETUDIANT'
+  );
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `livre`
 --
@@ -60,17 +95,34 @@ CREATE TABLE IF NOT EXISTS `livre` (
   `categorie` varchar(100) DEFAULT NULL,
   `langue` varchar(50) DEFAULT NULL,
   `annee_Publication` int DEFAULT NULL,
+  `nombre_pages` int DEFAULT NULL,
+  `genre` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `isbn` (`isbn`),
   KEY `idx_livre_titre` (`titre`),
   KEY `idx_livre_auteur` (`auteur`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `livre` (`id`, `titre`, `auteur`, `edition`, `isbn`, `categorie`, `langue`, `annee_Publication`) VALUES
-(1, 'Batifolages', 'Jiraya', '1', '987-2873-234', 'developement personnel', 'francais', 2004);
-
+) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+INSERT INTO `livre` (
+    `id`,
+    `titre`,
+    `auteur`,
+    `edition`,
+    `isbn`,
+    `categorie`,
+    `langue`,
+    `annee_Publication`
+  )
+VALUES (
+    1,
+    'Batifolages',
+    'Jiraya',
+    '1',
+    '987-2873-234',
+    'developement personnel',
+    'francais',
+    2004
+  );
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `exemplaire`
 --
@@ -79,14 +131,17 @@ DROP TABLE IF EXISTS `exemplaire`;
 CREATE TABLE IF NOT EXISTS `exemplaire` (
   `id` int NOT NULL AUTO_INCREMENT,
   `numero` varchar(50) NOT NULL,
-  `etat` enum('DISPONIBLE','EMPRUNTE','RESERVE','EN_REPARATION') NOT NULL DEFAULT 'DISPONIBLE',
+  `etat` enum(
+    'DISPONIBLE',
+    'EMPRUNTE',
+    'RESERVE',
+    'EN_REPARATION'
+  ) NOT NULL DEFAULT 'DISPONIBLE',
   `livre_id` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_exemplaire_livre` (`livre_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `emprunt`
 --
@@ -97,16 +152,14 @@ CREATE TABLE IF NOT EXISTS `emprunt` (
   `dateDebut` date NOT NULL,
   `dateRetourPrevue` date NOT NULL,
   `dateRetourReelle` date DEFAULT NULL,
-  `statut` enum('EN_COURS','RETOURNE','EN_RETARD') DEFAULT 'EN_COURS',
+  `statut` enum('EN_COURS', 'RETOURNE', 'EN_RETARD') DEFAULT 'EN_COURS',
   `utilisateur_id` int NOT NULL,
   `exemplaire_id` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_emprunt_utilisateur` (`utilisateur_id`),
   KEY `idx_emprunt_exemplaire` (`exemplaire_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `reservation`
 --
@@ -115,19 +168,22 @@ DROP TABLE IF EXISTS `reservation`;
 CREATE TABLE IF NOT EXISTS `reservation` (
   `id` int NOT NULL AUTO_INCREMENT,
   `dateReservation` date NOT NULL,
-  `statut` enum('EN_ATTENTE','CONFIRMEE','ANNULEE') DEFAULT 'EN_ATTENTE',
+  `statut` enum('EN_ATTENTE', 'CONFIRMEE', 'ANNULEE') DEFAULT 'EN_ATTENTE',
   `utilisateur_id` int NOT NULL,
   `livre_id` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_reservation_utilisateur` (`utilisateur_id`),
   KEY `reservation_ibfk_livre` (`livre_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `reservation` (`id`, `dateReservation`, `statut`, `utilisateur_id`, `livre_id`) VALUES
-(1, '2026-03-09', 'CONFIRMEE', 2, 1);
-
+) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+INSERT INTO `reservation` (
+    `id`,
+    `dateReservation`,
+    `statut`,
+    `utilisateur_id`,
+    `livre_id`
+  )
+VALUES (1, '2026-03-09', 'CONFIRMEE', 2, 1);
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `amende`
 -- CORRECTION : emprunt_id passé en UNIQUE (au plus une amende par emprunt, cf. MCD 0..1/1..1)
@@ -136,17 +192,15 @@ INSERT INTO `reservation` (`id`, `dateReservation`, `statut`, `utilisateur_id`, 
 DROP TABLE IF EXISTS `amende`;
 CREATE TABLE IF NOT EXISTS `amende` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `montant` decimal(10,2) NOT NULL,
+  `montant` decimal(10, 2) NOT NULL,
   `raison` varchar(255) DEFAULT NULL,
   `date` date NOT NULL,
   `emprunt_id` int NOT NULL,
-  `statut` enum('EN_ATTENTE','PAYEE','ANNULEE') DEFAULT 'EN_ATTENTE',
+  `statut` enum('EN_ATTENTE', 'PAYEE', 'ANNULEE') DEFAULT 'EN_ATTENTE',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_amende_emprunt` (`emprunt_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `abonnement`
 --
@@ -157,18 +211,31 @@ CREATE TABLE IF NOT EXISTS `abonnement` (
   `type` varchar(50) NOT NULL,
   `dateDebut` date NOT NULL,
   `dateFin` date NOT NULL,
-  `statutPaiement` enum('EN_ATTENTE','PAYE','EXPIRE') DEFAULT 'EN_ATTENTE',
+  `statutPaiement` enum('EN_ATTENTE', 'PAYE', 'EXPIRE') DEFAULT 'EN_ATTENTE',
   `utilisateur_id` int NOT NULL,
   `montant` float NOT NULL,
   PRIMARY KEY (`id`),
   KEY `utilisateur_id` (`utilisateur_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `abonnement` (`id`, `type`, `dateDebut`, `dateFin`, `statutPaiement`, `utilisateur_id`, `montant`) VALUES
-(1, 'MENSUEL', '2026-03-09', '2026-04-09', 'PAYE', 2, 2000);
-
+) ENGINE = InnoDB AUTO_INCREMENT = 2 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+INSERT INTO `abonnement` (
+    `id`,
+    `type`,
+    `dateDebut`,
+    `dateFin`,
+    `statutPaiement`,
+    `utilisateur_id`,
+    `montant`
+  )
+VALUES (
+    1,
+    'MENSUEL',
+    '2026-03-09',
+    '2026-04-09',
+    'PAYE',
+    2,
+    2000
+  );
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `paiement`
 -- CORRECTION : abonnement_id rendu NULLABLE + CHECK d'exclusivité avec amende_id
@@ -177,7 +244,7 @@ INSERT INTO `abonnement` (`id`, `type`, `dateDebut`, `dateFin`, `statutPaiement`
 DROP TABLE IF EXISTS `paiement`;
 CREATE TABLE IF NOT EXISTS `paiement` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `montant` decimal(10,2) NOT NULL,
+  `montant` decimal(10, 2) NOT NULL,
   `datePaiement` date NOT NULL,
   `statut` varchar(50) DEFAULT 'EFFECTUE',
   `abonnement_id` int DEFAULT NULL,
@@ -187,14 +254,17 @@ CREATE TABLE IF NOT EXISTS `paiement` (
   KEY `abonnement_id` (`abonnement_id`),
   KEY `paiement_ibfk_amende` (`amende_id`),
   CONSTRAINT `chk_paiement_cible_unique` CHECK (
-    (`abonnement_id` IS NOT NULL AND `amende_id` IS NULL)
-    OR
-    (`abonnement_id` IS NULL AND `amende_id` IS NOT NULL)
+    (
+      `abonnement_id` IS NOT NULL
+      AND `amende_id` IS NULL
+    )
+    OR (
+      `abonnement_id` IS NULL
+      AND `amende_id` IS NOT NULL
+    )
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `notification`
 --
@@ -206,13 +276,11 @@ CREATE TABLE IF NOT EXISTS `notification` (
   `contenu` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `date` date NOT NULL,
   `utilisateur_id` int NOT NULL,
-  `statut` enum('LU','NON_LU') NOT NULL DEFAULT 'NON_LU',
+  `statut` enum('LU', 'NON_LU') NOT NULL DEFAULT 'NON_LU',
   PRIMARY KEY (`id`),
   KEY `idx_notification_utilisateur` (`utilisateur_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 -- --------------------------------------------------------
-
 --
 -- Structure de la table `historique`
 -- CORRECTION : ajout de livre_id (troisième relation prévue par le MCD, absente du dump original)
@@ -233,8 +301,7 @@ CREATE TABLE IF NOT EXISTS `historique` (
   KEY `reservation_id` (`reservation_id`),
   KEY `idx_historique_utilisateur` (`utilisateur_id`),
   KEY `idx_historique_livre` (`livre_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 --
 -- Contraintes pour les tables déchargées
 --
@@ -243,60 +310,57 @@ CREATE TABLE IF NOT EXISTS `historique` (
 -- Contraintes pour la table `abonnement`
 --
 ALTER TABLE `abonnement`
-  ADD CONSTRAINT `abonnement_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT;
-
+ADD CONSTRAINT `abonnement_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT;
 --
 -- Contraintes pour la table `amende`
 --
 ALTER TABLE `amende`
-  ADD CONSTRAINT `amende_ibfk_1` FOREIGN KEY (`emprunt_id`) REFERENCES `emprunt` (`id`) ON DELETE RESTRICT;
-
+ADD CONSTRAINT `amende_ibfk_1` FOREIGN KEY (`emprunt_id`) REFERENCES `emprunt` (`id`) ON DELETE RESTRICT;
 --
 -- Contraintes pour la table `emprunt`
 --
 ALTER TABLE `emprunt`
-  ADD CONSTRAINT `emprunt_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT,
+ADD CONSTRAINT `emprunt_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `emprunt_ibfk_2` FOREIGN KEY (`exemplaire_id`) REFERENCES `exemplaire` (`id`) ON DELETE RESTRICT;
-
 --
 -- Contraintes pour la table `exemplaire`
 -- CORRECTION : CASCADE -> RESTRICT, cohérent avec emprunt.exemplaire_id en RESTRICT
 -- (évite qu'une suppression de livre parte en cascade puis échoue sur un exemplaire encore emprunté)
 --
 ALTER TABLE `exemplaire`
-  ADD CONSTRAINT `exemplaire_ibfk_1` FOREIGN KEY (`livre_id`) REFERENCES `livre` (`id`) ON DELETE RESTRICT;
-
+ADD CONSTRAINT `exemplaire_ibfk_1` FOREIGN KEY (`livre_id`) REFERENCES `livre` (`id`) ON DELETE RESTRICT;
 --
 -- Contraintes pour la table `historique`
 --
 ALTER TABLE `historique`
-  ADD CONSTRAINT `historique_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `historique_ibfk_2` FOREIGN KEY (`emprunt_id`) REFERENCES `emprunt` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `historique_ibfk_3` FOREIGN KEY (`reservation_id`) REFERENCES `reservation` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `historique_ibfk_4` FOREIGN KEY (`livre_id`) REFERENCES `livre` (`id`) ON DELETE SET NULL;
-
+ADD CONSTRAINT `historique_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `historique_ibfk_2` FOREIGN KEY (`emprunt_id`) REFERENCES `emprunt` (`id`) ON DELETE
+SET NULL,
+  ADD CONSTRAINT `historique_ibfk_3` FOREIGN KEY (`reservation_id`) REFERENCES `reservation` (`id`) ON DELETE
+SET NULL,
+  ADD CONSTRAINT `historique_ibfk_4` FOREIGN KEY (`livre_id`) REFERENCES `livre` (`id`) ON DELETE
+SET NULL;
 --
 -- Contraintes pour la table `notification`
 --
 ALTER TABLE `notification`
-  ADD CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
-
+ADD CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
 --
 -- Contraintes pour la table `paiement`
 --
 ALTER TABLE `paiement`
-  ADD CONSTRAINT `paiement_ibfk_1` FOREIGN KEY (`abonnement_id`) REFERENCES `abonnement` (`id`) ON DELETE RESTRICT,
+ADD CONSTRAINT `paiement_ibfk_1` FOREIGN KEY (`abonnement_id`) REFERENCES `abonnement` (`id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `paiement_ibfk_amende` FOREIGN KEY (`amende_id`) REFERENCES `amende` (`id`) ON DELETE RESTRICT;
-
 --
 -- Contraintes pour la table `reservation`
 --
 ALTER TABLE `reservation`
-  ADD CONSTRAINT `reservation_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT,
+ADD CONSTRAINT `reservation_ibfk_1` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `reservation_ibfk_livre` FOREIGN KEY (`livre_id`) REFERENCES `livre` (`id`) ON DELETE RESTRICT;
-
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */
+;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */
+;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */
+;
