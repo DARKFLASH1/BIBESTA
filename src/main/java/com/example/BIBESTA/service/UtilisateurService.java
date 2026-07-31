@@ -1,5 +1,7 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Utilisateur;
 import com.example.BIBESTA.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,12 +47,12 @@ public class UtilisateurService {
 
         // Vérifie que l'email n'est pas déjà utilisé
         if (utilisateurRepository.existsByEmail(utilisateur.getEmail())) {
-            throw new RuntimeException("Cet email est déjà utilisé");
+            throw new BusinessException("Cet email est déjà utilisé");
         }
 
         // Vérifie que l'identifiant n'est pas déjà pris
         if (utilisateurRepository.existsByIdentifiant(utilisateur.getIdentifiant())) {
-            throw new RuntimeException("Cet identifiant est déjà pris");
+            throw new BusinessException("Cet identifiant est déjà pris");
         }
 
         // Tout est ok → on sauvegarde dans MySQL
@@ -62,7 +64,7 @@ public class UtilisateurService {
 
         // Vérifie que l'utilisateur existe
         Utilisateur existant = utilisateurRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
 
         // Met à jour les champs
         existant.setNom(utilisateurModifie.getNom());
@@ -83,7 +85,7 @@ public class UtilisateurService {
 
         // Vérifie que l'utilisateur existe avant de supprimer
         if (!utilisateurRepository.existsById(id)) {
-            throw new RuntimeException("Utilisateur non trouvé");
+            throw new ResourceNotFoundException("Utilisateur non trouvé");
         }
 
         utilisateurRepository.deleteById(id);

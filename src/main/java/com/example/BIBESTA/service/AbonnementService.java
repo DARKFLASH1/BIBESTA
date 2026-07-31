@@ -1,5 +1,7 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Abonnement;
 import com.example.BIBESTA.model.Abonnement.StatutPaiement;
 import com.example.BIBESTA.model.Utilisateur;
@@ -48,12 +50,12 @@ public class AbonnementService {
 
         // Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Utilisateur non trouvé avec l'id : " + utilisateurId));
 
         // Vérifie que la date de fin est après la date de début
         if (abonnement.getDateFin().isBefore(abonnement.getDateDebut())) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "La date de fin doit être après la date de début");
         }
 
@@ -67,7 +69,7 @@ public class AbonnementService {
     public Abonnement updateStatut(Integer id, StatutPaiement nouveauStatut) {
 
         Abonnement abonnement = abonnementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Abonnement non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Abonnement non trouvé"));
 
         abonnement.setStatutPaiement(nouveauStatut);
         return abonnementRepository.save(abonnement);
@@ -92,7 +94,7 @@ public class AbonnementService {
     // Supprime un abonnement
     public void deleteById(Integer id) {
         if (!abonnementRepository.existsById(id)) {
-            throw new RuntimeException("Abonnement non trouvé");
+            throw new ResourceNotFoundException("Abonnement non trouvé");
         }
         abonnementRepository.deleteById(id);
     }

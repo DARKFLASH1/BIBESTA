@@ -1,5 +1,6 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class HistoriqueService {
         // 1. Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository
                 .findById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Utilisateur non trouvé"));
 
         // 2. Crée l'entrée historique

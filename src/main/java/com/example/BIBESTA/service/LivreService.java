@@ -1,5 +1,7 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Livre;
 import com.example.BIBESTA.repository.LivreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +29,12 @@ public class LivreService {
     public Livre saveLivre(Livre livre) {
         // Valider que l'ISBN est unique
         if (livre.getIsbn() != null && livreRepository.findByIsbn(livre.getIsbn()).isPresent()) {
-            throw new IllegalArgumentException("Un livre avec cet ISBN existe déjà");
+            throw new BusinessException("Un livre avec cet ISBN existe déjà");
         }
 
         // Valider l'unicité de l'ISBN (10 ou 13 chiffres)
         if (livre.getIsbn() != null && !isValidIsbn(livre.getIsbn())) {
-            throw new IllegalArgumentException("ISBN invalide. Format accepté : 10 ou 13 chiffres.");
+            throw new BusinessException("ISBN invalide. Format accepté : 10 ou 13 chiffres.");
         }
 
         return livreRepository.save(livre);
@@ -66,11 +68,11 @@ public class LivreService {
      */
     public void deleteLivre(int id) {
         Livre livre = livreRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Livre non trouvé avec l'ID : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Livre non trouvé avec l'ID : " + id));
 
         // Vérifier si le livre est emprunté
         if (isLivreEmprunte(livre)) {
-            throw new RuntimeException("Impossible de supprimer le livre : il est actuellement emprunté");
+            throw new BusinessException("Impossible de supprimer le livre : il est actuellement emprunté");
         }
 
         livreRepository.delete(livre);
@@ -87,16 +89,16 @@ public class LivreService {
      */
     public Livre updateLivre(int id, Livre livre) {
         Livre livreExistant = livreRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Livre non trouvé avec l'ID : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Livre non trouvé avec l'ID : " + id));
 
         // Valider que l'ISBN n'est pas changé ou est unique
         if (livre.getIsbn() != null && !livre.getIsbn().equals(livreExistant.getIsbn())) {
             if (livreRepository.findByIsbn(livre.getIsbn()).isPresent()) {
-                throw new IllegalArgumentException("Un autre livre avec cet ISBN existe déjà");
+                throw new BusinessException("Un autre livre avec cet ISBN existe déjà");
             }
             // Valider le format du nouvel ISBN
             if (!isValidIsbn(livre.getIsbn())) {
-                throw new IllegalArgumentException("ISBN invalide. Format accepté : 10 ou 13 chiffres.");
+                throw new BusinessException("ISBN invalide. Format accepté : 10 ou 13 chiffres.");
             }
         }
 
