@@ -1,5 +1,7 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.model.Emprunt.Statut;
 import com.example.BIBESTA.model.Exemplaire.Etat;
@@ -22,8 +24,8 @@ public class EmpruntService {
     private final UtilisateurRepository utilisateurRepository;
     private final ExemplaireRepository exemplaireRepository;
     private final NotificationService notificationService;
-    private final AmendeService amendeService; // ← nouveau
-    private final ReservationService reservationService; // ← nouveau
+    private final AmendeService amendeService;
+    private final ReservationService reservationService;
     private final HistoriqueService historiqueService;
     // NotificationService : on envoie des notifications automatiques
 
@@ -61,22 +63,22 @@ public class EmpruntService {
 
         // 1. Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
 
         // 2. Vérifie que l'exemplaire existe
         Exemplaire exemplaire = exemplaireRepository.findById(exemplaireId)
-                .orElseThrow(() -> new RuntimeException("Exemplaire non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exemplaire non trouvé"));
 
         // 3. Vérifie que l'exemplaire est disponible
         if (exemplaire.getEtat() != Etat.DISPONIBLE) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Cet exemplaire n'est pas disponible : " + exemplaire.getEtat());
         }
 
         // 4. Vérifie que l'exemplaire n'est pas déjà emprunté
         if (empruntRepository.existsByExemplaireIdAndStatut(
                 exemplaireId, Statut.EN_COURS)) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Cet exemplaire est déjà en cours d'emprunt");
         }
 
@@ -116,12 +118,12 @@ public class EmpruntService {
 
         // 1. Vérifie que l'emprunt existe
         Emprunt emprunt = empruntRepository.findById(empruntId)
-                .orElseThrow(() -> new RuntimeException("Emprunt non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Emprunt non trouvé"));
 
         // 2. Vérifie que l'emprunt est EN_COURS
         if (emprunt.getStatut() != Statut.EN_COURS &&
                 emprunt.getStatut() != Statut.EN_RETARD) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Cet emprunt est déjà clôturé : " + emprunt.getStatut());
         }
 
@@ -146,7 +148,7 @@ public class EmpruntService {
             // Retard détecté → crée une amende automatiquement
             try {
                 amendeService.creerAmende(empruntId);
-            } catch (RuntimeException e) {
+            } catch (BusinessException e) {
                 // Si amende déjà existante → on ignore
                 System.out.println("Amende déjà existante : " + e.getMessage());
             }

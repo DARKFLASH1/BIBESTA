@@ -1,5 +1,7 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Notification;
 import com.example.BIBESTA.model.Notification.Statut;
 import com.example.BIBESTA.model.Utilisateur;
@@ -49,7 +51,7 @@ public class NotificationService {
 
         // Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Utilisateur non trouvé avec l'id : " + utilisateurId));
 
         // Crée la notification
@@ -67,7 +69,7 @@ public class NotificationService {
     public Notification marquerCommeLue(Integer id) {
 
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification non trouvée"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification non trouvée"));
 
         notification.setStatut(Statut.LU);
         return notificationRepository.save(notification);
@@ -89,7 +91,7 @@ public class NotificationService {
     // Supprime une notification
     public void deleteById(Integer id) {
         if (!notificationRepository.existsById(id)) {
-            throw new RuntimeException("Notification non trouvée");
+            throw new ResourceNotFoundException("Notification non trouvée");
         }
         notificationRepository.deleteById(id);
     }
