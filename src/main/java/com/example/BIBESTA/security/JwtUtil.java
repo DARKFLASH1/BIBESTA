@@ -1,0 +1,64 @@
+package com.example.BIBESTA.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
+import java.security.Key;
+import java.util.Date;
+
+@Component
+public class JwtUtil {
+
+    // Clé secrète pour signer les tokens
+    // IMPORTANT : en production → mettre dans application.properties
+    private final String SECRET = "bibliotheque_secret_key_2024_esta_très_longue_512bits";
+
+    // Durée de validité : 24h en millisecondes
+    private final long EXPIRATION = 86400000;
+
+    // Génère la clé de signature
+    private Key getKey() {
+        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    }
+
+    // GÉNÈRE un token JWT
+    public String genererToken(String identifiant, String role) {
+        return Jwts.builder()
+                .setSubject(identifiant) // identifiant de l'utilisateur
+                .claim("role", role) // son rôle
+                .setIssuedAt(new Date()) // date de création
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + EXPIRATION)) // date d'expiration
+                .signWith(getKey()) // signature avec la clé secrète
+                .compact(); // génère la chaîne finale
+    }
+
+    // EXTRAIT l'identifiant depuis un token
+    public String extraireIdentifiant(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    // EXTRAIT le rôle depuis un token
+    public String extraireRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    // VÉRIFIE si un token est valide
+    public boolean estValide(String token) {
+        try {
+            getClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // Méthode interne : extrait toutes les données du token
+    private Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+}
