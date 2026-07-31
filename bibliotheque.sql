@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `exemplaire` (
 --
 -- Structure de la table `emprunt`
 --
-
+ 
 DROP TABLE IF EXISTS `emprunt`;
 CREATE TABLE IF NOT EXISTS `emprunt` (
   `id` int NOT NULL AUTO_INCREMENT,

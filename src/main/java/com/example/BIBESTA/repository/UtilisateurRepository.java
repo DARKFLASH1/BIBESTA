@@ -7,12 +7,6 @@ import java.util.Optional;
 
 @Repository // Dit à Spring : "ce composant gère l'accès à la base de données"
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Integer> {
-    // "extends JpaRepository" = on hérite de toutes les méthodes de base :
-    // - findAll() → SELECT * FROM utilisateur
-    // - findById(id) → SELECT * FROM utilisateur WHERE id = ?
-    // - save(user) → INSERT ou UPDATE
-    // - deleteById(id) → DELETE FROM utilisateur WHERE id = ?
-
     // On ajoute nos propres méthodes de recherche :
 
     // Spring comprend "findByEmail" et génère automatiquement :
