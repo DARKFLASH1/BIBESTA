@@ -7,19 +7,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import com.example.BIBESTA.dto.Mapper;
+import com.example.BIBESTA.dto.emprunt.EmpruntResponse;
+import com.example.BIBESTA.dto.emprunt.EmpruntRequest;
 
 @RestController
 @RequestMapping("/emprunts")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class EmpruntController {
-
+    private final Mapper mapper;
     private final EmpruntService empruntService;
 
     // GET /api/emprunts → tous les emprunts
     @GetMapping
-    public ResponseEntity<List<Emprunt>> findAll() {
-        return ResponseEntity.ok(empruntService.findAll());
+    public ResponseEntity<List<EmpruntResponse>> findAll() {
+        List<EmpruntResponse> emprunts = empruntService.findAll()
+                .stream()
+                // Convertit chaque Emprunt en EmpruntResponse
+                .map(mapper::toEmpruntResponse)
+                .toList();
+        return ResponseEntity.ok(emprunts);
     }
 
     // GET /api/emprunts/1 → un emprunt par id
@@ -58,12 +66,13 @@ public class EmpruntController {
     // Crée un nouvel emprunt
     @PostMapping
     public ResponseEntity<?> creerEmprunt(
-            @RequestParam Integer utilisateurId,
-            @RequestParam Integer exemplaireId) {
+            @RequestBody EmpruntRequest request) {
         try {
             Emprunt emprunt = empruntService.creerEmprunt(
-                    utilisateurId, exemplaireId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(emprunt);
+                    request.utilisateurId(),
+                    request.exemplaireId());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(mapper.toEmpruntResponse(emprunt));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

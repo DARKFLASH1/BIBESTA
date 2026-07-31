@@ -3,7 +3,6 @@ package com.example.BIBESTA.service;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.model.Paiement.Statut;
 import com.example.BIBESTA.model.Abonnement.StatutPaiement;
-import com.example.BIBESTA.model.Amende;
 import com.example.BIBESTA.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ public class PaiementService {
     private final AmendeRepository amendeRepository;
     private final NotificationService notificationService;
     private final AmendeService amendeService;
+    private final HistoriqueService historiqueService;
 
     // Tous les paiements
     public List<Paiement> findAll() {
@@ -68,7 +68,10 @@ public class PaiementService {
         abonnementRepository.save(abonnement);
 
         Paiement saved = paiementRepository.save(paiement);
-
+        // Enregistre dans l'historique
+        historiqueService.enregistrerPaiement(
+                abonnement.getUtilisateur().getId(),
+                "Paiement abonnement : " + abonnement.getMontant() + " FCFA");
         // 5. Notifie l'utilisateur
         notificationService.creer(
                 abonnement.getUtilisateur().getId(),

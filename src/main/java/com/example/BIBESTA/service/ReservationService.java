@@ -19,6 +19,7 @@ public class ReservationService {
     private final LivreRepository livreRepository;
     private final ExemplaireRepository exemplaireRepository;
     private final NotificationService notificationService;
+    private final HistoriqueService historiqueService;
 
     // Toutes les réservations
     public List<Reservation> findAll() {
@@ -70,6 +71,19 @@ public class ReservationService {
         Reservation saved = reservationRepository.save(reservation);
 
         // 5. Notification de confirmation
+        notificationService.creer(
+                utilisateurId,
+                "RESERVATION",
+                "Votre réservation pour '" + livre.getTitre() +
+                        "' est enregistrée. Nous vous préviendrons dès qu'un exemplaire est disponible.");
+
+        // Enregistre dans l'historique
+        historiqueService.enregistrerReservation(
+                utilisateurId,
+                saved.getId(),
+                livreId);
+
+        // Notification de confirmation
         notificationService.creer(
                 utilisateurId,
                 "RESERVATION",

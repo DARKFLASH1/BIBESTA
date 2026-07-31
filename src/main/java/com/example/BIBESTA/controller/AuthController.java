@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
-import java.util.Map;
+import com.example.BIBESTA.dto.auth.LoginResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -55,14 +55,13 @@ public class AuthController {
                 utilisateur.getRole().name());
 
         // 5. Retourne le token et les infos de l'utilisateur
-        Map<String, Object> reponse = new HashMap<>();
-        reponse.put("token", token);
-        reponse.put("role", utilisateur.getRole());
-        reponse.put("nom", utilisateur.getNom());
-        reponse.put("prenom", utilisateur.getPrenom());
-        reponse.put("identifiant", utilisateur.getIdentifiant());
-        reponse.put("id", utilisateur.getId());
-
+        LoginResponse reponse = new LoginResponse(
+                token,
+                utilisateur.getRole().name(),
+                utilisateur.getNom(),
+                utilisateur.getPrenom(),
+                utilisateur.getIdentifiant(),
+                utilisateur.getId());
         return ResponseEntity.ok(reponse);
     }
 }
