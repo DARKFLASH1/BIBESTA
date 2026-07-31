@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import com.example.BIBESTA.service.AmendeService;
+import com.example.BIBESTA.service.ReservationService;
+import com.example.BIBESTA.service.HistoriqueService;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,9 @@ public class EmpruntService {
     private final UtilisateurRepository utilisateurRepository;
     private final ExemplaireRepository exemplaireRepository;
     private final NotificationService notificationService;
+    private final AmendeService amendeService; // ← nouveau
+    private final ReservationService reservationService; // ← nouveau
+    private final HistoriqueService historiqueService;
     // NotificationService : on envoie des notifications automatiques
 
     // Retourne tous les emprunts
@@ -54,13 +61,11 @@ public class EmpruntService {
 
         // 1. Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Utilisateur non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         // 2. Vérifie que l'exemplaire existe
         Exemplaire exemplaire = exemplaireRepository.findById(exemplaireId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Exemplaire non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Exemplaire non trouvé"));
 
         // 3. Vérifie que l'exemplaire est disponible
         if (exemplaire.getEtat() != Etat.DISPONIBLE) {
@@ -80,7 +85,6 @@ public class EmpruntService {
         emprunt.setUtilisateur(utilisateur);
         emprunt.setExemplaire(exemplaire);
         emprunt.setDateDebut(LocalDate.now());
-        // Durée standard : 14 jours
         emprunt.setDateRetourPrevue(LocalDate.now().plusDays(14));
         emprunt.setStatut(Statut.EN_COURS);
 
@@ -91,12 +95,18 @@ public class EmpruntService {
         // 7. Sauvegarde l'emprunt
         Emprunt saved = empruntRepository.save(emprunt);
 
-        // 8. Envoie une notification de confirmation
+        // 8. Enregistre dans l'historique
+        historiqueService.enregistrerEmprunt(
+                utilisateurId,
+                saved.getId(),
+                exemplaire.getLivre().getId());
+
+        // 9. Notification de confirmation
         notificationService.creer(
                 utilisateurId,
                 "EMPRUNT",
-                "Vous avez emprunté un livre. Date de retour prévue : "
-                        + emprunt.getDateRetourPrevue());
+                "Vous avez emprunté '" + exemplaire.getLivre().getTitre() +
+                        "'. Date de retour prévue : " + emprunt.getDateRetourPrevue());
 
         return saved;
     }
@@ -108,30 +118,57 @@ public class EmpruntService {
         Emprunt emprunt = empruntRepository.findById(empruntId)
                 .orElseThrow(() -> new RuntimeException("Emprunt non trouvé"));
 
-        // 2. Vérifie que l'emprunt est bien EN_COURS
-        if (emprunt.getStatut() != Statut.EN_COURS) {
+        // 2. Vérifie que l'emprunt est EN_COURS
+        if (emprunt.getStatut() != Statut.EN_COURS &&
+                emprunt.getStatut() != Statut.EN_RETARD) {
             throw new RuntimeException(
                     "Cet emprunt est déjà clôturé : " + emprunt.getStatut());
         }
 
         // 3. Enregistre la date de retour réelle
         emprunt.setDateRetourReelle(LocalDate.now());
-
-        // 4. Change le statut → RETOURNE
         emprunt.setStatut(Statut.RETOURNE);
 
-        // 5. Remet l'exemplaire → DISPONIBLE
+        // 4. Remet l'exemplaire → DISPONIBLE
         Exemplaire exemplaire = emprunt.getExemplaire();
         exemplaire.setEtat(Etat.DISPONIBLE);
         exemplaireRepository.save(exemplaire);
 
-        // 6. Envoie notification de confirmation
-        notificationService.creer(
-                emprunt.getUtilisateur().getId(),
-                "RETOUR",
-                "Retour enregistré avec succès. Merci !");
+        // 5. Sauvegarde l'emprunt
+        Emprunt saved = empruntRepository.save(emprunt);
 
-        return empruntRepository.save(emprunt);
+        // 6. Vérifie s'il y a un retard
+        long joursRetard = ChronoUnit.DAYS.between(
+                emprunt.getDateRetourPrevue(),
+                LocalDate.now());
+
+        if (joursRetard > 0) {
+            // Retard détecté → crée une amende automatiquement
+            try {
+                amendeService.creerAmende(empruntId);
+            } catch (RuntimeException e) {
+                // Si amende déjà existante → on ignore
+                System.out.println("Amende déjà existante : " + e.getMessage());
+            }
+        } else {
+            // Pas de retard → notification de retour normal
+            notificationService.creer(
+                    emprunt.getUtilisateur().getId(),
+                    "RETOUR",
+                    "Retour enregistré avec succès. Merci !");
+        }
+
+        // 7. Vérifie s'il y a une réservation en attente pour ce livre
+        Integer livreId = exemplaire.getLivre().getId();
+        reservationService.confirmerReservationsSiDisponible(livreId);
+
+        // 8. Enregistre dans l'historique
+        historiqueService.enregistrerRetour(
+                emprunt.getUtilisateur().getId(),
+                empruntId,
+                livreId);
+
+        return saved;
     }
 
     // METTRE À JOUR LES EMPRUNTS EN RETARD
