@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/exemplaires")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class ExemplaireController {
 

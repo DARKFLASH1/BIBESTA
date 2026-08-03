@@ -16,7 +16,6 @@ import java.util.List;
 // Toutes les URLs de ce controller commencent par /api/utilisateurs
 // (le /api vient de application.properties → context-path)
 
-@CrossOrigin(origins = "*")
 // Autorise Angular (sur un autre port) à appeler cette API
 // "*" = accepte toutes les origines (à restreindre en production)
 

@@ -2,6 +2,7 @@ package com.example.BIBESTA.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
@@ -9,12 +10,17 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Clé secrète pour signer les tokens
-    // IMPORTANT : en production → mettre dans application.properties
-    private final String SECRET = "bibliotheque_secret_key_2024_esta_très_longue_512bits";
+    // Clé secrète pour signer les tokens, injectée depuis application.properties
+    // (elle-même lue depuis la variable d'env JWT_SECRET). Ne jamais commiter
+    // une vraie valeur : voir application.properties.example.
+    private final String SECRET;
 
     // Durée de validité : 24h en millisecondes
     private final long EXPIRATION = 86400000;
+
+    public JwtUtil(@Value("${app.jwt.secret}") String secret) {
+        this.SECRET = secret;
+    }
 
     // Génère la clé de signature
     private Key getKey() {

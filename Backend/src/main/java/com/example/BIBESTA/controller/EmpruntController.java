@@ -13,7 +13,6 @@ import com.example.BIBESTA.dto.emprunt.EmpruntRequest;
 
 @RestController
 @RequestMapping("/emprunts")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class EmpruntController {
     private final Mapper mapper;
