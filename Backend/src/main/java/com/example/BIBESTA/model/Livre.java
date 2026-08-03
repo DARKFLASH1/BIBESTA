@@ -31,17 +31,17 @@ public class Livre {
     @Column(name = "edition", length = 255)
     private String edition;
 
-    @Column(name = "categorie", length = 100)
-    private String categorie;
-
-    @Column(name = "annee_publication")
-    private Integer anneePublication;
-
     @Column(name = "isbn", unique = true, length = 13)
     private String isbn;
 
+    @Column(name = "categorie", length = 100)
+    private String categorie;
+
     @Column(name = "langue", length = 50)
     private String langue;
+
+    @Column(name = "annee_publication")
+    private Integer anneePublication;
 
     @Column(name = "genre", length = 100)
     private String genre;

@@ -24,9 +24,14 @@ public class Paiement {
     @Column(name = "datePaiement", nullable = false)
     private LocalDate datePaiement;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "methode_paiement", nullable = false, length = 50)
     // Ex: "ESPECES", "MOBILE_MONEY", "CARTE_BANCAIRE"
-    private String methodePaiement;
+    private methode_paiement methode_paiement;
+
+    public enum methode_paiement {
+        ESPECES, MOBILE_MONEY, CARTE_BANCAIRE
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false)

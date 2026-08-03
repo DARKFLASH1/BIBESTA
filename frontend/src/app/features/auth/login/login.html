@@ -1,0 +1,125 @@
+<style>
+  .login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a237e, #0d47a1);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .login-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .login-header h1 {
+    font-size: 2rem;
+    color: #1a237e;
+    margin-bottom: 0.5rem;
+  }
+  .login-header p {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #333;
+    font-weight: 500;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #1a237e;
+  }
+  .erreur {
+    background: #ffebee;
+    color: #c62828;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  button {
+    width: 100%;
+    padding: 0.9rem;
+    background: #1a237e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) {
+    background: #0d47a1;
+  }
+  button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+</style>
+
+<div class="login-container">
+  <div class="login-card">
+
+    <!-- Titre -->
+    <div class="login-header">
+      <h1>📚 BIBESTA</h1>
+      <p>Système de gestion de bibliothèque</p>
+    </div>
+
+    <!-- Formulaire -->
+    <form (ngSubmit)="onLogin()">
+
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input
+          type="text"
+          [(ngModel)]="credentials.identifiant"
+          name="identifiant"
+          placeholder="Ex: admin"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input
+          type="password"
+          [(ngModel)]="credentials.motDePasse"
+          name="motDePasse"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      <!-- Erreur -->
+      @if (erreur) {
+        <div class="erreur">{{ erreur }}</div>
+      }
+
+      <button type="submit" [disabled]="chargement">
+        {{ chargement ? 'Connexion...' : 'Se connecter' }}
+      </button>
+
+    </form>
+  </div>
+</div>

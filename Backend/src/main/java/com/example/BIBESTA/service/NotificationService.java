@@ -47,12 +47,21 @@ public class NotificationService {
     // Crée une nouvelle notification pour un utilisateur
     // Cette méthode sera appelée automatiquement par les autres services
     // Ex: EmpruntService appellera cette méthode en cas de retard
-    public Notification creer(Integer utilisateurId, String type, String contenu) {
+    public Notification creer(Integer utilisateurId, String typeStr, String contenu) {
 
         // Vérifie que l'utilisateur existe
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Utilisateur non trouvé avec l'id : " + utilisateurId));
+
+        // Convertit la String en enum Notification.Type
+        Notification.Type type;
+        try {
+            type = Notification.Type.valueOf(typeStr);
+        } catch (IllegalArgumentException e) {
+            // Si le type n'existe pas dans l'enum, on utilise RAPPEL_RETOUR par défaut
+            type = Notification.Type.RAPPEL_RETOUR;
+        }
 
         // Crée la notification
         Notification notification = new Notification();

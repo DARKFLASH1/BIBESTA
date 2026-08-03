@@ -20,11 +20,15 @@ public class Historique {
     @Column(name = "dateMouvement", nullable = false)
     // LocalDateTime = date ET heure (ex: 2024-01-15 14:30:00)
     private LocalDateTime dateMouvement;
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 50)
     // Types possibles : EMPRUNT | RETOUR | RESERVATION
     // | ANNULATION | PAIEMENT | CONNEXION
-    private String type;
+    private Type type;
+
+    public enum Type {
+        EMPRUNT, RETOUR, RESERVATION, ANNULATION, PAIEMENT, CONNEXION
+    }
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

@@ -7,98 +7,57 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
+        private final JwtFilter jwtFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http)
-            throws Exception {
-        http
-                // Désactive CSRF car on utilise JWT (pas de cookies)
-                .csrf(csrf -> csrf.disable())
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/auth/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/livres/**").permitAll()
+                                                .anyRequest().authenticated())
+                                .addFilterBefore(
+                                                jwtFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
 
-                // Pas de session : JWT gère l'authentification
-                // STATELESS = chaque requête est indépendante
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                return http.build();
+        }
 
-                // Règles d'accès par URL et rôle
-                .authorizeHttpRequests(auth -> auth
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
 
-                        // Connexion : tout le monde
-                        .requestMatchers("/auth/**").permitAll()
+                // Autorise Angular
+                config.setAllowedOrigins(List.of("http://localhost:4200"));
 
-                        // Lecture des livres : tout le monde connecté
-                        .requestMatchers(HttpMethod.GET, "/livres/**")
-                        .permitAll()
+                // Autorise toutes les méthodes HTTP
+                config.setAllowedMethods(List.of(
+                                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-                        // Modification des livres : bibliothécaire uniquement
-                        .requestMatchers(HttpMethod.POST, "/livres/**")
-                        .hasRole("BIBLIOTHECAIRE")
-                        .requestMatchers(HttpMethod.PUT, "/livres/**")
-                        .hasRole("BIBLIOTHECAIRE")
-                        .requestMatchers(HttpMethod.DELETE, "/livres/**")
-                        .hasRole("BIBLIOTHECAIRE")
+                // Autorise tous les en-têtes
+                config.setAllowedHeaders(List.of("*"));
 
-                        // Gestion des utilisateurs : bibliothécaire uniquement
-                        .requestMatchers("/utilisateurs/**")
-                        .hasRole("BIBLIOTHECAIRE")
+                // Autorise les credentials (token JWT)
+                config.setAllowCredentials(true);
 
-                        // Exemplaires : bibliothécaire uniquement
-                        .requestMatchers(HttpMethod.POST, "/exemplaires/**")
-                        .hasRole("BIBLIOTHECAIRE")
-                        .requestMatchers(HttpMethod.DELETE, "/exemplaires/**")
-                        .hasRole("BIBLIOTHECAIRE")
-
-                        // Emprunts : authentifié
-                        .requestMatchers("/emprunts/**")
-                        .authenticated()
-
-                        // Réservations : authentifié
-                        .requestMatchers("/reservations/**")
-                        .authenticated()
-
-                        // Amendes : authentifié
-                        .requestMatchers("/amendes/**")
-                        .authenticated()
-
-                        // Paiements : authentifié
-                        .requestMatchers("/paiements/**")
-                        .authenticated()
-
-                        // Notifications : authentifié
-                        .requestMatchers("/notifications/**")
-                        .authenticated()
-
-                        // Historique : bibliothécaire uniquement
-                        .requestMatchers("/historique/**")
-                        .hasRole("BIBLIOTHECAIRE")
-
-                        // Tout le reste : authentifié
-                        .anyRequest().authenticated())
-
-                // Ajoute notre filtre JWT AVANT le filtre Spring par défaut
-                .addFilterBefore(
-                        jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-
-    // BCrypt : algorithme de hashage des mots de passe
-    // Ex: "monmdp" → "$2a$10$xyz...."
-    // Impossible de retrouver le mot de passe original
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 }

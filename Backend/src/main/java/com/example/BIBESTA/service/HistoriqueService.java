@@ -66,7 +66,14 @@ public class HistoriqueService {
         // 2. Crée l'entrée historique
         Historique historique = new Historique();
         historique.setUtilisateur(utilisateur);
-        historique.setType(type);
+        // Convertit la String en enum Historique.Type
+        Historique.Type typeEnum;
+        try {
+            typeEnum = Historique.Type.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            typeEnum = Historique.Type.CONNEXION; // fallback par défaut
+        }
+        historique.setType(typeEnum);
         historique.setDescription(description);
         historique.setDateMouvement(LocalDateTime.now());
 

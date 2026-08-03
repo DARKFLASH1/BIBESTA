@@ -2,12 +2,14 @@ package com.example.BIBESTA.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*; // outils pour parler à la base de données
-import lombok.Data; // génère automatiquement getters/setters
+import lombok.Getter;
+import lombok.Setter; // Lombok : génère getters/setters
 import lombok.NoArgsConstructor; // génère un constructeur vide
 import lombok.AllArgsConstructor; // génère un constructeur avec tous les champs
 import java.time.LocalDate; // pour gérer les dates
 
-@Data // Lombok : génère getters, setters, toString automatiquement
+@Getter // Lombok : génère getters, setters, toString automatiquement
+@Setter
 @NoArgsConstructor // Lombok : génère Utilisateur() { }
 @AllArgsConstructor // Lombok : génère Utilisateur(nom, prenom, ...) { }
 @Entity // Dit à Hibernate : "cette classe = une table MySQL"
@@ -59,5 +61,9 @@ public class Utilisateur {
         ETUDIANT,
         ENSEIGNANT,
         PUBLIC
+    }
+
+    public String getMotDePasse() {
+        return motDePasse;
     }
 }
