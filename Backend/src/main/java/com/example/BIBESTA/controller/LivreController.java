@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/livres") // Toutes les URL de ce contrôleur commenceront par /livres
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Permet les appels depuis n'importe quelle origine (navigateur)
 public class LivreController {
 
     private final LivreService livreService;

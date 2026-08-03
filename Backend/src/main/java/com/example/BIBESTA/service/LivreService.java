@@ -2,7 +2,11 @@ package com.example.BIBESTA.service;
 
 import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
+import com.example.BIBESTA.model.Emprunt.Statut;
+import com.example.BIBESTA.model.Exemplaire;
 import com.example.BIBESTA.model.Livre;
+import com.example.BIBESTA.repository.EmpruntRepository;
+import com.example.BIBESTA.repository.ExemplaireRepository;
 import com.example.BIBESTA.repository.LivreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,10 +17,16 @@ import java.util.Optional;
 public class LivreService {
 
     private final LivreRepository livreRepository;
+    private final ExemplaireRepository exemplaireRepository;
+    private final EmpruntRepository empruntRepository;
 
     @Autowired
-    public LivreService(LivreRepository livreRepository) {
+    public LivreService(LivreRepository livreRepository,
+            ExemplaireRepository exemplaireRepository,
+            EmpruntRepository empruntRepository) {
         this.livreRepository = livreRepository;
+        this.exemplaireRepository = exemplaireRepository;
+        this.empruntRepository = empruntRepository;
     }
 
     /**
@@ -172,9 +182,15 @@ public class LivreService {
      * @return true si le livre est emprunté, false sinon
      */
     private boolean isLivreEmprunte(Livre livre) {
-        // Cette méthode devrait interroger la table emprunt pour vérifier si le
-        // livre a des emprunts en cours
-        // Pour l'instant, retourne false
+        // Un livre est "emprunté" si au moins un de ses exemplaires a un emprunt
+        // au statut EN_COURS.
+        List<Exemplaire> exemplaires = exemplaireRepository.findByLivreId(livre.getId());
+        for (Exemplaire exemplaire : exemplaires) {
+            if (empruntRepository.existsByExemplaireIdAndStatut(
+                    exemplaire.getId().intValue(), Statut.EN_COURS)) {
+                return true;
+            }
+        }
         return false;
     }
 

@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/historique")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class HistoriqueController {
 
