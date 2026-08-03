@@ -17,10 +17,15 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 50)
     // Types possibles définis dans ton SQL :
     // RETARD | RESERVATION_DISPONIBLE | AMENDE | RAPPEL_RETOUR | ABONNEMENT_EXPIRE
-    private String type;
+    private Type type;
+
+    public enum Type {
+        RETARD, RESERVATION_DISPONIBLE, AMENDE, RAPPEL_RETOUR, ABONNEMENT_EXPIRE
+    }
 
     @Column(name = "contenu", columnDefinition = "TEXT")
     // columnDefinition = "TEXT" → texte long (pas limité à 255 caractères)
