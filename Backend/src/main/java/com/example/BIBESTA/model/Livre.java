@@ -31,7 +31,7 @@ public class Livre {
     @Column(name = "edition", length = 255)
     private String edition;
 
-    @Column(name = "isbn", unique = true, length = 13)
+    @Column(name = "isbn", unique = true, length = 255)
     private String isbn;
 
     @Column(name = "categorie", length = 100)
