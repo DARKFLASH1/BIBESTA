@@ -1,0 +1,95 @@
+<div class="layout-container">
+  <!-- Overlay mobile -->
+  @if (isSidebarOpen() && isMobile()) {
+    <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.open]="isSidebarOpen()">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg lucideLibrary size="28"></svg>
+        <span class="logo-text">Bibliothèque</span>
+      </div>
+      @if (isMobile()) {
+        <button class="close-btn" (click)="closeSidebar()">
+          <svg lucideX size="20"></svg>
+        </button>
+      }
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      @for (item of menuItems; track item.route) {
+        <a 
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: item.route === '/books'}"
+          class="nav-item"
+          (click)="closeSidebar()">
+          
+          @switch (item.icon) {
+            @case ('bookOpen') {
+              <svg lucideBookOpen size="20"></svg>
+            }
+            @case ('bookmark') {
+              <svg lucideBookmark size="20"></svg>
+            }
+            @case ('calendarClock') {
+              <svg lucideCalendarClock size="20"></svg>
+            }
+            @case ('users') {
+              <svg lucideUsers size="20"></svg>
+            }
+            @case ('creditCard') {
+              <svg lucideCreditCard size="20"></svg>
+            }
+            @case ('badgeCheck') {
+              <svg lucideBadgeCheck size="20"></svg>
+            }
+            @case ('bell') {
+              <svg lucideBell size="20"></svg>
+            }
+            @case ('barChart3') {
+              <svg lucideBarChart3 size="20"></svg>
+            }
+          }
+          
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <!-- Profil + Déconnexion en bas de sidebar -->
+<div class="sidebar-footer">
+  <div class="user-info">
+    <div class="user-avatar">
+      <svg lucideUser size="18"></svg>
+    </div>
+    <div class="user-details">
+      <span class="user-nom">{{ nomUtilisateur }}</span>
+      <span class="user-role">{{ roleUtilisateur }}</span>
+    </div>
+  </div>
+  <button class="btn-logout" (click)="logout()" title="Se déconnecter">
+    <svg lucideLogOut size="18"></svg>
+  </button>
+</div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <!-- Mobile header -->
+    <header class="mobile-header">
+      <button class="menu-toggle" (click)="toggleSidebar()">
+        <svg lucideMenu size="24"></svg>
+      </button>
+      <h1 class="page-title">Bibliothèque</h1>
+    </header>
+
+    <!-- Page content -->
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

@@ -28,15 +28,15 @@ public class JwtUtil {
     }
 
     // GÉNÈRE un token JWT
-    public String genererToken(String identifiant, String role) {
+    public String genererToken(String identifiant, String role, Integer id) {
         return Jwts.builder()
-                .setSubject(identifiant) // identifiant de l'utilisateur
-                .claim("role", role) // son rôle
-                .setIssuedAt(new Date()) // date de création
-                .setExpiration(
-                        new Date(System.currentTimeMillis() + EXPIRATION)) // date d'expiration
-                .signWith(getKey()) // signature avec la clé secrète
-                .compact(); // génère la chaîne finale
+                .setSubject(identifiant)
+                .claim("role", role)
+                .claim("id", id) // ← ajoute l'id numérique
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .signWith(getKey())
+                .compact();
     }
 
     // EXTRAIT l'identifiant depuis un token
@@ -47,6 +47,11 @@ public class JwtUtil {
     // EXTRAIT le rôle depuis un token
     public String extraireRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    // EXTRAIT l'ID depuis un token
+    public Integer extraireId(String token) {
+        return getClaims(token).get("id", Integer.class);
     }
 
     // VÉRIFIE si un token est valide

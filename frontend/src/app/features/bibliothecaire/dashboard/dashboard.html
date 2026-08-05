@@ -1,105 +1,208 @@
+<div class="dashboard-container">
 
-<div class="layout">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <h2>📚 BIBESTA</h2>
-      <p>{{ nomComplet }}</p>
-      <p>{{ role }}</p>
-    </div>
-
-    <nav class="sidebar-menu">
-      <div class="menu-item active">
-        📊 Tableau de bord
-      </div>
-      <div class="menu-item">
-        📚 Livres
-      </div>
-      <div class="menu-item">
-        👥 Utilisateurs
-      </div>
-      <div class="menu-item">
-        📋 Emprunts
-      </div>
-      <div class="menu-item">
-        🔖 Réservations
-      </div>
-      <div class="menu-item">
-        💰 Amendes
-      </div>
-      <div class="menu-item">
-        🔔 Notifications
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <button class="btn-logout" (click)="logout()">
-        🚪 Se déconnecter
-      </button>
-    </div>
-  </aside>
-
-  <!-- CONTENU PRINCIPAL -->
-  <main class="main">
-
-    <div class="main-header">
+  <!-- EN-TÊTE -->
+  <div class="dashboard-header">
+    <div>
       <h1>Tableau de bord</h1>
-      <p>Bienvenue, {{ nomComplet }} — {{ role }}</p>
+      <p class="subtitle">Bienvenue, {{ nomComplet || 'Bibliothécaire' }} — {{ role }}</p>
     </div>
+    <button class="btn btn-danger" (click)="logout()">
+      🚪 Se déconnecter
+    </button>
+  </div>
+
+  <!-- CHARGEMENT -->
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Chargement des données...</p>
+    </div>
+  } @else {
 
     <!-- STATISTIQUES -->
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">📚</div>
-        <div class="stat-info">
-          <h3>0</h3>
-          <p>Livres</p>
+      <div class="stat-card" (click)="naviguer('/books')">
+        <div class="stat-icon accent">📚</div>
+        <div class="stat-content">
+          <span class="stat-label">Total Livres</span>
+          <span class="stat-value">{{ stats()?.totalLivres ?? 0 }}</span>
+          <span class="stat-detail">{{ stats()?.livresDisponibles ?? 0 }} disponibles</span>
         </div>
+        <span class="stat-arrow">→</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-info">
-          <h3>0</h3>
-          <p>Utilisateurs</p>
+
+      <div class="stat-card" (click)="naviguer('/users')">
+        <div class="stat-icon success">👥</div>
+        <div class="stat-content">
+          <span class="stat-label">Utilisateurs</span>
+          <span class="stat-value">{{ stats()?.totalUtilisateurs ?? 0 }}</span>
+          <span class="stat-detail">Membres actifs</span>
         </div>
+        <span class="stat-arrow">→</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">📋</div>
-        <div class="stat-info">
-          <h3>0</h3>
-          <p>Emprunts en cours</p>
+
+      <div class="stat-card" (click)="naviguer('/loans/manage')">
+        <div class="stat-icon warning">📋</div>
+        <div class="stat-content">
+          <span class="stat-label">Emprunts en cours</span>
+          <span class="stat-value">{{ stats()?.empruntsEnCours ?? 0 }}</span>
+          <span class="stat-detail">{{ stats()?.reservationsEnAttente ?? 0 }} réservations</span>
         </div>
+        <span class="stat-arrow">→</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">⚠️</div>
-        <div class="stat-info">
-          <h3>0</h3>
-          <p>Retards</p>
+
+      <div class="stat-card" (click)="naviguer('/fines')">
+        <div class="stat-icon danger">⚠️</div>
+        <div class="stat-content">
+          <span class="stat-label">Amendes impayées</span>
+          <span class="stat-value">{{ stats()?.amendesImpayees ?? 0 }}</span>
+          <span class="stat-detail">En attente</span>
         </div>
+        <span class="stat-arrow">→</span>
       </div>
     </div>
 
-    <!-- ACTIONS RAPIDES -->
-    <h2 style="margin-bottom:1rem; color:#333;">Actions rapides</h2>
-    <div class="actions-grid">
-      <div class="action-card">
-        <div class="icon">➕</div>
-        <h3>Ajouter un livre</h3>
+    <!-- TAUX DE DISPONIBILITÉ -->
+    <div class="card disponibilite-card">
+      <div class="disponibilite-header">
+        <h3>📈 Taux de disponibilité</h3>
+        <span class="disponibilite-value">{{ tauxDisponibilite() }}%</span>
       </div>
-      <div class="action-card">
-        <div class="icon">👤</div>
-        <h3>Nouvel utilisateur</h3>
+      <div class="disponibilite-bar">
+        <div class="disponibilite-progress" [style.width.%]="tauxDisponibilite()"></div>
       </div>
-      <div class="action-card">
-        <div class="icon">📖</div>
-        <h3>Créer un emprunt</h3>
+      <p class="disponibilite-text">
+        {{ stats()?.livresDisponibles ?? 0 }} livres disponibles sur {{ stats()?.totalLivres ?? 0 }} au total
+      </p>
+    </div>
+
+    <!-- GRILLE PRINCIPALE -->
+    <div class="dashboard-grid">
+
+      <!-- COLONNE GAUCHE -->
+      <div class="dashboard-column">
+
+        <!-- EMPRUNTS EN RETARD -->
+        <div class="card alertes-section">
+          <div class="section-header">
+            <h2><span class="text-danger">⚠️</span> Emprunts en retard</h2>
+            <button class="btn btn-sm btn-outline" (click)="naviguer('/loans/manage')">Voir tout</button>
+          </div>
+          @if (empruntsRetard().length === 0) {
+            <div class="empty-state"><p>✅ Aucun emprunt en retard</p></div>
+          } @else {
+            <div class="retard-list">
+              @for (item of empruntsRetard(); track item.id) {
+                <div class="retard-item">
+                  <div class="retard-info">
+                    <span class="retard-utilisateur">{{ item.utilisateur }}</span>
+                    <span class="retard-livre">{{ item.livre }}</span>
+                  </div>
+                  <div class="retard-details">
+                    <span class="badge badge-danger">{{ item.joursRetard }}j de retard</span>
+                    <span class="retard-date">Prévu le {{ item.dateRetourPrevue }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- STATISTIQUES MENSUELLES -->
+        <div class="card stats-mensuelles">
+          <div class="section-header">
+            <h2>📊 Activité mensuelle</h2>
+          </div>
+          <div class="chart-container">
+            <div class="chart-bars">
+              @for (mois of statsMensuelles(); track mois.mois) {
+                <div class="chart-month">
+                  <div class="chart-bar-group">
+                    <div class="chart-bar emprunts"
+                         [style.height.%]="(mois.emprunts / calculerMaxEmprunts()) * 100"
+                         [title]="'Emprunts: ' + mois.emprunts"></div>
+                    <div class="chart-bar retours"
+                         [style.height.%]="(mois.retours / calculerMaxEmprunts()) * 100"
+                         [title]="'Retours: ' + mois.retours"></div>
+                  </div>
+                  <span class="chart-label">{{ mois.mois }}</span>
+                </div>
+              }
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item">
+                <span class="legend-color emprunts"></span> Emprunts
+              </span>
+              <span class="legend-item">
+                <span class="legend-color retours"></span> Retours
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="action-card">
-        <div class="icon">🔄</div>
-        <h3>Enregistrer retour</h3>
+
+      <!-- COLONNE DROITE -->
+      <div class="dashboard-column">
+
+        <!-- ACTIVITÉ RÉCENTE -->
+        <div class="card activite-section">
+          <div class="section-header">
+            <h2>🕐 Activité récente</h2>
+          </div>
+          @if (activiteRecente().length === 0) {
+            <div class="empty-state"><p>Aucune activité récente</p></div>
+          } @else {
+            <div class="activite-list">
+              @for (item of activiteRecente(); track item.id) {
+                <div class="activite-item">
+                  <div class="activite-icon badge-{{ getCouleurActivite(item.type) }}">
+                    {{ getIconeActivite(item.type) }}
+                  </div>
+                  <div class="activite-content">
+                    <span class="activite-description">{{ item.description }}</span>
+                    <span class="activite-details">
+                      @if (item.utilisateur) { {{ item.utilisateur }} }
+                      @if (item.livre) { — {{ item.livre }} }
+                    </span>
+                  </div>
+                  <span class="activite-date">{{ formaterDate(item.date) }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- LIVRES POPULAIRES -->
+        <div class="card livres-populaires">
+          <div class="section-header">
+            <h2>🏆 Livres populaires</h2>
+            <button class="btn btn-sm btn-outline" (click)="naviguer('/books')">Voir tout</button>
+          </div>
+          @if (livresPopulaires().length === 0) {
+            <div class="empty-state"><p>Aucune donnée disponible</p></div>
+          } @else {
+            <div class="livres-list">
+              @for (livre of livresPopulaires(); track livre.id; let i = $index) {
+                <div class="livre-item">
+                  <span class="livre-rang">{{ i + 1 }}</span>
+                  <div class="livre-info">
+                    <span class="livre-titre">{{ livre.titre }}</span>
+                    <span class="livre-auteur">{{ livre.auteur }}</span>
+                  </div>
+                  <div class="livre-bar-container">
+                    <div class="livre-bar"
+                         [style.width.%]="(livre.nombreEmprunts / calculerMaxLivresPopulaires()) * 100"></div>
+                  </div>
+                  <span class="livre-count">{{ livre.nombreEmprunts }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
       </div>
     </div>
 
-  </main>
+  }
+
 </div>
