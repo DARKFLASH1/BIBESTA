@@ -1,0 +1,225 @@
+.loans-page {
+  padding: 2rem 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+  h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+}
+
+.erreur-banner {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* ── Onglets ─────────────────────────────────────── */
+.onglets {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.onglet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+
+  &:hover { border-color: var(--accent); color: var(--accent); }
+
+  &.actif {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  &.danger.actif {
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+}
+
+/* ── Liste ───────────────────────────────────────── */
+.loans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Carte emprunt ───────────────────────────────── */
+.loan-card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  overflow: hidden;
+  transition: var(--transition);
+
+  &:hover { box-shadow: var(--shadow-md); }
+  &.en-retard { border-color: rgba(178, 58, 46, 0.3); }
+}
+
+/* Bande colorée gauche */
+.statut-stripe {
+  width: 5px;
+  flex-shrink: 0;
+}
+.stripe-en_cours         { background: linear-gradient(to bottom, #2A5C8A, #5B87AD); }
+.stripe-a_rendre_bientot { background: linear-gradient(to bottom, #C1690D, #E2924B); }
+.stripe-retourne         { background: linear-gradient(to bottom, #2E7D46, #66A97D); }
+.stripe-en_retard        { background: linear-gradient(to bottom, #B23A2E, #D9695D); }
+
+.card-content {
+  flex: 1;
+  padding: 1.25rem;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.livre-titre {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.livre-auteur {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-bottom: 0.25rem;
+}
+
+.exemplaire {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  font-family: monospace;
+}
+
+/* ── Dates ───────────────────────────────────────── */
+.card-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.date-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ── Jours ───────────────────────────────────────── */
+.jours-info { margin-bottom: 0.75rem; }
+
+.jours-ok {
+  font-size: 0.85rem;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.jours-retard {
+  font-size: 0.85rem;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ── Actions ─────────────────────────────────────── */
+.card-actions { display: flex; justify-content: flex-end; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  &:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); }
+}
+
+/* ── Badge ───────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger);  }
+
+/* ── Skeleton ────────────────────────────────────── */
+.skeleton-card { padding: 1.25rem; }
+.skeleton {
+  background: linear-gradient(90deg, #F5F2EA 25%, #EFEBE0 50%, #F5F2EA 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+.sk-title { height: 18px; width: 70%; margin-bottom: 0.75rem; }
+.sk-line  { height: 14px; width: 50%; margin-bottom: 0.5rem; }
+.sk-line.short { width: 35%; }
+
+/* ── État vide ───────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  .empty-icon { color: var(--border-focus); margin-bottom: 1rem; }
+  h3 { font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: var(--text-main); margin-bottom: 0.5rem; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

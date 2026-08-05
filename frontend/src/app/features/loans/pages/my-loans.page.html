@@ -1,0 +1,125 @@
+<div class="loans-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <h1>
+      <svg lucideBookmark size="26"></svg>
+      Mes emprunts
+    </h1>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">
+    ⚠️ {{ erreur() }}
+  </div>
+
+  <!-- ── ONGLETS FILTRES ───────────────────────── -->
+  <div class="onglets" *ngIf="!loading()">
+    <button class="onglet" [class.actif]="filtreActif() === 'tous'"
+      (click)="filtreActif.set('tous')">
+      Tous ({{ emprunts().length }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'en_cours'"
+      (click)="filtreActif.set('en_cours')">
+      <svg lucideClock size="15"></svg>
+      En cours ({{ nbEnCours() }})
+    </button>
+    <button class="onglet danger" [class.actif]="filtreActif() === 'en_retard'"
+      (click)="filtreActif.set('en_retard')">
+      <svg lucideAlertTriangle size="15"></svg>
+      En retard ({{ nbRetard() }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'retourne'"
+      (click)="filtreActif.set('retourne')">
+      <svg lucideCheckCircle2 size="15"></svg>
+      Retournés ({{ nbRetournes() }})
+    </button>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="loans-list" *ngIf="loading()">
+    <div class="loan-card skeleton-card" *ngFor="let i of [1,2,3]">
+      <div class="skeleton sk-title"></div>
+      <div class="skeleton sk-line"></div>
+      <div class="skeleton sk-line short"></div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state" *ngIf="!loading() && empruntsFiltres().length === 0">
+    <svg lucideBookmark size="48" class="empty-icon"></svg>
+    <h3>Aucun emprunt trouvé</h3>
+    <p>Vous n'avez pas d'emprunt dans cette catégorie.</p>
+  </div>
+
+  <!-- ── LISTE DES EMPRUNTS ────────────────────── -->
+  <div class="loans-list" *ngIf="!loading() && empruntsFiltres().length > 0">
+    <div class="loan-card" *ngFor="let emprunt of empruntsFiltres()"
+      [class.en-retard]="emprunt.statut === 'EN_RETARD'">
+
+      <!-- Bande colorée gauche selon statut -->
+      <div class="statut-stripe" [class]="'stripe-' + emprunt.statut.toLowerCase()"></div>
+
+      <div class="card-content">
+        <div class="card-top">
+          <div class="livre-info">
+            <h3 class="livre-titre">{{ emprunt.livreTitre }}</h3>
+            <p class="livre-auteur">{{ emprunt.livreAuteur }}</p>
+            <span class="exemplaire">N° {{ emprunt.exemplaireNumero }}</span>
+          </div>
+
+          <!-- Badge statut -->
+          <span class="badge" [ngClass]="badgeClass(emprunt.statut)">
+            <svg lucideClock size="13"
+              *ngIf="emprunt.statut === 'EN_COURS' || emprunt.statut === 'A_RENDRE_BIENTOT'">
+            </svg>
+            <svg lucideAlertTriangle size="13" *ngIf="emprunt.statut === 'EN_RETARD'"></svg>
+            <svg lucideCheckCircle2 size="13" *ngIf="emprunt.statut === 'RETOURNE'"></svg>
+            {{ libelleStatut(emprunt.statut) }}
+          </span>
+        </div>
+
+        <div class="card-dates">
+          <div class="date-item">
+            <svg lucideCalendar size="14"></svg>
+            <span>Emprunté le {{ emprunt.dateDebut | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="date-item">
+            <svg lucideCalendar size="14"></svg>
+            <span>À rendre le {{ emprunt.dateRetourPrevue | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="date-item" *ngIf="emprunt.dateRetourReelle">
+            <svg lucideCheckCircle2 size="14"></svg>
+            <span>Retourné le {{ emprunt.dateRetourReelle | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <!-- Jours restants ou retard -->
+        <div class="jours-info" *ngIf="emprunt.statut !== 'RETOURNE'">
+          <ng-container *ngIf="joursRestants(emprunt.dateRetourPrevue) >= 0">
+            <span class="jours-ok">
+              {{ joursRestants(emprunt.dateRetourPrevue) }} jour(s) restant(s)
+            </span>
+          </ng-container>
+          <ng-container *ngIf="joursRestants(emprunt.dateRetourPrevue) < 0">
+            <span class="jours-retard">
+              {{ -joursRestants(emprunt.dateRetourPrevue) }} jour(s) de retard
+            </span>
+          </ng-container>
+        </div>
+
+        <!-- Bouton retour -->
+        <div class="card-actions" *ngIf="emprunt.statut !== 'RETOURNE'">
+          <button class="btn btn-secondary"
+            (click)="retourner(emprunt)"
+            [disabled]="retourEnCours() === emprunt.id">
+            <svg lucideUndo2 size="16"></svg>
+            {{ retourEnCours() === emprunt.id ? 'Enregistrement...' : 'Retourner ce livre' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

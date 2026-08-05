@@ -1,0 +1,253 @@
+<div class="manage-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <svg lucideBookmark size="26"></svg>
+        Gestion des emprunts
+      </h1>
+      <span class="compteur" *ngIf="!loading()">
+        {{ emprunts().length }} emprunt{{ emprunts().length > 1 ? 's' : '' }}
+      </span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="mettreAJourRetards()" title="Mettre à jour les retards">
+        <svg lucideRefreshCw size="16"></svg>
+        Sync retards
+      </button>
+      <button class="btn btn-primary" (click)="ouvrirModal()">
+        <svg lucidePlus size="18"></svg>
+        Nouvel emprunt
+      </button>
+    </div>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">
+    ⚠️ {{ erreur() }}
+  </div>
+
+  <!-- ── STATS RAPIDES ─────────────────────────── -->
+  <div class="stats-row" *ngIf="!loading()">
+    <div class="stat-card warning">
+      <svg lucideClock size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbEnCours() }}</span>
+        <span class="stat-label">En cours</span>
+      </div>
+    </div>
+    <div class="stat-card danger">
+      <svg lucideAlertTriangle size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbEnRetard() }}</span>
+        <span class="stat-label">En retard</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <svg lucideCheckCircle2 size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbRetournes() }}</span>
+        <span class="stat-label">Retournés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ONGLETS ────────────────────────────────── -->
+  <div class="onglets" *ngIf="!loading()">
+    <button class="onglet" [class.actif]="filtreActif() === 'tous'"
+      (click)="filtreActif.set('tous')">Tous</button>
+    <button class="onglet" [class.actif]="filtreActif() === 'en_cours'"
+      (click)="filtreActif.set('en_cours')">
+      <svg lucideClock size="14"></svg> En cours
+    </button>
+    <button class="onglet danger" [class.actif]="filtreActif() === 'en_retard'"
+      (click)="filtreActif.set('en_retard')">
+      <svg lucideAlertTriangle size="14"></svg> En retard ({{ nbEnRetard() }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'retourne'"
+      (click)="filtreActif.set('retourne')">
+      <svg lucideCheckCircle2 size="14"></svg> Retournés
+    </button>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="table-wrapper" *ngIf="loading()">
+    <table class="loans-table">
+      <thead>
+        <tr>
+          <th>Livre</th><th>Emprunteur</th>
+          <th>Date emprunt</th><th>Date retour</th>
+          <th>Statut</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let i of [1,2,3,4,5]">
+          <td><div class="skeleton sk-line"></div></td>
+          <td><div class="skeleton sk-line short"></div></td>
+          <td><div class="skeleton sk-line short"></div></td>
+          <td><div class="skeleton sk-line short"></div></td>
+          <td><div class="skeleton sk-badge"></div></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state"
+    *ngIf="!loading() && empruntsFiltres().length === 0">
+    <svg lucideBookmark size="48" class="empty-icon"></svg>
+    <h3>Aucun emprunt trouvé</h3>
+    <p>Aucun emprunt dans cette catégorie.</p>
+  </div>
+
+  <!-- ── TABLEAU ───────────────────────────────── -->
+  <div class="table-wrapper"
+    *ngIf="!loading() && empruntsFiltres().length > 0">
+    <table class="loans-table">
+      <thead>
+        <tr>
+          <th>Livre / Exemplaire</th>
+          <th>Emprunteur</th>
+          <th>Date emprunt</th>
+          <th>Date retour prévue</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let emprunt of empruntsFiltres()"
+          [class.row-retard]="emprunt.statut === 'EN_RETARD'">
+
+          <td>
+            <div class="livre-cell">
+              <span class="livre-titre">{{ emprunt.livreTitre }}</span>
+              <span class="exemplaire-num">{{ emprunt.exemplaireNumero }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="user-cell">
+              {{ emprunt.utilisateurPrenom }} {{ emprunt.utilisateurNom }}
+            </div>
+          </td>
+
+          <td>
+            <div class="date-cell">
+              <svg lucideCalendar size="13"></svg>
+              {{ emprunt.dateDebut | date:'dd/MM/yyyy' }}
+            </div>
+          </td>
+
+          <td>
+            <div class="date-cell"
+              [class.date-retard]="joursRestants(emprunt.dateRetourPrevue) < 0 && emprunt.statut !== 'RETOURNE'">
+              <svg lucideCalendar size="13"></svg>
+              {{ emprunt.dateRetourPrevue | date:'dd/MM/yyyy' }}
+              <span class="jours-retard"
+                *ngIf="joursRestants(emprunt.dateRetourPrevue) < 0 && emprunt.statut !== 'RETOURNE'">
+                ({{ -joursRestants(emprunt.dateRetourPrevue) }}j de retard)
+              </span>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge" [ngClass]="badgeClass(emprunt.statut)">
+              <svg lucideClock size="12" *ngIf="emprunt.statut === 'EN_COURS'"></svg>
+              <svg lucideAlertTriangle size="12" *ngIf="emprunt.statut === 'EN_RETARD'"></svg>
+              <svg lucideCheckCircle2 size="12" *ngIf="emprunt.statut === 'RETOURNE'"></svg>
+              {{ libelleStatut(emprunt.statut) }}
+            </span>
+          </td>
+
+          <td>
+            <button class="btn btn-secondary btn-sm"
+              *ngIf="emprunt.statut !== 'RETOURNE'"
+              (click)="retourner(emprunt)"
+              [disabled]="retourEnCours() === emprunt.id">
+              <svg lucideUndo2 size="14"></svg>
+              {{ retourEnCours() === emprunt.id ? '...' : 'Retour' }}
+            </button>
+            <span class="retourne-label" *ngIf="emprunt.statut === 'RETOURNE'">
+              {{ emprunt.dateRetourReelle | date:'dd/MM/yyyy' }}
+            </span>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══ MODAL NOUVEL EMPRUNT ════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalOuvert()" (click)="fermerModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Nouvel emprunt</h2>
+      <button class="btn-icon" (click)="fermerModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Sélection utilisateur -->
+      <div class="form-group">
+        <label>Emprunteur *</label>
+        <select class="form-control"
+          [ngModel]="utilisateurSelectionne()"
+          (ngModelChange)="utilisateurSelectionne.set($event ? +$event : null)">
+          <option [ngValue]="null">-- Sélectionner un utilisateur --</option>
+          <option *ngFor="let u of utilisateurs()" [value]="u.id">
+            {{ u.prenom }} {{ u.nom }} ({{ u.identifiant }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Sélection livre -->
+      <div class="form-group">
+        <label>Livre *</label>
+        <select class="form-control"
+          [ngModel]="livreSelectionne()"
+          (ngModelChange)="onLivreChange(+$event)">
+          <option [ngValue]="null">-- Sélectionner un livre --</option>
+          <option *ngFor="let l of livres()" [value]="l.id">
+            {{ l.titre }} — {{ l.auteur }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Sélection exemplaire -->
+      <div class="form-group">
+        <label>Exemplaire disponible *</label>
+        <select class="form-control"
+          [disabled]="!livreSelectionne() || exemplaires().length === 0"
+          [ngModel]="exemplaireSelectionne()"
+          (ngModelChange)="exemplaireSelectionne.set($event ? +$event : null)">
+          <option [ngValue]="null">
+            {{ !livreSelectionne() ? '-- Choisir un livre d\'abord --' :
+               exemplaires().length === 0 ? 'Aucun exemplaire disponible' :
+               '-- Sélectionner un exemplaire --' }}
+          </option>
+          <option *ngFor="let ex of exemplaires()" [value]="ex.id">
+            {{ ex.numExemplaire }}
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button class="btn btn-primary"
+        (click)="creerEmprunt()"
+        [disabled]="!utilisateurSelectionne() || !exemplaireSelectionne() || sauvegarde()">
+        {{ sauvegarde() ? 'Enregistrement...' : 'Créer l\'emprunt' }}
+      </button>
+    </div>
+
+  </div>
+</div>

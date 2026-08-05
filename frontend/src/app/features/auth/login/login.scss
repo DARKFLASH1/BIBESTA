@@ -1,0 +1,247 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg-primary);
+}
+
+/* ── Panneau gauche ──────────────────────────────────
+   gradient encre profonde #241F16 → laiton #8A6A2F
+             */
+.login-left {
+  flex: 1;
+  background: linear-gradient(145deg, #241F16 0%, #3D3425 60%, #8A6A2F 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+
+  @media (max-width: 768px) { display: none; }
+}
+
+.left-content {
+  color: #fff;
+  max-width: 380px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  .logo-icon { color: var(--accent-light); }
+
+  h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #fff;
+  }
+}
+
+.tagline {
+  font-size: 1.1rem;
+  color: #C9BBA0;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #EDE3D0;
+  font-size: 0.95rem;
+
+  .feature-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    flex-shrink: 0;
+  }
+}
+
+/* ── Panneau droit ───────────────────────────────────── */
+.login-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+
+  @media (max-width: 768px) { flex: unset; width: 100%; }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 2.5rem;
+}
+
+/* ── En-tête carte ───────────────────────────────────── */
+.card-header {
+  margin-bottom: 2rem;
+
+  h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+  }
+
+  p { color: var(--text-muted); font-size: 0.9rem; }
+}
+
+/* ── Bannière d'erreur ───────────────────────────────── */
+.erreur-banner {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(178, 58, 46, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Formulaire ──────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  font-size: var(--text-base);
+  color: var(--text-main);
+  font-family: inherit;
+  transition: var(--transition);
+
+  &:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(138, 106, 47, 0.18);
+  }
+
+  &::placeholder { color: var(--text-light); }
+}
+
+/* ── Mot de passe avec toggle ────────────────────────── */
+.password-wrapper {
+  position: relative;
+
+  .form-control { padding-right: 3rem; }
+
+  .toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ── Bouton connexion ─────────────────────────────────── */
+.btn-login {
+  width: 100%;
+  padding: 0.85rem;
+  min-height: 44px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(138, 106, 47, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* ── Animation de chargement ─────────────────────────── */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  .dot {
+    animation: blink 1.2s infinite;
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+/* ── Pied de carte ───────────────────────────────────── */
+.footer-note {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  margin-top: 2rem;
+}
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40%           { opacity: 1; }
+}

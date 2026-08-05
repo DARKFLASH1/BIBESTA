@@ -74,7 +74,8 @@ public class AuthController {
                 // 4. Génère le token JWT
                 String token = jwtUtil.genererToken(
                                 utilisateur.getIdentifiant(),
-                                utilisateur.getRole().name());
+                                utilisateur.getRole().name(),
+                                utilisateur.getId());
 
                 // 5. Retourne le token et les infos
                 LoginResponse reponse = new LoginResponse(

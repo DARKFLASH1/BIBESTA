@@ -1,0 +1,221 @@
+<div class="books-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <svg lucideBookOpen size="28"></svg>
+        Catalogue des livres
+      </h1>
+      <span class="compteur" *ngIf="!loading()">
+        {{ totalLivres() }} livre{{ totalLivres() > 1 ? 's' : '' }}
+      </span>
+    </div>
+
+    <!-- Bouton ajout (bibliothécaire uniquement) -->
+    <button
+      *ngIf="estBibliothecaire"
+      class="btn btn-primary"
+      (click)="ouvrirModalAjout()">
+      <svg lucidePlus size="18"></svg>
+      Ajouter un livre
+    </button>
+  </div>
+
+  <!-- ── BARRE DE RECHERCHE ────────────────────── -->
+  <div class="search-bar">
+    <div class="search-input-wrapper">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input
+        class="form-control search-input"
+        type="text"
+        placeholder="Rechercher par titre, auteur, ISBN..."
+        [(ngModel)]="recherche.titre"
+        (keydown.enter)="lancerRecherche()" />
+    </div>
+
+    <button class="btn btn-secondary" (click)="afficherFiltres.update(v => !v)">
+      <svg lucideSlidersHorizontal size="18"></svg>
+      Filtres
+    </button>
+
+    <button class="btn btn-primary" (click)="lancerRecherche()">
+      Rechercher
+    </button>
+  </div>
+
+  <!-- ── FILTRES AVANCÉS ───────────────────────── -->
+  <div class="filtres-panel" *ngIf="afficherFiltres()">
+    <div class="filtres-grid">
+      <div class="filtre-group">
+        <label>Auteur</label>
+        <input class="form-control" [(ngModel)]="recherche.auteur" placeholder="ex: Victor Hugo" />
+      </div>
+      <div class="filtre-group">
+        <label>Genre</label>
+        <input class="form-control" [(ngModel)]="recherche.genre" placeholder="ex: Roman" />
+      </div>
+      <div class="filtre-group">
+        <label>Langue</label>
+        <input class="form-control" [(ngModel)]="recherche.langue" placeholder="ex: Français" />
+      </div>
+      <div class="filtre-group">
+        <label>Catégorie</label>
+        <input class="form-control" [(ngModel)]="recherche.categorie" placeholder="ex: Informatique" />
+      </div>
+      <div class="filtre-group">
+        <label>ISBN</label>
+        <input class="form-control" [(ngModel)]="recherche.isbn" placeholder="ex: 978-..." />
+      </div>
+    </div>
+    <div class="filtres-actions">
+      <button class="btn btn-secondary" (click)="reinitialiser()">
+        <svg lucideX size="16"></svg>
+        Réinitialiser
+      </button>
+      <button class="btn btn-primary" (click)="lancerRecherche()">Appliquer</button>
+    </div>
+  </div>
+
+  <!-- ── ERREUR RÉSEAU ─────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">
+    ⚠️ {{ erreur() }}
+  </div>
+
+  <!-- ── SKELETON (chargement) ─────────────────── -->
+  <div class="books-grid" *ngIf="loading()">
+    <div class="book-card skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT VIDE ──────────────────────────────── -->
+  <div class="empty-state" *ngIf="!loading() && livres().length === 0">
+    <svg lucideBookOpen size="48" class="empty-icon"></svg>
+    <h3>Aucun livre trouvé</h3>
+    <p>Essayez d'élargir vos critères de recherche.</p>
+    <button class="btn btn-secondary" (click)="reinitialiser()">
+      Voir tous les livres
+    </button>
+  </div>
+
+  <!-- ── GRILLE DES LIVRES ──────────────────────── -->
+  <div class="books-grid" *ngIf="!loading() && livres().length > 0">
+    <div class="book-card" *ngFor="let livre of livres()">
+
+      <!-- Bande colorée en haut -->
+      <div class="card-accent-bar"></div>
+
+      <div class="card-body">
+        <!-- Badge catégorie -->
+        <span class="badge badge-system" *ngIf="livre.categorie">
+          {{ livre.categorie }}
+        </span>
+
+        <h3 class="livre-titre">{{ livre.titre }}</h3>
+        <p class="livre-auteur">{{ livre.auteur }}</p>
+
+        <div class="livre-meta">
+          <span *ngIf="livre.anneePublication">📅 {{ livre.anneePublication }}</span>
+          <span *ngIf="livre.langue">🌍 {{ livre.langue }}</span>
+          <span *ngIf="livre.isbn" class="isbn">ISBN : {{ livre.isbn }}</span>
+        </div>
+      </div>
+
+      <!-- Actions (bibliothécaire uniquement) -->
+      <div class="card-actions" *ngIf="estBibliothecaire">
+        <button class="btn btn-secondary btn-sm" (click)="ouvrirModalModif(livre)" title="Modifier">
+          <svg lucidePencil size="15"></svg>
+        </button>
+        <button class="btn btn-danger btn-sm" (click)="supprimer(livre)" title="Supprimer">
+          <svg lucideX size="15"></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL AJOUT / MODIFICATION ══════════════════ -->
+<div class="modal-backdrop" *ngIf="modalOuvert()" (click)="fermerModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>{{ modeEdition() ? 'Modifier le livre' : 'Ajouter un livre' }}</h2>
+      <button class="btn-icon" (click)="fermerModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Titre *</label>
+          <input class="form-control"
+            [(ngModel)]="livreEnCours().titre"
+            (ngModelChange)="livreEnCours.update(l => ({...l, titre: $event}))"
+            placeholder="ex: Les Misérables" />
+        </div>
+        <div class="form-group full-width">
+          <label>Auteur *</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().auteur"
+            (ngModelChange)="livreEnCours.update(l => ({...l, auteur: $event}))"
+            placeholder="ex: Victor Hugo" />
+        </div>
+        <div class="form-group">
+          <label>Genre</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().genre"
+            (ngModelChange)="livreEnCours.update(l => ({...l, genre: $event}))"
+            placeholder="ex: Roman" />
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().categorie"
+            (ngModelChange)="livreEnCours.update(l => ({...l, categorie: $event}))"
+            placeholder="ex: Littérature française" />
+        </div>
+        <div class="form-group">
+          <label>Langue</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().langue"
+            (ngModelChange)="livreEnCours.update(l => ({...l, langue: $event}))"
+            placeholder="ex: Français" />
+        </div>
+        <div class="form-group">
+          <label>Année de publication</label>
+          <input class="form-control" type="number"
+            [ngModel]="livreEnCours().anneePublication"
+            (ngModelChange)="livreEnCours.update(l => ({...l, anneePublication: $event}))"
+            placeholder="ex: 1862" />
+        </div>
+        <div class="form-group">
+          <label>Édition</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().edition"
+            (ngModelChange)="livreEnCours.update(l => ({...l, edition: $event}))"
+            placeholder="ex: Pocket" />
+        </div>
+        <div class="form-group">
+          <label>ISBN</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().isbn"
+            (ngModelChange)="livreEnCours.update(l => ({...l, isbn: $event}))"
+            placeholder="ex: 978-2-07-040850-4" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="sauvegarder()" [disabled]="sauvegarde()">
+        {{ sauvegarde() ? 'Enregistrement...' : (modeEdition() ? 'Enregistrer' : 'Ajouter') }}
+      </button>
+    </div>
+
+  </div>
+</div>
