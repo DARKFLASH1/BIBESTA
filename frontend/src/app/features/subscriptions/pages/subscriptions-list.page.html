@@ -1,0 +1,261 @@
+<div class="subs-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <svg lucideBadgeCheck size="26"></svg>
+        Abonnements
+      </h1>
+      <span class="compteur" *ngIf="!loading()">
+        {{ abonnements().length }} abonnement{{ abonnements().length > 1 ? 's' : '' }}
+      </span>
+    </div>
+    <button class="btn btn-primary" (click)="ouvrirModal()">
+      <svg lucidePlus size="18"></svg>
+      Nouvel abonnement
+    </button>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">⚠️ {{ erreur() }}</div>
+
+  <!-- ── STATS ─────────────────────────────────── -->
+  <div class="stats-row" *ngIf="!loading()">
+    <div class="stat-card success">
+      <svg lucideCheckCircle2 size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbPayes() }}</span>
+        <span class="stat-label">Actifs</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <svg lucideClock size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbAttente() }}</span>
+        <span class="stat-label">En attente</span>
+      </div>
+    </div>
+    <div class="stat-card danger">
+      <svg lucideAlertTriangle size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbExpires() }}</span>
+        <span class="stat-label">Expirés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ONGLETS ────────────────────────────────── -->
+  <div class="onglets" *ngIf="!loading()">
+    <button class="onglet" [class.actif]="filtreActif() === 'tous'"
+      (click)="filtreActif.set('tous')">
+      Tous ({{ abonnements().length }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'paye'"
+      (click)="filtreActif.set('paye')">
+      <svg lucideCheckCircle2 size="14"></svg>
+      Actifs ({{ nbPayes() }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'en_attente'"
+      (click)="filtreActif.set('en_attente')">
+      <svg lucideClock size="14"></svg>
+      En attente ({{ nbAttente() }})
+    </button>
+    <button class="onglet danger" [class.actif]="filtreActif() === 'expire'"
+      (click)="filtreActif.set('expire')">
+      <svg lucideAlertTriangle size="14"></svg>
+      Expirés ({{ nbExpires() }})
+    </button>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="cards-grid" *ngIf="loading()">
+    <div class="sub-card skeleton-card" *ngFor="let i of [1,2,3]">
+      <div class="skeleton sk-title"></div>
+      <div class="skeleton sk-line"></div>
+      <div class="skeleton sk-line short"></div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state"
+    *ngIf="!loading() && abonnementsFiltres().length === 0">
+    <svg lucideBadgeCheck size="48" class="empty-icon"></svg>
+    <h3>Aucun abonnement</h3>
+    <p>Aucun abonnement dans cette catégorie.</p>
+    <button class="btn btn-secondary" (click)="ouvrirModal()">
+      <svg lucidePlus size="16"></svg>
+      Créer un abonnement
+    </button>
+  </div>
+
+  <!-- ── GRILLE CARTES ──────────────────────────── -->
+  <div class="cards-grid"
+    *ngIf="!loading() && abonnementsFiltres().length > 0">
+
+    <div class="sub-card" *ngFor="let a of abonnementsFiltres()"
+      [class.actif]="estActif(a)"
+      [class.expire]="a.statutPaiement === 'EXPIRE'">
+
+      <!-- Bande colorée -->
+      <div class="statut-stripe"
+        [class.stripe-success]="a.statutPaiement === 'PAYE'"
+        [class.stripe-warning]="a.statutPaiement === 'EN_ATTENTE'"
+        [class.stripe-danger]="a.statutPaiement === 'EXPIRE'">
+      </div>
+
+      <div class="card-body">
+
+        <div class="card-top">
+          <div>
+            <span class="type-label">{{ a.type }}</span>
+            <span class="actif-dot" *ngIf="estActif(a)">● Actif</span>
+          </div>
+          <span class="badge" [ngClass]="badgeClass(a.statutPaiement)">
+            <svg lucideCheckCircle2 size="12" *ngIf="a.statutPaiement === 'PAYE'"></svg>
+            <svg lucideClock size="12" *ngIf="a.statutPaiement === 'EN_ATTENTE'"></svg>
+            <svg lucideAlertTriangle size="12" *ngIf="a.statutPaiement === 'EXPIRE'"></svg>
+            {{ libelleStatut(a.statutPaiement) }}
+          </span>
+        </div>
+
+        <!-- Utilisateur (bibliothécaire) -->
+        <div class="user-info" *ngIf="estBibliothecaire">
+          {{ a.utilisateur.prenom }} {{ a.utilisateur.nom }}
+          <code>{{ a.utilisateur.identifiant }}</code>
+        </div>
+
+        <!-- Dates -->
+        <div class="dates-row">
+          <div class="date-item">
+            <span class="date-label">Début</span>
+            <span class="date-valeur">{{ a.dateDebut | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="date-separator">→</div>
+          <div class="date-item">
+            <span class="date-label">Fin</span>
+            <span class="date-valeur">{{ a.dateFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <!-- Jours restants -->
+        <div class="jours-restants"
+          *ngIf="a.statutPaiement === 'PAYE' && joursRestants(a.dateFin) > 0">
+          <svg lucideClock size="13"></svg>
+          {{ joursRestants(a.dateFin) }} jour(s) restant(s)
+        </div>
+
+        <!-- Montant -->
+        <div class="montant-row">
+          <span class="montant">{{ a.montant | number }} FCFA</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions">
+          <button class="btn btn-primary btn-sm"
+            *ngIf="a.statutPaiement === 'EN_ATTENTE'"
+            (click)="payerAbonnement(a)">
+            <svg lucideCheckCircle2 size="14"></svg>
+            Marquer payé
+          </button>
+          <button class="btn btn-danger btn-sm"
+            *ngIf="estBibliothecaire"
+            (click)="supprimer(a)">
+            <svg lucideX size="14"></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL NOUVEL ABONNEMENT ══════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalOuvert()" (click)="fermerModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Nouvel abonnement</h2>
+      <button class="btn-icon" (click)="fermerModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Utilisateur (bibliothécaire uniquement) -->
+      <div class="form-group" *ngIf="estBibliothecaire">
+        <label>Utilisateur *</label>
+        <select class="form-control"
+          [ngModel]="utilisateurSelectionne()"
+          (ngModelChange)="utilisateurSelectionne.set($event ? +$event : null)">
+          <option [ngValue]="null">-- Sélectionner --</option>
+          <option *ngFor="let u of utilisateurs()" [value]="u.id">
+            {{ u.prenom }} {{ u.nom }} ({{ u.identifiant }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Type -->
+      <div class="form-group">
+        <label>Type *</label>
+        <div class="types-grid">
+          <div class="type-card"
+            [class.actif]="form.type === 'MENSUEL'"
+            (click)="form.type = 'MENSUEL'; onTypeChange()">
+            <span class="type-nom">Mensuel</span>
+            <span class="type-prix">5 000 FCFA</span>
+          </div>
+          <div class="type-card"
+            [class.actif]="form.type === 'TRIMESTRIEL'"
+            (click)="form.type = 'TRIMESTRIEL'; onTypeChange()">
+            <span class="type-nom">Trimestriel</span>
+            <span class="type-prix">12 000 FCFA</span>
+          </div>
+          <div class="type-card"
+            [class.actif]="form.type === 'ANNUEL'"
+            (click)="form.type = 'ANNUEL'; onTypeChange()">
+            <span class="type-nom">Annuel</span>
+            <span class="type-prix">15 000 FCFA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dates -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date de début</label>
+          <input class="form-control" type="date"
+            [(ngModel)]="form.dateDebut"
+            (ngModelChange)="onTypeChange()" />
+        </div>
+        <div class="form-group">
+          <label>Date de fin</label>
+          <input class="form-control" type="date"
+            [(ngModel)]="form.dateFin" />
+        </div>
+      </div>
+
+      <!-- Statut paiement -->
+      <div class="form-group">
+        <label>Statut paiement</label>
+        <select class="form-control" [(ngModel)]="form.statutPaiement">
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="PAYE">Payé</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button class="btn btn-primary"
+        (click)="sauvegarder()"
+        [disabled]="!utilisateurSelectionne() || sauvegarde()">
+        {{ sauvegarde() ? 'Création...' : 'Créer l\'abonnement' }}
+      </button>
+    </div>
+
+  </div>
+</div>
