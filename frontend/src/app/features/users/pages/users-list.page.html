@@ -1,0 +1,258 @@
+<div class="users-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <svg lucideUsers size="26"></svg>
+        Utilisateurs
+      </h1>
+      <span class="compteur" *ngIf="!loading()">
+        {{ utilisateurs().length }} utilisateur{{ utilisateurs().length > 1 ? 's' : '' }}
+      </span>
+    </div>
+    <button class="btn btn-primary" (click)="ouvrirModalAjout()">
+      <svg lucidePlus size="18"></svg>
+      Ajouter un utilisateur
+    </button>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">⚠️ {{ erreur() }}</div>
+
+  <!-- ── STATS RAPIDES ─────────────────────────── -->
+  <div class="stats-row" *ngIf="!loading()">
+    <div class="stat-card" (click)="filtreRole.set('tous')"
+      [class.actif]="filtreRole() === 'tous'">
+      <svg lucideUsers size="18"></svg>
+      <span class="stat-nb">{{ utilisateurs().length }}</span>
+      <span class="stat-label">Tous</span>
+    </div>
+    <div class="stat-card" (click)="filtreRole.set('ETUDIANT')"
+      [class.actif]="filtreRole() === 'ETUDIANT'">
+      <svg lucideUser size="18"></svg>
+      <span class="stat-nb">{{ nbEtudiants() }}</span>
+      <span class="stat-label">Étudiants</span>
+    </div>
+    <div class="stat-card" (click)="filtreRole.set('ENSEIGNANT')"
+      [class.actif]="filtreRole() === 'ENSEIGNANT'">
+      <svg lucideUser size="18"></svg>
+      <span class="stat-nb">{{ nbEnseignants() }}</span>
+      <span class="stat-label">Enseignants</span>
+    </div>
+    <div class="stat-card" (click)="filtreRole.set('PUBLIC')"
+      [class.actif]="filtreRole() === 'PUBLIC'">
+      <svg lucideUser size="18"></svg>
+      <span class="stat-nb">{{ nbPublic() }}</span>
+      <span class="stat-label">Public</span>
+    </div>
+    <div class="stat-card" (click)="filtreRole.set('BIBLIOTHECAIRE')"
+      [class.actif]="filtreRole() === 'BIBLIOTHECAIRE'">
+      <svg lucideUser size="18"></svg>
+      <span class="stat-nb">{{ nbBiblios() }}</span>
+      <span class="stat-label">Bibliothécaires</span>
+    </div>
+  </div>
+
+  <!-- ── RECHERCHE ─────────────────────────────── -->
+  <div class="search-bar" *ngIf="!loading()">
+    <div class="search-wrapper">
+      <svg lucideSearch size="16" class="search-icon"></svg>
+      <input class="form-control search-input"
+        type="text"
+        placeholder="Rechercher par nom, prénom, email, identifiant..."
+        [ngModel]="recherche()"
+        (ngModelChange)="recherche.set($event)" />
+    </div>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="table-wrapper" *ngIf="loading()">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th><th>Identifiant</th>
+          <th>Email</th><th>Rôle</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let i of [1,2,3,4]">
+          <td><div class="skeleton sk-line"></div></td>
+          <td><div class="skeleton sk-line short"></div></td>
+          <td><div class="skeleton sk-line"></div></td>
+          <td><div class="skeleton sk-badge"></div></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state"
+    *ngIf="!loading() && utilisateursFiltres().length === 0">
+    <svg lucideUsers size="48" class="empty-icon"></svg>
+    <h3>Aucun utilisateur trouvé</h3>
+    <p>Essayez d'élargir votre recherche.</p>
+  </div>
+
+  <!-- ── TABLEAU ───────────────────────────────── -->
+  <div class="table-wrapper"
+    *ngIf="!loading() && utilisateursFiltres().length > 0">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Identifiant</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Rôle</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of utilisateursFiltres()">
+
+          <td>
+            <div class="user-cell">
+              <div class="avatar">
+                {{ u.prenom[0] }}{{ u.nom[0] }}
+              </div>
+              <div>
+                <span class="user-nom">{{ u.prenom }} {{ u.nom }}</span>
+                <span class="user-sexe">{{ u.sexe === 'M' ? 'Homme' : 'Femme' }}</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <code class="identifiant">{{ u.identifiant }}</code>
+          </td>
+
+          <td class="email">{{ u.email }}</td>
+
+          <td>{{ u.contact || '—' }}</td>
+
+          <td>
+            <span class="badge" [ngClass]="badgeRole(u.role)">
+              {{ libelleRole(u.role) }}
+            </span>
+          </td>
+
+          <td>
+            <div class="actions">
+              <button class="btn btn-secondary btn-sm"
+                (click)="ouvrirModalModif(u)" title="Modifier">
+                <svg lucidePencil size="14"></svg>
+              </button>
+              <button class="btn btn-danger btn-sm"
+                (click)="supprimer(u)" title="Supprimer">
+                <svg lucideX size="14"></svg>
+              </button>
+            </div>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══ MODAL AJOUT / MODIFICATION ══════════════════ -->
+<div class="modal-backdrop" *ngIf="modalOuvert()" (click)="fermerModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>{{ modeEdition() ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur' }}</h2>
+      <button class="btn-icon" (click)="fermerModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Prénom *</label>
+          <input class="form-control" [(ngModel)]="form.prenom"
+            placeholder="ex: Marie" />
+        </div>
+
+        <div class="form-group">
+          <label>Nom *</label>
+          <input class="form-control" [(ngModel)]="form.nom"
+            placeholder="ex: Dupont" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Email *</label>
+          <input class="form-control" type="email" [(ngModel)]="form.email"
+            placeholder="ex: marie@email.com" />
+        </div>
+
+        <div class="form-group">
+          <label>Identifiant *</label>
+          <input class="form-control" [(ngModel)]="form.identifiant"
+            placeholder="ex: marie.dupont"
+            [disabled]="modeEdition()" />
+        </div>
+
+        <div class="form-group">
+          <label>
+            {{ modeEdition() ? 'Nouveau mot de passe' : 'Mot de passe *' }}
+          </label>
+          <div class="password-wrapper">
+            <input class="form-control"
+              [type]="motDePasseVisible ? 'text' : 'password'"
+              [(ngModel)]="form.motDePasse"
+              placeholder="{{ modeEdition() ? 'Laisser vide pour ne pas changer' : 'Mot de passe' }}" />
+            <button class="toggle-pwd" type="button"
+              (click)="motDePasseVisible = !motDePasseVisible">
+              {{ motDePasseVisible ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Contact</label>
+          <input class="form-control" [(ngModel)]="form.contact"
+            placeholder="ex: 0600000000" />
+        </div>
+
+        <div class="form-group">
+          <label>Date de naissance</label>
+          <input class="form-control" type="date"
+            [(ngModel)]="form.dateNaissance" />
+        </div>
+
+        <div class="form-group">
+          <label>Sexe</label>
+          <select class="form-control" [(ngModel)]="form.sexe">
+            <option value="M">Homme</option>
+            <option value="F">Femme</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Rôle *</label>
+          <select class="form-control" [(ngModel)]="form.role">
+            <option value="ETUDIANT">Étudiant</option>
+            <option value="ENSEIGNANT">Enseignant</option>
+            <option value="PUBLIC">Public</option>
+            <option value="BIBLIOTHECAIRE">Bibliothécaire</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="sauvegarder()"
+        [disabled]="!form.nom || !form.prenom || !form.email || sauvegarde()">
+        {{ sauvegarde() ? 'Enregistrement...' : (modeEdition() ? 'Enregistrer' : 'Ajouter') }}
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,104 @@
+<div class="notifs-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <svg lucideBell size="26"></svg>
+        Notifications
+        <span class="badge-count" *ngIf="nbNonLues() > 0">
+          {{ nbNonLues() }}
+        </span>
+      </h1>
+    </div>
+    <button class="btn btn-secondary"
+      *ngIf="nbNonLues() > 0"
+      (click)="marquerToutesLues()">
+      <svg lucideCheckCircle2 size="16"></svg>
+      Tout marquer lu
+    </button>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">⚠️ {{ erreur() }}</div>
+
+  <!-- ── ONGLETS ────────────────────────────────── -->
+  <div class="onglets" *ngIf="!loading()">
+    <button class="onglet" [class.actif]="filtreActif() === 'tous'"
+      (click)="filtreActif.set('tous')">
+      Toutes ({{ notifications().length }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'non_lues'"
+      (click)="filtreActif.set('non_lues')">
+      <svg lucideBell size="14"></svg>
+      Non lues ({{ nbNonLues() }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'lues'"
+      (click)="filtreActif.set('lues')">
+      <svg lucideCheckCircle2 size="14"></svg>
+      Lues
+    </button>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="notifs-list" *ngIf="loading()">
+    <div class="notif-card skeleton-card" *ngFor="let i of [1,2,3]">
+      <div class="skeleton sk-icon"></div>
+      <div class="sk-content">
+        <div class="skeleton sk-title"></div>
+        <div class="skeleton sk-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state"
+    *ngIf="!loading() && notificationsFiltrees().length === 0">
+    <svg lucideBell size="48" class="empty-icon"></svg>
+    <h3>Aucune notification</h3>
+    <p>Vous êtes à jour !</p>
+  </div>
+
+  <!-- ── LISTE ─────────────────────────────────── -->
+  <div class="notifs-list"
+    *ngIf="!loading() && notificationsFiltrees().length > 0">
+
+    <div class="notif-card"
+      *ngFor="let n of notificationsFiltrees()"
+      [class.non-lue]="n.statut === 'NON_LUE'"
+      (click)="marquerLue(n)">
+
+      <!-- Icône type -->
+      <div class="notif-icone" [ngClass]="classeType(n.type)">
+        <svg lucideAlertTriangle size="20" *ngIf="n.type === 'AMENDE'"></svg>
+        <svg lucideClock size="20"        *ngIf="n.type === 'RAPPEL'"></svg>
+        <svg lucideCheckCircle2 size="20" *ngIf="n.type === 'DISPONIBLE'"></svg>
+        <svg lucideInfo size="20"
+          *ngIf="n.type !== 'AMENDE' && n.type !== 'RAPPEL' && n.type !== 'DISPONIBLE'">
+        </svg>
+      </div>
+
+      <div class="notif-body">
+        <div class="notif-top">
+          <span class="notif-type">{{ n.type }}</span>
+          <div class="notif-meta">
+            <span class="notif-date">
+              {{ n.dateEnvoi | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+            <span class="dot-non-lue" *ngIf="n.statut === 'NON_LUE'"></span>
+          </div>
+        </div>
+        <p class="notif-contenu">{{ n.contenue }}</p>
+      </div>
+
+      <!-- Bouton supprimer -->
+      <button class="btn-supprimer"
+        (click)="$event.stopPropagation(); supprimer(n)"
+        title="Supprimer">
+        <svg lucideX size="16"></svg>
+      </button>
+
+    </div>
+  </div>
+
+</div>

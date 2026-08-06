@@ -1,0 +1,211 @@
+<div class="fines-page">
+
+  <!-- ── EN-TÊTE ───────────────────────────────── -->
+  <div class="page-header">
+    <h1>
+      <svg lucideCreditCard size="26"></svg>
+      Amendes & Paiements
+    </h1>
+  </div>
+
+  <!-- ── ERREUR ────────────────────────────────── -->
+  <div class="erreur-banner" *ngIf="erreur()">⚠️ {{ erreur() }}</div>
+
+  <!-- ── STATS ─────────────────────────────────── -->
+  <div class="stats-row" *ngIf="!loadingAmendes()">
+    <div class="stat-card danger">
+      <svg lucideAlertTriangle size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbEnAttente() }}</span>
+        <span class="stat-label">Impayée(s)</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <svg lucideCheckCircle2 size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ nbPayees() }}</span>
+        <span class="stat-label">Payée(s)</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <svg lucideCreditCard size="20"></svg>
+      <div>
+        <span class="stat-nb">{{ totalDu() | number }} FCFA</span>
+        <span class="stat-label">Total dû</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ONGLETS ────────────────────────────────── -->
+  <div class="onglets" *ngIf="!loadingAmendes()">
+    <button class="onglet" [class.actif]="filtreActif() === 'tous'"
+      (click)="filtreActif.set('tous')">
+      Toutes ({{ amendes().length }})
+    </button>
+    <button class="onglet danger" [class.actif]="filtreActif() === 'en_attente'"
+      (click)="filtreActif.set('en_attente')">
+      <svg lucideAlertTriangle size="14"></svg>
+      Impayées ({{ nbEnAttente() }})
+    </button>
+    <button class="onglet" [class.actif]="filtreActif() === 'payee'"
+      (click)="filtreActif.set('payee')">
+      <svg lucideCheckCircle2 size="14"></svg>
+      Payées ({{ nbPayees() }})
+    </button>
+  </div>
+
+  <!-- ── SKELETON ──────────────────────────────── -->
+  <div class="cards-grid" *ngIf="loadingAmendes()">
+    <div class="amende-card skeleton-card" *ngFor="let i of [1,2,3]">
+      <div class="skeleton sk-title"></div>
+      <div class="skeleton sk-line"></div>
+      <div class="skeleton sk-montant"></div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT VIDE ─────────────────────────────── -->
+  <div class="empty-state"
+    *ngIf="!loadingAmendes() && amendesFiltrees().length === 0">
+    <svg lucideCheckCircle2 size="48" class="empty-icon"></svg>
+    <h3>Aucune amende</h3>
+    <p>Aucune amende dans cette catégorie.</p>
+  </div>
+
+  <!-- ── GRILLE AMENDES ────────────────────────── -->
+  <div class="cards-grid"
+    *ngIf="!loadingAmendes() && amendesFiltrees().length > 0">
+
+    <div class="amende-card" *ngFor="let amende of amendesFiltrees()"
+      [class.payee]="amende.statut === 'PAYEE'"
+      [class.annulee]="amende.statut === 'ANNULEE'">
+
+      <!-- Bande colorée -->
+      <div class="statut-stripe"
+        [class.stripe-danger]="amende.statut === 'EN_ATTENTE'"
+        [class.stripe-success]="amende.statut === 'PAYEE'"
+        [class.stripe-system]="amende.statut === 'ANNULEE'">
+      </div>
+
+      <div class="card-body">
+
+        <div class="card-top">
+          <h3 class="livre-titre">{{ titreLivre(amende) }}</h3>
+          <span class="badge" [ngClass]="badgeClass(amende.statut)">
+            <svg lucideAlertTriangle size="12" *ngIf="amende.statut === 'EN_ATTENTE'"></svg>
+            <svg lucideCheckCircle2 size="12" *ngIf="amende.statut === 'PAYEE'"></svg>
+            <svg lucideX size="12" *ngIf="amende.statut === 'ANNULEE'"></svg>
+            {{ libelleStatut(amende.statut) }}
+          </span>
+        </div>
+
+        <!-- Emprunteur (bibliothécaire uniquement) -->
+        <div class="user-info" *ngIf="estBibliothecaire">
+          <svg lucideInfo size="13"></svg>
+          {{ nomUtilisateur(amende) }}
+        </div>
+
+        <p class="raison">{{ amende.raison }}</p>
+
+        <div class="montant-row">
+          <span class="montant"
+            [class.montant-impaye]="amende.statut === 'EN_ATTENTE'"
+            [class.montant-paye]="amende.statut === 'PAYEE'">
+            {{ amende.montant | number }} FCFA
+          </span>
+          <span class="date-amende">
+            {{ amende.date | date:'dd/MM/yyyy' }}
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions" *ngIf="amende.statut === 'EN_ATTENTE'">
+          <button class="btn btn-danger btn-sm"
+            *ngIf="estBibliothecaire"
+            (click)="annulerAmende(amende)">
+            <svg lucideX size="14"></svg>
+            Annuler
+          </button>
+          <button class="btn btn-primary btn-sm"
+            (click)="ouvrirModalPaiement(amende)">
+            <svg lucideCreditCard size="14"></svg>
+            Payer
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL PAIEMENT ══════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalPaiementOuvert()" (click)="fermerModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Payer l'amende</h2>
+      <button class="btn-icon" (click)="fermerModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="amendeSelectionnee()">
+
+      <!-- Récapitulatif -->
+      <div class="recapitulatif">
+        <div class="recap-ligne">
+          <span class="recap-label">Livre</span>
+          <span class="recap-valeur">{{ titreLivre(amendeSelectionnee()!) }}</span>
+        </div>
+        <div class="recap-ligne">
+          <span class="recap-label">Montant</span>
+          <span class="recap-valeur montant-impaye">
+            {{ amendeSelectionnee()!.montant | number }} FCFA
+          </span>
+        </div>
+        <div class="recap-ligne">
+          <span class="recap-label">Motif</span>
+          <span class="recap-valeur">{{ amendeSelectionnee()!.raison }}</span>
+        </div>
+      </div>
+
+      <!-- Méthode de paiement -->
+      <div class="form-group">
+        <label>Méthode de paiement *</label>
+        <div class="methodes-grid">
+          <div class="methode-card"
+            [class.actif]="methodePaiement() === 'ESPECES'"
+            (click)="methodePaiement.set('ESPECES')">
+            💵 Espèces
+          </div>
+          <div class="methode-card"
+            [class.actif]="methodePaiement() === 'CARTE'"
+            (click)="methodePaiement.set('CARTE')">
+            💳 Carte
+          </div>
+          <div class="methode-card"
+            [class.actif]="methodePaiement() === 'MOBILE'"
+            (click)="methodePaiement.set('MOBILE')">
+            📱 Mobile Money
+          </div>
+          <div class="methode-card"
+            [class.actif]="methodePaiement() === 'VIREMENT'"
+            (click)="methodePaiement.set('VIREMENT')">
+            🏦 Virement
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button class="btn btn-primary"
+        (click)="payerAmende()"
+        [disabled]="paiementEnCours()">
+        {{ paiementEnCours() ? 'Paiement...' : 'Confirmer le paiement' }}
+      </button>
+    </div>
+
+  </div>
+</div>
