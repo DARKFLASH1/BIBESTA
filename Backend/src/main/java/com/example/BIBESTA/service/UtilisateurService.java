@@ -10,6 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -77,10 +81,24 @@ public class UtilisateurService {
         return utilisateurRepository.save(existant);
     }
 
+    public Page<Utilisateur> findAllPagines(Pageable pageable) {
+        // JpaRepository fournit findAll(Pageable) automatiquement
+        return utilisateurRepository.findAll(pageable);
+    }
+
     public void deleteById(Integer id) {
-        if (!utilisateurRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Utilisateur non trouvé");
-        }
-        utilisateurRepository.deleteById(id);
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+
+        // Désactivation logique au lieu d'une suppression physique (RG12)
+        // Préserve l'historique des emprunts et évite les erreurs de clé étrangère
+        utilisateur.setStatut(Utilisateur.Statut.DESACTIVE);
+        utilisateurRepository.save(utilisateur);
+    }
+
+    // Retourne une page d'utilisateurs
+    // Appelée par GET /utilisateurs/page?page=0&size=10
+    public Page<Utilisateur> findAllPagines(Pageable pageable) {
+        return utilisateurRepository.findAll(pageable);
     }
 }

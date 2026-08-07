@@ -9,27 +9,33 @@ import java.util.List;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
 
-    // Toutes les réservations d'un utilisateur
-    List<Reservation> findByUtilisateurId(Integer utilisateurId);
+        // Toutes les réservations d'un utilisateur
+        List<Reservation> findByUtilisateurId(Integer utilisateurId);
 
-    // Réservations d'un utilisateur par statut
-    List<Reservation> findByUtilisateurIdAndStatut(
-            Integer utilisateurId,
-            Statut statut);
+        // Réservations d'un utilisateur par statut
+        List<Reservation> findByUtilisateurIdAndStatut(
+                        Integer utilisateurId,
+                        Statut statut);
 
-    // Réservations EN_ATTENTE pour un livre
-    // Utile quand un exemplaire est rendu :
-    // on cherche qui attend ce livre
-    List<Reservation> findByLivreIdAndStatut(
-            Integer livreId,
-            Statut statut);
+        // Réservations EN_ATTENTE pour un livre
+        // Utile quand un exemplaire est rendu :
+        // on cherche qui attend ce livre
+        List<Reservation> findByLivreIdAndStatut(
+                        Integer livreId,
+                        Statut statut);
 
-    // Vérifie si un utilisateur a déjà réservé ce livre
-    boolean existsByUtilisateurIdAndLivreIdAndStatut(
-            Integer utilisateurId,
-            Integer livreId,
-            Statut statut);
+        // Réservations EN_ATTENTE pour un livre, triées par date (FIFO)
+        // Premier arrivé, premier servi
+        List<Reservation> findByLivreIdAndStatutOrderByDateReservationAsc(
+                        Integer livreId,
+                        Statut statut);
 
-    // Toutes les réservations par statut
-    List<Reservation> findByStatut(Statut statut);
+        // Vérifie si un utilisateur a déjà réservé ce livre
+        boolean existsByUtilisateurIdAndLivreIdAndStatut(
+                        Integer utilisateurId,
+                        Integer livreId,
+                        Statut statut);
+
+        // Toutes les réservations par statut
+        List<Reservation> findByStatut(Statut statut);
 }

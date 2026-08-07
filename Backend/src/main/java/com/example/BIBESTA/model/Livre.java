@@ -49,4 +49,8 @@ public class Livre {
     @Column(name = "nombre_pages")
     private Integer nombrePages;
 
+    // Désactivation logique : false = livre supprimé/désactivé
+    @Column(name = "actif", nullable = false)
+    private boolean actif = true;
+
 }

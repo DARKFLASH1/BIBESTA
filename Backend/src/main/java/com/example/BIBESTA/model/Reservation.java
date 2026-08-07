@@ -20,6 +20,12 @@ public class Reservation {
     @Column(name = "dateReservation", nullable = false)
     private LocalDate dateReservation;
 
+    // Date à laquelle la réservation a été confirmée (exemplaire disponible)
+    // Null tant que la réservation est EN_ATTENTE
+    // C'est cette date qui sert à calculer l'expiration des 48h
+    @Column(name = "dateConfirmation", nullable = true)
+    private LocalDate dateConfirmation;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut")
     private Statut statut = Statut.EN_ATTENTE;

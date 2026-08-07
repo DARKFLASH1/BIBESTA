@@ -1,10 +1,12 @@
 package com.example.BIBESTA.controller;
 
 import com.example.BIBESTA.model.Amende;
+import com.example.BIBESTA.security.SecurityUtils; // ← import ajouté
 import com.example.BIBESTA.service.AmendeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,39 +17,41 @@ public class AmendeController {
 
     private final AmendeService amendeService;
 
-    // GET /api/amendes → toutes les amendes
     @GetMapping
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Amende>> findAll() {
         return ResponseEntity.ok(amendeService.findAll());
     }
 
-    // GET /api/amendes/1 → une amende par id
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Amende> findById(@PathVariable Integer id) {
         return amendeService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // GET /api/amendes/utilisateur/2 → amendes d'un utilisateur
+    // Amendes d'un utilisateur
+    // Accessible à l'utilisateur lui-même OU au bibliothécaire
     @GetMapping("/utilisateur/{utilisateurId}")
     public ResponseEntity<List<Amende>> findByUtilisateur(
             @PathVariable Integer utilisateurId) {
+        SecurityUtils.verifierAccesPropriete(utilisateurId); // ← ajouté
         return ResponseEntity.ok(
                 amendeService.findByUtilisateurId(utilisateurId));
     }
 
-    // GET /api/amendes/utilisateur/2/en-attente
     // Amendes non payées d'un utilisateur
     @GetMapping("/utilisateur/{utilisateurId}/en-attente")
     public ResponseEntity<List<Amende>> findEnAttente(
             @PathVariable Integer utilisateurId) {
+        SecurityUtils.verifierAccesPropriete(utilisateurId); // ← ajouté
         return ResponseEntity.ok(
                 amendeService.findEnAttenteByUtilisateurId(utilisateurId));
     }
 
-    // POST /api/amendes/emprunt/1 → crée une amende pour un emprunt
     @PostMapping("/emprunt/{empruntId}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> creerAmende(@PathVariable Integer empruntId) {
         try {
             Amende amende = amendeService.creerAmende(empruntId);
@@ -57,8 +61,8 @@ public class AmendeController {
         }
     }
 
-    // PATCH /api/amendes/1/payee → marque une amende comme payée
     @PatchMapping("/{id}/payee")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> marquerPayee(@PathVariable Integer id) {
         try {
             Amende amende = amendeService.marquerPayee(id);
@@ -68,8 +72,8 @@ public class AmendeController {
         }
     }
 
-    // PATCH /api/amendes/1/annuler → annule une amende
     @PatchMapping("/{id}/annuler")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> annuler(@PathVariable Integer id) {
         try {
             Amende amende = amendeService.annuler(id);

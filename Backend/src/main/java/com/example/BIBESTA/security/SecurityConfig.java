@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -31,6 +33,36 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/livres/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/emprunts", "/emprunts/{id}",
+                                                                "/emprunts/en-retard")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/emprunts/utilisateur/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/reservations", "/reservations/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/reservations/utilisateur/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/amendes", "/amendes/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/amendes/utilisateur/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/paiements", "/paiements/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/paiements/utilisateur/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/abonnements", "/abonnements/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/abonnements/utilisateur/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/utilisateurs", "/utilisateurs/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/historique", "/historique/**")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/notifications",
+                                                                "/notifications/{id}")
+                                                .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/notifications/utilisateur/**")
+                                                .authenticated()
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(
                                                 jwtFilter,

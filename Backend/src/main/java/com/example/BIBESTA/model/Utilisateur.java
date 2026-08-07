@@ -54,6 +54,11 @@ public class Utilisateur {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    // Statut du compte : ACTIF, SUSPENDU ou DESACTIVE
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private Statut statut = Statut.ACTIF;
+
     // Enum = une liste de valeurs autorisées, rien d'autre n'est possible
     // Correspond au ENUM dans ta table MySQL
     public enum Role {
@@ -61,6 +66,13 @@ public class Utilisateur {
         ETUDIANT,
         ENSEIGNANT,
         PUBLIC
+    }
+
+    // Statut du compte utilisateur
+    public enum Statut {
+        ACTIF,
+        SUSPENDU,
+        DESACTIVE
     }
 
     public String getMotDePasse() {

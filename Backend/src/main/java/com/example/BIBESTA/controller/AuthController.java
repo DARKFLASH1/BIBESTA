@@ -49,6 +49,13 @@ public class AuthController {
                                         .body("Identifiant ou mot de passe incorrect");
                 }
 
+                // 2.1 Vérifie que le compte est ACTIF (RG5)
+                if (utilisateur.getStatut() != Utilisateur.Statut.ACTIF) {
+                        return ResponseEntity.status(403)
+                                        .body("Ce compte est " + utilisateur.getStatut().name().toLowerCase() +
+                                                        ". Contactez le bibliothécaire.");
+                }
+
                 // 3. Vérifie le mot de passe
                 String hashEnBase = utilisateur.getMotDePasse();
                 boolean motDePasseValide;
