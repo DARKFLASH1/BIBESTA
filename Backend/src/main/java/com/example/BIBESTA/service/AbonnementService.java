@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +47,7 @@ public class AbonnementService {
     }
 
     // Crée un nouvel abonnement pour un utilisateur
+    @Transactional
     public Abonnement save(Integer utilisateurId, Abonnement abonnement) {
 
         // Vérifie que l'utilisateur existe
@@ -66,6 +68,7 @@ public class AbonnementService {
     }
 
     // Met à jour le statut de paiement d'un abonnement
+    @Transactional
     public Abonnement updateStatut(Integer id, StatutPaiement nouveauStatut) {
 
         Abonnement abonnement = abonnementRepository.findById(id)
@@ -76,6 +79,7 @@ public class AbonnementService {
     }
 
     // Expire automatiquement les abonnements dont la date de fin est dépassée
+    @Transactional
     public void expireAbonnementsDepasses() {
 
         // Trouve tous les abonnements dont la date de fin est dépassée
@@ -92,6 +96,7 @@ public class AbonnementService {
     }
 
     // Supprime un abonnement
+    @Transactional
     public void deleteById(Integer id) {
         if (!abonnementRepository.existsById(id)) {
             throw new ResourceNotFoundException("Abonnement non trouvé");

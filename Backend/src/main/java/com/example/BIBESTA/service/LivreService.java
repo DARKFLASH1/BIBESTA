@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class LivreService {
@@ -50,14 +52,61 @@ public class LivreService {
         return livreRepository.save(livre);
     }
 
+    // Retourne tous les livres ACTIFS (exclut les désactivés)
+    public List<Livre> getAllLivres() {
+        return livreRepository.findByActifTrue();
+    }
+
+    // Liste paginée — actifs seulement
+    public Page<Livre> getAllLivresPagines(Pageable pageable) {
+        return livreRepository.findByActifTrue(pageable);
+    }
+
+    // Recherche paginée — actifs seulement
+    public Page<Livre> searchLivresPagines(String query, Pageable pageable) {
+        if (query == null || query.isBlank()) {
+            return livreRepository.findByActifTrue(pageable);
+        }
+        return livreRepository
+                .findByActifTrueAndTitreContainingIgnoreCaseOrActifTrueAndAuteurContainingIgnoreCaseOrActifTrueAndCategorieContainingIgnoreCase(
+                        query, query, query, pageable);
+    }
+
+    // Recherche multicritère — actifs seulement
+    public List<Livre> searchLivres(String titre, String auteur, String isbn,
+            String genre, String langue, String categorie) {
+
+        if (titre == null && auteur == null && isbn == null &&
+                genre == null && langue == null && categorie == null) {
+            return getAllLivres(); // déjà filtré
+        }
+        if (titre != null && !titre.isEmpty()) {
+            return livreRepository.findByTitreContainingIgnoreCaseAndActifTrue(titre);
+        }
+        if (auteur != null && !auteur.isEmpty()) {
+            return livreRepository.findByAuteurContainingIgnoreCaseAndActifTrue(auteur);
+        }
+        if (isbn != null && !isbn.isEmpty()) {
+            return livreRepository.findByIsbnAndActifTrue(isbn)
+                    .map(List::of).orElse(List.of());
+        }
+        if (genre != null && !genre.isEmpty()) {
+            return livreRepository.findByGenreContainingIgnoreCaseAndActifTrue(genre);
+        }
+        if (categorie != null && !categorie.isEmpty()) {
+            return livreRepository.findByCategorieContainingIgnoreCaseAndActifTrue(categorie);
+        }
+        if (langue != null && !langue.isEmpty()) {
+            return livreRepository.findByLangueContainingIgnoreCaseAndActifTrue(langue);
+        }
+        return List.of();
+    }
+
     /**
      * Récupère tous les livres
      * 
      * @return Liste de tous les livres
      */
-    public List<Livre> getAllLivres() {
-        return livreRepository.findAll();
-    }
 
     /**
      * Récupère un livre par son ID
@@ -85,7 +134,10 @@ public class LivreService {
             throw new BusinessException("Impossible de supprimer le livre : il est actuellement emprunté");
         }
 
-        livreRepository.delete(livre);
+        // Désactivation logique au lieu d'une suppression physique (RG12)
+        // Préserve l'historique des emprunts et évite les erreurs de clé étrangère
+        livre.setActif(false);
+        livreRepository.save(livre);
     }
 
     /**
@@ -144,36 +196,6 @@ public class LivreService {
      * @param langue Langue du livre (optionnel)
      * @return Liste des livres correspondant aux critères
      */
-    public List<Livre> searchLivres(String titre, String auteur, String isbn,
-            String genre, String langue, String categorie) {
-
-        if (titre == null && auteur == null && isbn == null &&
-                genre == null && langue == null && categorie == null) {
-            return getAllLivres();
-        }
-
-        if (titre != null && !titre.isEmpty()) {
-            return livreRepository.findByTitreContainingIgnoreCase(titre);
-        }
-        if (auteur != null && !auteur.isEmpty()) {
-            return livreRepository.findByAuteurContainingIgnoreCase(auteur);
-        }
-        if (isbn != null && !isbn.isEmpty()) {
-            return livreRepository.findByIsbn(isbn)
-                    .map(List::of).orElse(List.of());
-        }
-        if (genre != null && !genre.isEmpty()) {
-            return livreRepository.findByGenreContainingIgnoreCase(genre);
-        }
-        if (categorie != null && !categorie.isEmpty()) {
-            return livreRepository.findByCategorieContainingIgnoreCase(categorie);
-        }
-        if (langue != null && !langue.isEmpty()) {
-            return livreRepository.findByLangueContainingIgnoreCase(langue);
-        }
-
-        return List.of();
-    }
 
     /**
      * Vérifie si un livre est emprunté

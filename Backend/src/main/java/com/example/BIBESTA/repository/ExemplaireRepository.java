@@ -1,7 +1,7 @@
 package com.example.BIBESTA.repository;
 
 import com.example.BIBESTA.model.Exemplaire;
-import com.example.BIBESTA.model.Exemplaire.Etat;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -14,12 +14,15 @@ public interface ExemplaireRepository extends JpaRepository<Exemplaire, Integer>
     List<Exemplaire> findByLivreId(Integer livreId);
 
     // Tous les exemplaires disponibles d'un livre
-    // SELECT * FROM exemplaire WHERE livre_id = ? AND etat = 'DISPONIBLE'
-    List<Exemplaire> findByLivreIdAndEtat(Integer livreId, Etat etat);
+    // SELECT * FROM exemplaire WHERE livre_id = ? AND statut_disponibilite =
+    // 'DISPONIBLE'
+    List<Exemplaire> findByLivreIdAndStatutDisponibilite(
+            Integer livreId, StatutDisponibilite statutDisponibilite);
 
     // Compte les exemplaires disponibles d'un livre
-    long countByLivreIdAndEtat(Integer livreId, Etat etat);
+    long countByLivreIdAndStatutDisponibilite(
+            Integer livreId, StatutDisponibilite statutDisponibilite);
 
-    // Tous les exemplaires par état
-    List<Exemplaire> findByEtat(Etat etat);
+    // Tous les exemplaires par statut de disponibilité
+    List<Exemplaire> findByStatutDisponibilite(StatutDisponibilite statutDisponibilite);
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,13 +34,15 @@ public class PaiementService {
                 return paiementRepository.findById(id);
         }
 
-        // Paiements d'un utilisateur
+        // Retourne tous les paiements d'un utilisateur (abonnements + amendes)
         public List<Paiement> findByUtilisateurId(Integer utilisateurId) {
-                return paiementRepository
-                                .findByAbonnementUtilisateurId(utilisateurId);
+                return paiementRepository.findAllByUtilisateurId(utilisateurId);
+                // Avant : findByAbonnementUtilisateurId() — ne retournait que les paiements
+                // d'abonnements
         }
 
         // PAYER UN ABONNEMENT
+        @Transactional
         public Paiement payerAbonnement(
                         Integer abonnementId,
                         String methodePaiement) {
@@ -86,6 +89,7 @@ public class PaiementService {
         }
 
         // PAYER UNE AMENDE
+        @Transactional
         public Paiement payerAmende(
                         Integer amendeId,
                         String methodePaiement) {

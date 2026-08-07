@@ -4,6 +4,7 @@ import com.example.BIBESTA.model.Historique;
 import com.example.BIBESTA.service.HistoriqueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -17,12 +18,14 @@ public class HistoriqueController {
     // GET /api/historique → tout l'historique
     // Réservé au bibliothécaire
     @GetMapping
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Historique>> findAll() {
         return ResponseEntity.ok(historiqueService.findAll());
     }
 
     // GET /api/historique/1 → un historique par id
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Historique> findById(@PathVariable Integer id) {
         return historiqueService.findById(id)
                 .map(ResponseEntity::ok)
@@ -32,6 +35,7 @@ public class HistoriqueController {
     // GET /api/historique/utilisateur/2
     // Historique complet d'un utilisateur
     @GetMapping("/utilisateur/{utilisateurId}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Historique>> findByUtilisateur(
             @PathVariable Integer utilisateurId) {
         return ResponseEntity.ok(
@@ -41,6 +45,7 @@ public class HistoriqueController {
     // GET /api/historique/livre/1
     // Historique d'un livre
     @GetMapping("/livre/{livreId}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Historique>> findByLivre(
             @PathVariable Integer livreId) {
         return ResponseEntity.ok(
@@ -50,6 +55,7 @@ public class HistoriqueController {
     // GET /api/historique/type/EMPRUNT
     // Historique par type d'action
     @GetMapping("/type/{type}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Historique>> findByType(
             @PathVariable String type) {
         return ResponseEntity.ok(

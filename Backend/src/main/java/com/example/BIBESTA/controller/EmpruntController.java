@@ -10,6 +10,8 @@ import java.util.List;
 import com.example.BIBESTA.dto.Mapper;
 import com.example.BIBESTA.dto.emprunt.EmpruntResponse;
 import com.example.BIBESTA.dto.emprunt.EmpruntRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.example.BIBESTA.security.SecurityUtils;
 
 @RestController
 @RequestMapping("/emprunts")
@@ -20,6 +22,7 @@ public class EmpruntController {
 
     // GET /api/emprunts → tous les emprunts
     @GetMapping
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<EmpruntResponse>> findAll() {
         List<EmpruntResponse> emprunts = empruntService.findAll()
                 .stream()
@@ -31,6 +34,7 @@ public class EmpruntController {
 
     // GET /api/emprunts/1 → un emprunt par id
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Emprunt> findById(@PathVariable Integer id) {
         return empruntService.findById(id)
                 .map(ResponseEntity::ok)
@@ -57,6 +61,7 @@ public class EmpruntController {
     // GET /api/emprunts/en-retard → tous les emprunts en retard
     // Réservé au bibliothécaire
     @GetMapping("/en-retard")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<List<Emprunt>> findEnRetard() {
         return ResponseEntity.ok(empruntService.findEnRetard());
     }
@@ -64,6 +69,7 @@ public class EmpruntController {
     // POST /api/emprunts?utilisateurId=2&exemplaireId=1
     // Crée un nouvel emprunt
     @PostMapping
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> creerEmprunt(
             @RequestBody EmpruntRequest request) {
         try {
@@ -79,6 +85,7 @@ public class EmpruntController {
 
     // PUT /api/emprunts/1/retour → enregistre le retour d'un livre
     @PutMapping("/{id}/retour")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> enregistrerRetour(@PathVariable Integer id) {
         try {
             Emprunt emprunt = empruntService.enregistrerRetour(id);
@@ -91,6 +98,7 @@ public class EmpruntController {
     // PUT /api/emprunts/retards/update
     // Met à jour tous les emprunts en retard
     @PutMapping("/retards/update")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> mettreAJourRetards() {
         try {
             empruntService.mettreAJourRetards();

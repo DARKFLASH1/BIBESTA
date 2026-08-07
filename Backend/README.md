@@ -1,253 +1,393 @@
-# Système de Gestion de Bibliothèque
+# BIBESTA — Système de Gestion de Bibliothèque
 
-Application de gestion de bibliothèque
+> Application web complète de gestion de bibliothèque, conçue pour remplacer la gestion manuelle (Excel, papier) par une solution digitale sécurisée. Elle couvre la gestion des collections, des emprunts, des retours, des réservations, des abonnements, des amendes et des utilisateurs.
 
-## Objectif du projet
+---
 
-Remplacer la gestion manuelle (Excel, papier) d'une bibliothèque par une solution digitale sécurisée et évolutive, couvrant la gestion des collections, des emprunts, des retours et des utilisateurs, avec des outils de recherche et de suivi pour bibliothécaires et lecteurs.
+## Table des matières
 
-## Stack technique
+1. [Présentation générale](#1-présentation-générale)
+2. [Stack technique](#2-stack-technique)
+3. [Architecture du projet](#3-architecture-du-projet)
+4. [Modèle de données](#4-modèle-de-données)
+5. [Règles de gestion métier](#5-règles-de-gestion-métier)
+6. [Endpoints API](#6-endpoints-api)
+7. [Sécurité](#7-sécurité)
+8. [Automatisations planifiées](#8-automatisations-planifiées)
+9. [Installation et démarrage](#9-installation-et-démarrage)
+10. [Points d'attention pour la mise en production](#10-points-dattention-pour-la-mise-en-production)
 
-| Couche | Technologie |
-|---|---|
-| Frontend | Angular |
-| Backend | Spring Boot (Java) |
-| Base de données | MySQL |
-| Communication | API REST (JSON) |
-| Sécurité | Spring Security + JWT |
-| Build backend | Maven |
-| Build frontend | Angular CLI / npm |
+---
 
-## Architecture
+## 1. Présentation générale
+
+BIBESTA est une application de gestion de bibliothèque à deux interfaces :
+
+- **Le bibliothécaire** gère les livres, les exemplaires, les utilisateurs, les emprunts, les retours, les amendes, les abonnements et les réservations.
+- **Le lecteur** consulte le catalogue, suit ses emprunts, ses réservations et ses notifications depuis son espace personnel.
+
+L'application est divisée en deux parties distinctes qui communiquent via une API :
+
+- Le **backend** (serveur) : reçoit les demandes, applique les règles métier, accède à la base de données.
+- Le **frontend** (interface web) : ce que l'utilisateur voit et utilise dans son navigateur.
+
+---
+
+## 2. Stack technique
+
+| Couche | Technologie | Rôle |
+|---|---|---|
+| Frontend | Angular 19 (Standalone + Signals) | Interface utilisateur dans le navigateur |
+| Backend | Spring Boot 3 (Java 21) | Serveur, logique métier, API REST |
+| Base de données | MySQL 8 | Stockage persistant des données |
+| Communication | API REST (JSON) | Échange de données entre frontend et backend |
+| Sécurité | Spring Security + JWT | Authentification et autorisation |
+| Build backend | Maven | Compilation et gestion des dépendances Java |
+| Build frontend | Angular CLI / npm | Compilation et gestion des dépendances TypeScript |
+| ORM | Hibernate / Spring Data JPA | Mapping automatique Java ↔ MySQL |
+| Utilitaires Java | Lombok | Génération automatique de getters/setters/constructeurs |
+
+---
+
+## 3. Architecture du projet
 
 ```
-
-bibliotheque/
-├── backend/                  # API Spring Boot
-│   ├── src/main/java/
-│   │   └── com/esta/bibliotheque/
-│   │       ├── controller/   # Endpoints REST
-│   │       ├── service/      # Logique métier
-│   │       ├── repository/   # Accès données (Spring Data JPA)
-│   │       ├── model/        # Entités JPA
-│   │       ├── dto/          # Objets de transfert
-│   │       ├── security/     # Config JWT / rôles
-│   │       └── exception/    # Gestion centralisée des erreurs
-│   └── src/main/resources/
-│       └── application.properties
+BIBESTA/
+├── backend/                          # Serveur Spring Boot
+│   └── src/main/java/com/example/BIBESTA/
+│       ├── BibestaApplication.java   # Point d'entrée + @EnableScheduling
+│       ├── controller/               # Reçoit les requêtes HTTP (endpoints REST)
+│       ├── service/                  # Logique métier (règles, calculs, validations)
+│       ├── repository/               # Accès base de données (Spring Data JPA)
+│       ├── model/                    # Entités JPA = tables MySQL
+│       ├── dto/                      # Objets de transfert (ce qu'on envoie/reçoit)
+│       │   └── Mapper.java           # Convertit entités ↔ DTOs
+│       ├── security/                 # JWT, filtre d'authentification, utilitaires
+│       │   ├── JwtUtil.java          # Génère et valide les tokens JWT
+│       │   ├── JwtFilter.java        # Intercepte chaque requête pour vérifier le token
+│       │   ├── SecurityConfig.java   # Règles d'accès par route et par rôle
+│       │   └── SecurityUtils.java    # Utilitaire : récupère l'id de l'utilisateur connecté
+│       └── exception/                # Gestion centralisée des erreurs
+│           ├── GlobalExceptionHandler.java
+│           ├── BusinessException.java     # Règle métier violée → HTTP 400
+│           └── ResourceNotFoundException.java # Ressource introuvable → HTTP 404
 │
-└── frontend/                 # Application Angular
+└── frontend/                         # Application Angular 19
     └── src/app/
-        ├── core/              # Services, guards, intercepteurs
-        ├── shared/            # Composants réutilisables
+        ├── core/                     # Services globaux, guards, intercepteurs
+        ├── shared/                   # Composants réutilisables
         └── features/
-            ├── auth/
-            ├── users/
-            ├── books/
-            ├── loans/
-            ├── search/
-            ├── notifications/
-            └── reports/
+            ├── auth/                 # Connexion / déconnexion
+            ├── users/                # Gestion des utilisateurs
+            ├── books/                # Catalogue et gestion des livres
+            ├── loans/                # Emprunts et retours
+            ├── reservations/         # Réservations
+            ├── notifications/        # Centre de notifications
+            └── reports/              # Statistiques (prévu)
 ```
 
-## Modèle de données (MCD)
+### Comment les couches communiquent
 
-Modèle conceptuel de données du groupe, 10 entités.
+```
+Navigateur (Angular)
+      ↓  requête HTTP (GET /livres, POST /emprunts...)
+Controller (reçoit et délègue)
+      ↓
+Service (applique les règles métier)
+      ↓
+Repository (parle à MySQL via JPA)
+      ↓
+Base de données MySQL
+```
 
-### Entités
+---
 
-| Entité | Attributs |
-|---|---|
-| **Utilisateur** | Nom, Prenom, Date_naissance, Sexe, Email, Role, Identifiant, Contact, MotDePasse |
-| **Livre** | Titre, Auteur, Edition, Categorie, Annee_publication, Langue, ISBN (`String`) |
-| **Exemplaire** | Num_exemplaire, Etat |
-| **Emprunt** | Date_debut, Date_retour_prevue, Date_retour_reelle, Statut |
-| **Reservation** | Date_reserv, Statut |
-| **Amende** | Montant, Raison, Date, Statut |
-| **Abonnement** | Type, Date_debut, Date_fin, Montant, StatutPaiement |
-| **Paiement** | Montant, Date, MethodePaiement, Statut |
-| **Notification** | Type, Contenue, Date_envoi, Statut |
-| **Historique** | Date_mouv, Description, Type |
+## 4. Modèle de données
 
-### Associations
+### Les 10 entités et leurs champs
 
-| Classe A | Card. A | Card. B | Classe B | Remarque |
-|---|:---:|:---:|---|---|
-| Livre | 1..* | 1..1 | Exemplaire | Un livre a au moins un exemplaire |
-| Utilisateur | 0..* | 1..1 | Emprunt | Un utilisateur peut avoir plusieurs emprunts |
-| Exemplaire | 0..* | 1..1 | Emprunt | Un exemplaire peut être emprunté plusieurs fois |
-| Emprunt | 0..1 | 1..1 | Amende | Un emprunt a au plus une amende ; une amende concerne exactement un emprunt |
-| Livre | 1..1 | 0..* | Reservation | Un livre peut avoir plusieurs réservations |
-| Utilisateur | 0..* | 1..1 | Reservation | Un utilisateur peut faire plusieurs réservations |
-| Utilisateur | 1..1 | 0..* | Abonnement | Un utilisateur peut avoir plusieurs abonnements |
-| Abonnement | 1..1 | 0..* | Paiement | Un abonnement peut avoir 0, 1 ou plusieurs paiements (échelonnement, renouvellement) |
-| Amende | 1..1 | 0..1 | Paiement | Une amende peut avoir au plus un paiement qui la règle |
-| Utilisateur | 0..* | 1..1 | Notification | Un utilisateur peut recevoir plusieurs notifications |
-| Historique | 0..* | 1..1 | Utilisateur | L'historique est associé à un utilisateur |
-| Historique | 0..* | 0..1 | Emprunt | L'historique peut tracer des emprunts |
-| Historique | 0..* | 0..1 | Livre | L'historique peut tracer des mouvements de livres |
-| Historique | 0..* | 0..1 | Reservation | L'historique peut tracer des réservations |
-
-**Contrainte applicative (non modélisable en MCD)** : un `Paiement` référence soit un `Abonnement`, soit une `Amende`, jamais les deux et jamais aucun des deux. Le schéma relationnel ne peut pas l'imposer nativement — à valider par un `CHECK` en base ou par la couche service Spring Boot.
-
-### Champs et statuts requis pour un usage réel en bibliothèque
-
-Le MCD initial est correct sur le plan structurel, mais insuffisant pour représenter le fonctionnement réel d'une bibliothèque physique. Les ajouts suivants sont nécessaires (voir aussi l'audit §14) :
-
-| Entité | Ajout nécessaire | Justification métier |
+| Entité | Champs | Notes |
 |---|---|---|
-| **Utilisateur** | `Statut` (`ACTIF` / `SUSPENDU` / `DESACTIVE`) | Un bibliothécaire doit pouvoir bloquer un lecteur (amendes impayées, livre perdu, comportement abusif) sans supprimer son historique. Le design frontend prévoit déjà un badge "Compte désactivé" (`LucideCircleOff`) — le champ backend correspondant n'existe pas encore. |
-| **Utilisateur / Rôle** | Quota d'emprunts simultanés par rôle (ex. 3 pour `PUBLIC`, 5 pour `ETUDIANT`, 10 pour `ENSEIGNANT`) | Sans plafond, un même lecteur peut vider un rayon entier. Un vrai SIGB (Système Intégré de Gestion de Bibliothèque) applique toujours une limite par profil. |
-| **Exemplaire** | Séparer **état physique** (`BON_ETAT`, `USAGE`, `ENDOMMAGE`, `PERDU`) de **statut de disponibilité** (`DISPONIBLE`, `EMPRUNTE`, `RESERVE`, `EN_REPARATION`) | Un exemplaire "endommagé" doit pouvoir rester "emprunté" jusqu'à son retour — ces deux notions ne peuvent pas cohabiter dans un seul enum sans créer des états invalides. |
-| **Emprunt** | Compteur/plafond de renouvellements (`nombreRenouvellements`, max. généralement 2) | Un emprunt doit pouvoir être prolongé une ou deux fois, sauf si le livre est réservé par quelqu'un d'autre — fonctionnalité standard en bibliothèque, absente du modèle actuel. |
-| **Reservation** | `datePeremption` (ex. +48h après confirmation) | Une réservation "confirmée" doit expirer si le lecteur ne vient pas récupérer le livre, sinon l'exemplaire reste bloqué indéfiniment pour les autres lecteurs. |
-| **Amende** | Distinction `raisonType` (`RETARD` / `DOMMAGE` / `PERTE`) en plus du texte libre `raison` | Le calcul et le montant d'une amende pour un livre perdu (remplacement) n'ont rien à voir avec un simple retard ; les mélanger dans un champ texte empêche tout reporting fiable. |
-| **Paiement** | Contrainte `CHECK` SQL (`abonnement_id` XOR `amende_id`) | La règle "un paiement règle soit un abonnement, soit une amende" n'est aujourd'hui vérifiée que côté service Java — rien n'empêche une insertion directe en base ou un bug futur de violer la règle. |
+| **Utilisateur** | id, nom, prenom, dateNaissance, sexe, email, identifiant, contact, motDePasse, role, statut | `role` : BIBLIOTHECAIRE / ETUDIANT / ENSEIGNANT / PUBLIC. `statut` : ACTIF / SUSPENDU / DESACTIVE |
+| **Livre** | id, titre, auteur, edition, isbn, categorie, genre, langue, anneePublication, nombrePages, actif | `actif = false` = livre désactivé (suppression logique) |
+| **Exemplaire** | id, numExemplaire, etatPhysique, statutDisponibilite, livre | `etatPhysique` : BON_ETAT / USAGE / ENDOMMAGE / PERDU. `statutDisponibilite` : DISPONIBLE / EMPRUNTE / RESERVE / EN_REPARATION |
+| **Emprunt** | id, dateDebut, dateRetourPrevue, dateRetourReelle, statut, utilisateur, exemplaire | `statut` : EN_COURS / RETOURNE / EN_RETARD. Durée standard : 14 jours |
+| **Reservation** | id, dateReservation, statut, utilisateur, livre | `statut` : EN_ATTENTE / CONFIRMEE / ANNULEE. On réserve un livre, pas un exemplaire précis |
+| **Amende** | id, montant, raison, date, statut, emprunt | `statut` : EN_ATTENTE / PAYEE / ANNULEE. Tarif : 100 FCFA/jour de retard |
+| **Abonnement** | id, type, dateDebut, dateFin, montant, statutPaiement, utilisateur | `statutPaiement` : EN_ATTENTE / PAYE / EXPIRE |
+| **Paiement** | id, montant, datePaiement, methodePaiement, statut, abonnement, amende | Règle : soit `abonnement`, soit `amende` — jamais les deux. `methodePaiement` : ESPECES / MOBILE_MONEY / CARTE_BANCAIRE |
+| **Notification** | id, type, contenu, date, statut, utilisateur | `statut` : LU / NON_LU |
+| **Historique** | id, dateMouvement, type, description, utilisateur, emprunt, livre, reservation | Trace automatique de toutes les actions. `type` : EMPRUNT / RETOUR / RESERVATION / ANNULATION / PAIEMENT / CONNEXION |
 
-## Modules fonctionnels
+### Relations entre entités
 
-### 1. Gestion des utilisateurs
+| Entité A | Relation | Entité B | Signification |
+|---|:---:|---|---|
+| Livre | 1 → N | Exemplaire | Un livre a un ou plusieurs exemplaires physiques |
+| Utilisateur | 1 → N | Emprunt | Un utilisateur peut avoir plusieurs emprunts |
+| Exemplaire | 1 → N | Emprunt | Un exemplaire peut être emprunté plusieurs fois (pas en même temps) |
+| Emprunt | 1 → 0..1 | Amende | Un emprunt peut avoir au plus une amende |
+| Utilisateur | 1 → N | Reservation | Un utilisateur peut avoir plusieurs réservations |
+| Livre | 1 → N | Reservation | Un livre peut avoir plusieurs réservations en file d'attente |
+| Utilisateur | 1 → N | Abonnement | Un utilisateur peut avoir plusieurs abonnements (renouvellements) |
+| Abonnement | 1 → N | Paiement | Un abonnement peut être payé en plusieurs fois |
+| Amende | 1 → 0..1 | Paiement | Une amende est réglée par au plus un paiement |
+| Utilisateur | 1 → N | Notification | Un utilisateur reçoit plusieurs notifications |
+| Utilisateur | 1 → N | Historique | Toutes les actions d'un utilisateur sont tracées |
 
-- CRUD comptes utilisateurs avec rôles
-- Suivi des emprunts et retards par utilisateur
+---
 
-### 2. Gestion des livres
+## 5. Règles de gestion métier
 
-- CRUD livres et exemplaires
-- Historique des mouvements (emprunts, réservations, retours)
+Ce sont les règles que le système applique automatiquement. Elles sont toutes implémentées dans la couche service.
 
-### 3. Gestion des emprunts et retours
+### Règles sur l'emprunt
 
-- Création d'emprunt avec dates
-- Gestion automatique des retards
-- Réservation sur livre indisponible
-- Historique par utilisateur / par livre
-
-### 4. Recherche et consultation
-
-- Recherche par titre, auteur, ISBN, catégorie, mots-clés
-- Filtres avancés : disponibilité, langue, année
-
-### 5. Notifications et alertes
-
-- Rappels avant date limite
-- Alerte disponibilité sur réservation
-- Alerte retard / amende
-
-### 6. Abonnements et paiement
-
-- Suivi des cotisations/abonnements des utilisateurs (à spécifier selon les besoins du groupe)
-
-### 7. Statistiques et reporting
-
-- Emprunts les plus fréquents, livres les plus populaires
-- Suivi des retards et amendes
-- Export PDF / Excel
-
-## Règles de gestion métier (Business Rules)
-
-Cette section documente les règles indispensables au fonctionnement réel d'une bibliothèque. Certaines sont déjà implémentées dans le backend, d'autres sont **manquantes dans le code actuel** (voir la colonne "Statut" et le détail en §14 — Audit).
-
-| # | Règle | Statut dans le code actuel |
+| Règle | Description | Où c'est implémenté |
 |---|---|---|
-| RG1 | Un emprunt ne peut être créé que si l'exemplaire est `DISPONIBLE`. | ✅ Implémenté (`EmpruntService.creerEmprunt`) |
-| RG2 | Un emprunt ne peut être créé que si l'utilisateur a un **abonnement actif et payé**. | ❌ Non implémenté — aucune vérification de l'abonnement lors de l'emprunt |
-| RG3 | Un emprunt ne peut être créé que si l'utilisateur n'a **aucune amende impayée** au-delà d'un certain seuil. | ❌ Non implémenté |
-| RG4 | Un emprunt ne peut être créé que si l'utilisateur n'a pas atteint son **quota d'emprunts simultanés**. | ❌ Non implémenté — aucune limite de nombre d'emprunts en cours |
-| RG5 | Un compte `SUSPENDU`/`DESACTIVE` ne peut ni emprunter, ni réserver, ni se connecter. | ❌ Non implémenté — le champ `Statut` du compte n'existe pas |
-| RG6 | Quand une réservation est confirmée, l'exemplaire concerné doit être **verrouillé** (`RESERVE`) pour que personne d'autre ne puisse l'emprunter entre-temps. | ❌ Non implémenté — l'exemplaire reste `DISPONIBLE`, voir audit §14.3 |
-| RG7 | Une réservation confirmée non retirée après un délai (48h) doit expirer et libérer l'exemplaire pour le lecteur suivant dans la file d'attente. | ❌ Non implémenté — aucune tâche planifiée, aucun champ de péremption |
-| RG8 | La file de réservations sur un même livre doit être servie dans l'ordre d'arrivée (FIFO). | ⚠️ Partiel — aucun tri explicite (`ORDER BY dateReservation`) n'est appliqué en base |
-| RG9 | Le passage automatique d'un emprunt en retard (`EN_RETARD`), le calcul des amendes, l'expiration des abonnements et les rappels avant échéance doivent s'exécuter **chaque jour sans intervention humaine**. | ❌ Non implémenté — les méthodes existent (`mettreAJourRetards`, `expireAbonnementsDepasses`) mais **aucune tâche planifiée (`@Scheduled`) ne les déclenche** |
-| RG10 | Un paiement référence exactement une `Amende` ou un `Abonnement`, jamais les deux, jamais aucun. | ⚠️ Partiel — imposé côté service Java uniquement, pas de contrainte en base |
-| RG11 | Seul un `BIBLIOTHECAIRE` peut créer/modifier/supprimer un livre, un exemplaire, gérer les utilisateurs, annuler une amende ou un paiement. | ❌ Non implémenté au niveau API — voir audit §14.1 (faille critique) |
-| RG12 | La suppression d'un utilisateur ou d'un livre ayant un historique d'emprunts ne doit jamais être une suppression physique (perte de traçabilité légale et de l'historique des lecteurs). | ❌ Non implémenté — suppression physique (`deleteById`) sans désactivation logique |
+| RG1 | L'exemplaire doit être `DISPONIBLE` | `EmpruntService.creerEmprunt()` |
+| RG2 | L'utilisateur doit avoir un abonnement actif et payé | `EmpruntService` → `AbonnementService.hasAbonnementActif()` |
+| RG3 | L'utilisateur ne doit avoir aucune amende impayée | `EmpruntService.creerEmprunt()` |
+| RG4 | Quota d'emprunts simultanés par rôle : PUBLIC=3, ETUDIANT=5, ENSEIGNANT=10, BIBLIOTHECAIRE=10 | `EmpruntService.creerEmprunt()` |
+| RG5 | Le compte utilisateur doit être `ACTIF` | `EmpruntService` et `ReservationService` |
+| RG6 | Durée standard d'un emprunt : 14 jours | `EmpruntService.creerEmprunt()` |
+| RG7 | Si retour en retard → amende créée automatiquement (100 FCFA/jour) | `EmpruntService.enregistrerRetour()` → `AmendeService.creerAmende()` |
 
-## Endpoints API (aperçu)
+### Règles sur les réservations
 
-> ⚠️ Le tableau ci-dessous reflète les **routes réellement exposées dans le code** (`@RequestMapping` des contrôleurs Spring Boot), qui diffèrent de la version précédente de ce README : il n'y a **pas de préfixe `/api`**, et les noms de ressources sont en français.
+| Règle | Description | Où c'est implémenté |
+|---|---|---|
+| RG8 | File d'attente FIFO : premier réservé = premier servi | `ReservationRepository.findByLivreIdAndStatutOrderByDateReservationAsc()` |
+| RG9 | Quand un exemplaire devient disponible, la première réservation est confirmée et l'exemplaire est verrouillé (`RESERVE`) | `ReservationService.confirmerReservationsSiDisponible()` |
+| RG10 | Une réservation confirmée expire après 48h si non retirée | `ScheduledTasks` → `ReservationService.expirerReservationsConfirmees()` |
+| RG11 | Un utilisateur ne peut pas réserver deux fois le même livre | `ReservationRepository.existsByUtilisateurIdAndLivreIdAndStatut()` |
 
-| Méthode | Endpoint | Description | Accès requis (souhaité) |
+### Règles sur les paiements
+
+| Règle | Description | Où c'est implémenté |
+|---|---|---|
+| RG12 | Un paiement règle soit un abonnement, soit une amende — jamais les deux | `PaiementService.payerAbonnement()` et `payerAmende()` |
+
+### Règles sur les suppressions
+
+| Règle | Description | Où c'est implémenté |
+|---|---|---|
+| RG13 | Les utilisateurs et livres ne sont jamais supprimés physiquement — désactivation logique uniquement | `UtilisateurService.deleteById()` → `statut = DESACTIVE`. `LivreService.deleteLivre()` → `actif = false` |
+| RG14 | Un livre avec un emprunt en cours ne peut pas être désactivé | `LivreService.isLivreEmprunte()` |
+| RG15 | Un exemplaire emprunté ne peut pas être supprimé | `ExemplaireService.deleteById()` |
+
+---
+
+## 6. Endpoints API
+
+**Base URL :** `http://localhost:8080`
+
+> Les routes sont en français, sans préfixe `/api`.
+
+### Authentification
+
+| Méthode | Route | Description | Accès |
 |---|---|---|---|
-| POST | `/auth/login` | Authentification, retourne un JWT | Public |
-| GET | `/utilisateurs` | Liste des utilisateurs | Bibliothécaire uniquement |
-| POST | `/utilisateurs` | Création d'un utilisateur (le rôle est fourni dans le corps de la requête) | Bibliothécaire uniquement — **actuellement ouvert à tout utilisateur authentifié, voir audit §14.1** |
-| GET | `/livres` / `GET /livres/search?titre=&auteur=&isbn=&genre=&langue=&categorie=` | Catalogue / recherche de livres | Public (lecture) |
-| POST | `/livres` | Ajout d'un livre | Bibliothécaire uniquement — **non appliqué actuellement** |
-| POST | `/emprunts` | Créer un emprunt | Bibliothécaire (guichet) |
-| PUT | `/emprunts/{id}/retour` | Enregistrer un retour | Bibliothécaire (guichet) |
-| POST | `/reservations` | Réserver un livre | Lecteur authentifié |
-| GET | `/amendes`, `/paiements`, `/abonnements` | Gestion financière | Bibliothécaire (écriture) / Lecteur (lecture de son propre solde) |
-| GET | `/historique` | Historique des mouvements | Bibliothécaire |
-| GET | `/notifications` | Notifications d'un utilisateur | Lecteur authentifié (les siennes uniquement) |
+| POST | `/auth/login` | Connexion — retourne un token JWT | Public |
 
-Le module de reporting/export (statistiques, export PDF/Excel) décrit en §7 n'a pas encore de contrôleur dédié dans le code actuel.
+### Livres
 
-## Déroulement logique du développement
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/livres` | Tous les livres | Public |
+| GET | `/livres/{id}` | Un livre par id | Public |
+| GET | `/livres/search?titre=&auteur=&isbn=&genre=&langue=&categorie=` | Recherche multicritère | Public |
+| GET | `/livres/page?page=0&size=10&sort=titre` | Liste paginée | Public |
+| GET | `/livres/search/page?query=java&page=0&size=10` | Recherche paginée | Public |
+| POST | `/livres` | Créer un livre | Bibliothécaire |
+| PUT | `/livres/{id}` | Modifier un livre | Bibliothécaire |
+| DELETE | `/livres/{id}` | Désactiver un livre | Bibliothécaire |
 
-L'ordre suit les dépendances réelles du MCD : une entité ne peut être développée avant celles dont elle dépend par clé étrangère.
+### Exemplaires
 
-### Étape 0 — Préparation
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/exemplaires` | Tous les exemplaires | Authentifié |
+| GET | `/exemplaires/{id}` | Un exemplaire | Authentifié |
+| GET | `/exemplaires/livre/{livreId}` | Exemplaires d'un livre | Authentifié |
+| GET | `/exemplaires/livre/{livreId}/disponibles` | Exemplaires disponibles | Authentifié |
+| POST | `/exemplaires/livre/{livreId}` | Créer un exemplaire | Bibliothécaire |
+| PATCH | `/exemplaires/{id}/etat` | Changer l'état | Bibliothécaire |
+| DELETE | `/exemplaires/{id}` | Supprimer un exemplaire | Bibliothécaire |
 
-- Convertir le MCD corrigé en MLD (tables, clés primaires/étrangères) et créer le schéma MySQL
-- Mettre en place les squelettes Spring Boot (Maven, dépendances JPA/Security/Web) et Angular (CLI, routing, modules)
+### Utilisateurs
 
-### Étape 1 — Entités racines (sans dépendance)
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/utilisateurs` | Tous les utilisateurs | Bibliothécaire |
+| GET | `/utilisateurs/page?page=0&size=10` | Liste paginée | Bibliothécaire |
+| GET | `/utilisateurs/{id}` | Un utilisateur | Bibliothécaire |
+| POST | `/utilisateurs` | Créer un utilisateur | Bibliothécaire |
+| PUT | `/utilisateurs/{id}` | Modifier un utilisateur | Bibliothécaire |
+| DELETE | `/utilisateurs/{id}` | Désactiver un utilisateur | Bibliothécaire |
 
-- `Utilisateur` : entité JPA, repository, CRUD, gestion des rôles
-- `Livre` : entité JPA, repository, CRUD
+### Emprunts
 
-### Étape 2 — Entités dépendantes de niveau 1
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/emprunts` | Tous les emprunts | Bibliothécaire |
+| GET | `/emprunts/{id}` | Un emprunt | Bibliothécaire |
+| GET | `/emprunts/en-retard` | Emprunts en retard | Bibliothécaire |
+| GET | `/emprunts/utilisateur/{id}` | Emprunts d'un utilisateur | Propriétaire ou Bibliothécaire |
+| GET | `/emprunts/utilisateur/{id}/en-cours` | Emprunts en cours | Propriétaire ou Bibliothécaire |
+| POST | `/emprunts` | Créer un emprunt | Bibliothécaire |
+| PUT | `/emprunts/{id}/retour` | Enregistrer un retour | Bibliothécaire |
+| PUT | `/emprunts/retards/update` | Forcer la mise à jour des retards | Bibliothécaire |
 
-- `Exemplaire` (dépend de `Livre`, 1..*) : un livre doit exister avant de créer un exemplaire
-- `Abonnement` (dépend de `Utilisateur`, 1..1)
-- `Notification` (dépend de `Utilisateur`, 1..1)
+### Réservations
 
-### Étape 3 — Entités transactionnelles (dépendent de deux entités)
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/reservations` | Toutes les réservations | Bibliothécaire |
+| GET | `/reservations/{id}` | Une réservation | Bibliothécaire |
+| GET | `/reservations/utilisateur/{id}` | Réservations d'un utilisateur | Propriétaire ou Bibliothécaire |
+| GET | `/reservations/utilisateur/{id}/en-attente` | Réservations en attente | Propriétaire ou Bibliothécaire |
+| POST | `/reservations?utilisateurId=&livreId=` | Créer une réservation | Bibliothécaire |
+| PUT | `/reservations/{id}/annuler` | Annuler une réservation | Bibliothécaire |
+| PUT | `/reservations/confirmer/{livreId}` | Confirmer manuellement | Bibliothécaire |
 
-- `Emprunt` (dépend de `Utilisateur` + `Exemplaire`) : implémenter en premier car `Amende` et `Historique` en dépendent
-- `Reservation` (dépend de `Utilisateur` + `Livre`)
+### Amendes
 
-### Étape 4 — Entités de règlement (dépendent des transactions)
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/amendes` | Toutes les amendes | Bibliothécaire |
+| GET | `/amendes/{id}` | Une amende | Bibliothécaire |
+| GET | `/amendes/utilisateur/{id}` | Amendes d'un utilisateur | Propriétaire ou Bibliothécaire |
+| GET | `/amendes/utilisateur/{id}/en-attente` | Amendes impayées | Propriétaire ou Bibliothécaire |
+| POST | `/amendes/emprunt/{empruntId}` | Créer une amende manuellement | Bibliothécaire |
+| PATCH | `/amendes/{id}/payee` | Marquer comme payée | Bibliothécaire |
+| PATCH | `/amendes/{id}/annuler` | Annuler une amende | Bibliothécaire |
 
-- `Amende` (dépend de `Emprunt`, au plus une par emprunt) : logique de calcul à définir (retard, dommage)
-- `Paiement` (référence `Abonnement` en 0..* ou `Amende` en 0..1) : imposer par code que chaque paiement règle soit un abonnement, soit une amende — jamais les deux, jamais aucun des deux
+### Paiements
 
-### Étape 5 — Historisation (dépend de tout ce qui précède)
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/paiements` | Tous les paiements | Bibliothécaire |
+| GET | `/paiements/{id}` | Un paiement | Bibliothécaire |
+| GET | `/paiements/utilisateur/{id}` | Paiements d'un utilisateur | Propriétaire ou Bibliothécaire |
+| POST | `/paiements/abonnement/{id}?methodePaiement=ESPECES` | Payer un abonnement | Bibliothécaire |
+| POST | `/paiements/amende/{id}?methodePaiement=MOBILE_MONEY` | Payer une amende | Bibliothécaire |
+| PATCH | `/paiements/{id}/annuler` | Annuler un paiement | Bibliothécaire |
 
-- `Historique` (dépend de `Utilisateur`, et optionnellement de `Emprunt` ou `Livre`) : implémenter en dernier côté backend, via des écouteurs d'événements ou déclenchements explicites à chaque mouvement (emprunt, retour, réservation)
+### Abonnements
 
-### Étape 6 — API REST
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/abonnements` | Tous les abonnements | Bibliothécaire |
+| GET | `/abonnements/{id}` | Un abonnement | Bibliothécaire |
+| GET | `/abonnements/utilisateur/{id}` | Abonnements d'un utilisateur | Propriétaire ou Bibliothécaire |
+| GET | `/abonnements/utilisateur/{id}/actif` | A un abonnement actif ? | Propriétaire ou Bibliothécaire |
+| POST | `/abonnements/utilisateur/{id}` | Créer un abonnement | Bibliothécaire |
+| PATCH | `/abonnements/{id}/statut?nouveauStatut=PAYE` | Changer le statut | Bibliothécaire |
+| DELETE | `/abonnements/{id}` | Supprimer un abonnement | Bibliothécaire |
 
-- Exposer les contrôleurs dans le même ordre (Utilisateur → Livre → Exemplaire → Emprunt/Reservation → Amende/Paiement → Historique/Notification)
-- Sécuriser les endpoints par rôle (JWT + Spring Security)
+### Notifications
 
-### Étape 7 — Frontend Angular
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/notifications/utilisateur/{id}` | Notifications d'un utilisateur | Propriétaire ou Bibliothécaire |
+| GET | `/notifications/utilisateur/{id}/non-lues` | Notifications non lues | Propriétaire ou Bibliothécaire |
+| GET | `/notifications/utilisateur/{id}/count` | Nombre non lues (badge) | Propriétaire ou Bibliothécaire |
+| POST | `/notifications/utilisateur/{id}` | Créer une notification | Bibliothécaire |
+| PATCH | `/notifications/{id}/lue` | Marquer comme lue | Authentifié |
+| PATCH | `/notifications/utilisateur/{id}/toutes-lues` | Tout marquer comme lu | Propriétaire ou Bibliothécaire |
+| DELETE | `/notifications/{id}` | Supprimer une notification | Bibliothécaire |
 
-- Modules dans le même ordre de dépendance : auth/utilisateurs → catalogue livres → emprunts/réservations → amendes/paiements → notifications/historique
-- Chaque module frontend n'est développable qu'une fois son endpoint backend disponible
+### Historique
 
-### Étape 8 — Fonctionnalités transverses
+| Méthode | Route | Description | Accès |
+|---|---|---|---|
+| GET | `/historique` | Tout l'historique | Bibliothécaire |
+| GET | `/historique/{id}` | Une entrée | Bibliothécaire |
+| GET | `/historique/utilisateur/{id}` | Historique d'un utilisateur | Bibliothécaire |
+| GET | `/historique/livre/{id}` | Historique d'un livre | Bibliothécaire |
+| GET | `/historique/type/{type}` | Par type d'action | Bibliothécaire |
 
-- Recherche/filtrage sur `Livre` (titre, auteur, ISBN, catégorie, langue, année)
-- Notifications automatiques (rappel avant échéance, alerte réservation disponible, alerte retard)
-- Statistiques et exports PDF/Excel (dépendent de `Emprunt` et `Historique` déjà peuplés)
+---
 
-### Étape 9 — Tests et cas limites
+## 7. Sécurité
 
-- Double réservation sur un même livre, exemplaire déjà emprunté, paiement sur abonnement expiré
-- Cohérence des statuts (`Emprunt.Statut`, `Reservation.Statut`, `Amende.Statut`, `Paiement.Statut`)
+### Authentification par JWT
 
-## Installation
+**JWT (JSON Web Token)** = un badge numérique. Quand un utilisateur se connecte, le serveur lui remet un token chiffré contenant son identifiant, son rôle et son id. Ce token est joint à chaque requête suivante dans l'en-tête HTTP.
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+```
+
+Le token expire après **24 heures**. Après expiration, l'utilisateur doit se reconnecter.
+
+### Niveaux d'accès
+
+| Niveau | Description |
+|---|---|
+| **Public** | Accessible sans connexion (catalogue de livres, login) |
+| **Authentifié** | Accessible à tout utilisateur connecté |
+| **Propriétaire ou Bibliothécaire** | Accessible à l'utilisateur concerné (ses propres données) ou au bibliothécaire |
+| **Bibliothécaire** | Réservé au rôle BIBLIOTHECAIRE uniquement |
+
+### Vérification des droits
+
+- **Niveau route** : `SecurityConfig.java` définit qui peut accéder à quelles routes.
+- **Niveau méthode** : `@PreAuthorize("hasRole('BIBLIOTHECAIRE')")` sur chaque endpoint sensible.
+- **Niveau propriété** : `SecurityUtils.verifierAccesPropriete()` vérifie qu'un utilisateur ne consulte que ses propres données.
+
+### Mots de passe
+
+Les mots de passe sont hachés avec **BCrypt** avant stockage. Le mot de passe en clair n'est jamais sauvegardé ni retourné par l'API (`@JsonIgnore`).
+
+---
+
+## 8. Automatisations planifiées
+
+Le serveur exécute automatiquement des tâches chaque nuit à **1h du matin** (`ScheduledTasks.java`).
+
+| Tâche | Déclencheur | Effet |
+|---|---|---|
+| Mise à jour des retards | Chaque nuit | Les emprunts dont la date de retour est dépassée passent au statut `EN_RETARD`. Une notification est envoyée à l'utilisateur. |
+| Expiration des abonnements | Chaque nuit | Les abonnements dont la date de fin est dépassée passent de `PAYE` à `EXPIRE`. |
+| Expiration des réservations | Chaque nuit | Les réservations `CONFIRMEE` non retirées après 48h passent à `ANNULEE`. L'exemplaire est libéré. La réservation suivante dans la file est confirmée automatiquement. |
+
+---
+
+## 9. Installation et démarrage
 
 ### Prérequis
 
-- JDK 17+
-- Node.js 18+ / npm
+- Java 21+
+- Node.js 18+ et npm
 - MySQL 8+
-- Maven
+- Maven 3.8+
 
-### Backend
+### Base de données
+
+```sql
+CREATE DATABASE bibliotheque CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### Configuration backend
+
+Dans `backend/src/main/resources/application.properties` :
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/bibliotheque
+spring.datasource.username=TON_UTILISATEUR_MYSQL
+spring.datasource.password=TON_MOT_DE_PASSE
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+
+app.jwt.secret=TON_SECRET_JWT_LONG_ET_ALEATOIRE
+```
+
+> Hibernate crée les tables automatiquement au premier démarrage (`ddl-auto=update`). Ne jamais créer les tables manuellement.
+
+### Démarrage backend
 
 ```bash
 cd backend
@@ -255,7 +395,9 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-### Frontend
+Le serveur démarre sur `http://localhost:8080`.
+
+### Démarrage frontend
 
 ```bash
 cd frontend
@@ -263,83 +405,55 @@ npm install
 ng serve
 ```
 
-### Base de données
+L'interface est accessible sur `http://localhost:4200`.
 
-```sql
-CREATE DATABASE bibliotheque;
-```
+### Ordre de création des données de test (Postman)
 
-Configurer les identifiants dans `backend/src/main/resources/application.properties`.
+Les entités ont des dépendances : créer dans cet ordre.
+
+1. `POST /auth/login` → récupérer le token (créer d'abord un bibliothécaire en base directement)
+2. `POST /utilisateurs` → créer des lecteurs
+3. `POST /livres` → créer des livres
+4. `POST /exemplaires/livre/{livreId}` → créer des exemplaires
+5. `POST /abonnements/utilisateur/{id}` → créer un abonnement
+6. `POST /paiements/abonnement/{id}` → payer l'abonnement (nécessaire pour emprunter)
+7. `POST /emprunts` → créer un emprunt
+8. `POST /reservations?utilisateurId=&livreId=` → créer une réservation
 
 ---
 
-## 14. Audit du code existant — Constats d'un expert
+## 10. Points d'attention pour la mise en production
 
-Cette section a été rédigée après lecture du code source réel (`backend/` et `frontend/`), pas seulement de la conception. Les constats sont classés par gravité. L'objectif n'est pas de critiquer le travail déjà fourni — la base est solide (couches propres, DTO, gestion d'erreurs centralisée, hachage BCrypt, JWT, historisation) — mais de lister objectivement ce qui empêche aujourd'hui une mise en production dans une vraie bibliothèque.
+### Corrections à apporter avant déploiement
 
-### 14.1 Critique — Sécurité (à corriger avant tout déploiement)
+| Priorité | Problème | Impact | Solution recommandée |
+|---|---|---|---|
+| 🔴 Critique | **Types de notifications incohérents** | Les services envoient des types (`"EMPRUNT"`, `"RETOUR"`, `"ANNULATION"`, `"RESERVATION_EXPIREE"`) qui n'existent pas dans l'enum `Notification.Type`. Le service fait un fallback silencieux vers `RAPPEL_RETOUR`, ce qui rend toutes ces notifications indiscernables. | Ajouter les types manquants à l'enum : `EMPRUNT, RETOUR, RETARD, ANNULATION, RESERVATION, RESERVATION_EXPIREE, PAIEMENT` |
+| 🔴 Critique | **Livres désactivés visibles dans le catalogue** | `LivreService.getAllLivres()` retourne tous les livres y compris ceux avec `actif = false`. Un livre "supprimé" reste visible dans le catalogue. | Ajouter `findByActifTrue()` dans `LivreRepository` et l'utiliser dans `getAllLivres()` et `searchLivres()` |
+| 🔴 Critique | **Bug d'expiration des réservations** | `expirerReservationsConfirmees()` compare `dateReservation + 2 jours` au lieu de la date de confirmation. Une réservation faite le 1er janvier et confirmée le 15 mars expirera immédiatement car `1er janvier + 2 jours < aujourd'hui`. | Ajouter un champ `dateConfirmation` dans `Reservation` et utiliser cette date pour le calcul des 48h |
+| 🔴 Critique | **Aucune transaction `@Transactional`** | Si une opération échoue à mi-chemin (ex: emprunt créé mais exemplaire non mis à jour), la base reste dans un état incohérent. | Ajouter `@Transactional` sur toutes les méthodes de service qui font plusieurs écritures en base |
+| 🟠 Important | **Paiements d'amendes non retournés dans `/paiements/utilisateur/{id}`** | `findByAbonnementUtilisateurId()` ne retourne que les paiements liés aux abonnements. Les paiements d'amendes sont invisibles. | Ajouter une méthode dans `PaiementRepository` qui combine les deux types |
+| 🟠 Important | **Aucun rappel avant échéance d'emprunt** | Le README décrit cette fonctionnalité mais elle n'est pas implémentée dans `ScheduledTasks`. | Ajouter une tâche qui envoie une notification 3 jours avant la date de retour prévue |
+| 🟡 Modéré | **Aucun rappel avant expiration d'abonnement** | Même problème : l'abonnement expire sans prévenir l'utilisateur. | Ajouter une tâche qui notifie 7 jours avant expiration |
+| 🟡 Modéré | **Statistiques et export non implémentés** | Le module `reports/` est prévu dans le README et le frontend mais aucun contrôleur n'existe côté backend. | Créer `StatistiqueController` avec les endpoints de reporting |
+| ⚪ Mineur | **`Exemplaire.id` est `Long` alors que les autres entités utilisent `Integer`** | Crée des conversions `intValue()` manuelles dans le code (ex: `LivreService`). | Uniformiser en `Integer` ou `Long` partout |
+| ⚪ Mineur | **Nommage non standard de l'enum `methode_paiement`** | La convention Java impose `MethodePaiement` (PascalCase) pour les enums, pas `methode_paiement`. | Renommer l'enum et le champ |
 
-**Aucune autorisation par rôle côté API.** `SecurityConfig` n'exige que `authenticated()` sur toutes les routes hors `/auth/**` et `GET /livres/**`. Il n'y a **aucune annotation `@PreAuthorize` ni `hasRole(...)`** dans tout le backend. Concrètement, un compte `PUBLIC` ou `ETUDIANT` authentifié peut aujourd'hui, via un simple appel API (Postman, curl, ou son propre token JWT) :
-- lister tous les utilisateurs de la bibliothèque (`GET /utilisateurs`), y compris emails et contacts ;
-- **créer un utilisateur avec le rôle `BIBLIOTHECAIRE`** (`POST /utilisateurs`, le champ `role` est fourni librement dans le corps de la requête) — c'est une escalade de privilèges complète ;
-- supprimer n'importe quel livre, utilisateur, ou annuler n'importe quelle amende.
+### Ce qui fonctionne correctement
 
-Le `roleGuard` Angular (`frontend/src/app/core/guards/role.guard.ts`) est purement cosmétique : il masque des liens dans l'interface, mais **ne protège rien côté serveur**. La sécurité doit toujours être imposée par le backend, jamais uniquement par le frontend.
-
-*Recommandation :* ajouter `@PreAuthorize("hasRole('BIBLIOTHECAIRE')")` sur les endpoints d'écriture sensibles (gestion des utilisateurs, livres, exemplaires, annulation d'amendes/paiements), et restreindre les endpoints de lecture personnelle (`/emprunts`, `/notifications`, `/amendes`) à l'utilisateur concerné ou au bibliothécaire.
-
-### 14.2 Critique — Aucune tâche planifiée (cron)
-
-Les méthodes `EmpruntService.mettreAJourRetards()`, `AbonnementService.expireAbonnementsDepasses()` existent et sont fonctionnellement correctes, mais **rien ne les appelle automatiquement** (aucun `@Scheduled`, aucun `@EnableScheduling` sur `BibestaApplication`). En l'état, un emprunt ne passera jamais en retard, une amende ne sera jamais générée automatiquement, et un abonnement expiré restera marqué `PAYE`, **sauf si un bibliothécaire déclenche ces actions manuellement** — ce qui n'est réaliste pour aucune bibliothèque.
-
-*Recommandation :* ajouter `@EnableScheduling` et exécuter ces méthodes via `@Scheduled(cron = "0 0 1 * * *")` (une fois par jour, nuit), ainsi qu'une tâche pour les rappels avant échéance (module 5 du README) et l'expiration des réservations confirmées (§14.3).
-
-### 14.3 Important — La réservation ne verrouille pas l'exemplaire
-
-Dans `ReservationService.confirmerReservationsSiDisponible()`, quand un exemplaire redevient disponible, la réservation passe en `CONFIRMEE` et une notification est envoyée ("venez le récupérer dans les 48h"), **mais l'exemplaire reste à l'état `DISPONIBLE`**. Rien n'empêche un autre lecteur d'emprunter ce même exemplaire avant que la personne qui a réservé ne se présente au guichet. La réservation, dans son état actuel, n'a donc aucune valeur contraignante — c'est une notification, pas un blocage.
-
-*Recommandation :* faire passer l'exemplaire à un état `RESERVE` (distinct de `DISPONIBLE`) à la confirmation, et prévoir la tâche planifiée qui le repasse en `DISPONIBLE` (et relance la réservation suivante dans la file) si le lecteur ne s'est pas présenté après le délai.
-
-Par ailleurs, `ReservationRepository.findByLivreIdAndStatut(...)` n'est trié par aucune date : "la première réservation en attente" (`enAttente.get(0)`) n'est donc pas garantie être la plus ancienne. Pour respecter le principe premier-arrivé/premier-servi attendu dans une bibliothèque, la requête doit être triée par `dateReservation ASC`.
-
-### 14.4 Important — Emprunt sans vérification d'éligibilité du lecteur
-
-`EmpruntService.creerEmprunt()` vérifie uniquement la disponibilité de l'exemplaire. Il ne vérifie ni :
-- que l'utilisateur a un abonnement actif et payé (`AbonnementService.hasAbonnementActif` existe déjà mais n'est jamais appelé depuis `EmpruntService`) ;
-- que l'utilisateur n'a pas d'amende impayée bloquante ;
-- qu'il n'a pas dépassé un plafond d'emprunts simultanés ;
-- que son compte n'est pas suspendu (le champ n'existe même pas encore, voir §14.6).
-
-Dans une bibliothèque réelle, ce sont typiquement les premiers contrôles effectués au guichet avant même de regarder si un livre est disponible.
-
-### 14.5 Modéré — Modélisation `Exemplaire.Etat`
-
-L'énumération actuelle mélange deux notions différentes : la disponibilité (`DISPONIBLE`, `EMPRUNTE`, `RESERVE`, `EN_REPARATION`) et l'état physique (`BON_ETAT`, `MAUVAIS_ETAT`). Un même exemplaire peut pourtant être simultanément "emprunté" ET "en mauvais état" — ces deux informations doivent être portées par deux champs distincts, sinon certaines combinaisons légitimes deviennent impossibles à représenter.
-
-### 14.6 Modéré — Aucune gestion de compte suspendu/désactivé
-
-Le frontend prévoit déjà une icône et un badge "Compte désactivé / Bloquer" (`LucideCircleOff`, rapport de design §6), mais le modèle `Utilisateur` backend n'a aucun champ `statut`. Un bibliothécaire ne peut donc pas aujourd'hui bloquer un lecteur indélicat (livre perdu non remboursé, comportement abusif) sans supprimer purement et simplement son compte — ce qui détruit son historique.
-
-### 14.7 Mineur — Suppression physique des données
-
-`UtilisateurService.deleteById()` et `LivreService.deleteLivre()` effectuent une suppression physique (`repository.deleteById`). Pour une bibliothèque, la suppression d'un lecteur ou d'un livre ayant un historique d'emprunts pose un double problème : perte de traçabilité (utile en cas de litige sur un livre non rendu) et risque d'échec par contrainte de clé étrangère (`Emprunt`, `Historique`, `Amende` référencent ces entités). Une désactivation logique (`Statut = DESACTIVE` / champ `actif = false`) est préférable à une suppression réelle.
-
-### 14.8 Mineur — Incohérences de documentation / doublons de code
-
-- Le tableau "Endpoints API" original documentait des routes `/api/...` (ex. `/api/users`, `/api/books`) qui **n'existent pas dans le code** ; les routes réelles n'ont pas de préfixe `/api` et sont en français (`/utilisateurs`, `/livres`). Corrigé dans la section correspondante ci-dessus.
-- `ReservationService.creerReservation()` envoie **deux fois** la même notification de confirmation (bloc dupliqué) — un lecteur reçoit deux notifications identiques pour une seule réservation.
-- L'entité `Livre` contient deux champs (`genre`, `nombrePages`) absents du MCD documenté en §"Modèle de données" — à ajouter au MCD ou à retirer du modèle si non utilisés, pour que la documentation reste fidèle au code.
-- Aucune pagination sur `GET /livres`, `GET /livres/search`, `GET /utilisateurs` : pour un catalogue de plusieurs milliers d'ouvrages, retourner la liste entière à chaque appel deviendra un problème de performance. Une pagination Spring Data (`Pageable`) est recommandée avant mise en production.
-
-### 14.9 Synthèse — Priorités avant mise en service réelle
-
-| Priorité | Action | Impact si non traité |
-|---|---|---|
-| P0 | Ajouter les vérifications de rôle (`@PreAuthorize`) sur les endpoints d'écriture | Faille de sécurité exploitable par n'importe quel compte lecteur |
-| P0 | Activer `@Scheduled` pour retards, expiration d'abonnements, rappels | Le système ne détecte jamais un retard tout seul |
-| P1 | Verrouiller l'exemplaire à la confirmation d'une réservation + expiration après délai | Les réservations n'ont aucune valeur contraignante |
-| P1 | Vérifier abonnement actif + amendes impayées + quota avant de créer un emprunt | Le système ne peut pas faire respecter les règles de prêt d'une vraie bibliothèque |
-| P2 | Ajouter le statut de compte (actif/suspendu) | Impossible de sanctionner un lecteur indélicat sans supprimer son compte |
-| P2 | Séparer état physique / statut de disponibilité de l'exemplaire | États incohérents impossibles à représenter |
-| P3 | Passer les suppressions physiques en désactivation logique | Perte d'historique, risques de contrainte FK |
-| P3 | Pagination des listes, tri FIFO des réservations, corrections mineures listées en §14.8 | Dette technique, pas bloquant à court terme |
+- ✅ Authentification JWT complète (génération, validation, extraction du rôle et de l'id)
+- ✅ Autorisation par rôle sur tous les endpoints (`@PreAuthorize` + `SecurityConfig`)
+- ✅ Protection des données personnelles (`SecurityUtils.verifierAccesPropriete`)
+- ✅ Toutes les règles d'éligibilité à l'emprunt (statut compte, abonnement, amendes, quota)
+- ✅ File d'attente FIFO pour les réservations
+- ✅ Verrouillage de l'exemplaire à la confirmation de réservation
+- ✅ Calcul et création automatique des amendes au retour
+- ✅ Tâches planifiées (retards, abonnements expirés, réservations expirées)
+- ✅ Historisation automatique de toutes les actions
+- ✅ Suppressions logiques (utilisateurs et livres)
+- ✅ Hachage BCrypt des mots de passe
+- ✅ Gestion centralisée des erreurs avec codes HTTP corrects
+- ✅ Séparation état physique / disponibilité des exemplaires
+- ✅ Pagination sur les listes de livres et utilisateurs
+- ✅ Validation ISBN (format 10 ou 13 chiffres)
+- ✅ Contrainte : un paiement = un abonnement OU une amende, jamais les deux

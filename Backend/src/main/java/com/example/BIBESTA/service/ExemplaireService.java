@@ -4,6 +4,7 @@ import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Exemplaire;
 import com.example.BIBESTA.model.Exemplaire.Etat;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.model.Livre;
 import com.example.BIBESTA.repository.ExemplaireRepository;
 import com.example.BIBESTA.repository.LivreRepository;
@@ -37,12 +38,14 @@ public class ExemplaireService {
 
     // Retourne les exemplaires disponibles d'un livre
     public List<Exemplaire> findDisponiblesByLivreId(Integer livreId) {
-        return exemplaireRepository.findByLivreIdAndEtat(livreId, Etat.DISPONIBLE);
+        return exemplaireRepository.findByLivreIdAndStatutDisponibilite(
+                livreId, StatutDisponibilite.DISPONIBLE);
     }
 
     // Vérifie si un livre a au moins un exemplaire disponible
     public boolean hasExemplaireDisponible(Integer livreId) {
-        return exemplaireRepository.countByLivreIdAndEtat(livreId, Etat.DISPONIBLE) > 0;
+        return exemplaireRepository.countByLivreIdAndStatutDisponibilite(
+                livreId, StatutDisponibilite.DISPONIBLE) > 0;
     }
 
     // Crée un nouvel exemplaire pour un livre

@@ -6,6 +6,7 @@ import com.example.BIBESTA.service.ExemplaireService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -44,6 +45,7 @@ public class ExemplaireController {
 
     // POST /api/exemplaires/livre/1 → crée un exemplaire pour le livre 1
     @PostMapping("/livre/{livreId}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> save(
             @PathVariable Integer livreId,
             @RequestBody Exemplaire exemplaire) {
@@ -57,6 +59,7 @@ public class ExemplaireController {
 
     // PATCH /api/exemplaires/1/etat?nouvelEtat=EMPRUNTE → change l'état
     @PatchMapping("/{id}/etat")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     // @PatchMapping = modification partielle (juste l'état, pas tout l'objet)
     public ResponseEntity<?> updateEtat(
             @PathVariable Integer id,
@@ -71,6 +74,7 @@ public class ExemplaireController {
 
     // DELETE /api/exemplaires/1 → supprime un exemplaire
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> deleteById(@PathVariable Integer id) {
         try {
             exemplaireService.deleteById(id);

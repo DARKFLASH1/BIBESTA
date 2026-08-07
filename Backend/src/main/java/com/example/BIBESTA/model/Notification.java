@@ -24,7 +24,20 @@ public class Notification {
     private Type type;
 
     public enum Type {
-        RETARD, RESERVATION_DISPONIBLE, AMENDE, RAPPEL_RETOUR, ABONNEMENT_EXPIRE
+        // Types envoyés automatiquement par les services
+        EMPRUNT, // confirmation d'un nouvel emprunt
+        RETOUR, // retour enregistré sans retard
+        RETARD, // emprunt passé en retard
+        RESERVATION, // confirmation de création d'une réservation
+        RESERVATION_DISPONIBLE, // exemplaire disponible → venir récupérer
+        RESERVATION_EXPIREE, // réservation confirmée non retirée après 48h
+        AMENDE, // amende créée automatiquement
+        PAIEMENT, // paiement d'amende ou d'abonnement confirmé
+        ANNULATION, // réservation annulée
+        // Types planifiés (à implémenter dans ScheduledTasks)
+        RAPPEL_RETOUR, // rappel J-3 avant date de retour
+        ABONNEMENT_EXPIRE, // abonnement arrivé à expiration
+        RAPPEL_ABONNEMENT // rappel J-7 avant expiration abonnement
     }
 
     @Column(name = "contenu", columnDefinition = "TEXT")

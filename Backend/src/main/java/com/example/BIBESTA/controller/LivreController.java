@@ -3,89 +3,101 @@ package com.example.BIBESTA.controller;
 import com.example.BIBESTA.model.Livre;
 import com.example.BIBESTA.service.LivreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/livres") // Toutes les URL de ce contrôleur commenceront par /livres
+@RequestMapping("/livres")
 @RequiredArgsConstructor
 public class LivreController {
 
     private final LivreService livreService;
 
-    // =====================
-    // LIRE
-    // =====================
+    // ─────────────────────────────────────────
+    // ENDPOINTS PAGINÉS (nouveaux — à utiliser côté Angular)
+    // ─────────────────────────────────────────
 
-    // GET /livres → retourne tous les livres
-    @GetMapping
-    public ResponseEntity<List<Livre>> getAllLivres() {
-        List<Livre> livres = livreService.getAllLivres();
-        return ResponseEntity.ok(livres);
+    // GET /livres/page?page=0&size=10&sort=titre
+    // Retourne une page de livres avec les infos de pagination
+    // Exemple de réponse : { content: [...], totalPages: 5, totalElements: 48 }
+    @GetMapping("/page")
+    public ResponseEntity<Page<Livre>> getAllLivresPagines(
+            // @RequestParam(defaultValue = "0") = si le paramètre est absent, on prend 0
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "titre") String sort) {
+
+        // PageRequest.of = crée l'objet Pageable avec page + taille + tri
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
+        return ResponseEntity.ok(livreService.getAllLivresPagines(pageable));
     }
 
-    // GET /livres/123 → retourne un livre par son ID
+    // GET /livres/search/page?query=java&page=0&size=10
+    // Recherche paginée dans titre, auteur et catégorie
+    @GetMapping("/search/page")
+    public ResponseEntity<Page<Livre>> searchLivresPagines(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("titre").ascending());
+        return ResponseEntity.ok(livreService.searchLivresPagines(query, pageable));
+    }
+
+    // ─────────────────────────────────────────
+    // ENDPOINTS EXISTANTS (conservés pour compatibilité)
+    // ─────────────────────────────────────────
+
+    @GetMapping
+    public ResponseEntity<List<Livre>> getAllLivres() {
+        return ResponseEntity.ok(livreService.getAllLivres());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Livre> getLivreById(@PathVariable Integer id) {
         return livreService.getLivreById(id)
-                .map(ResponseEntity::ok) // Si trouvé → ResponseEntity.ok(livre)
-                .orElse(ResponseEntity.notFound().build()); // Si pas trouvé → 404
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // =====================
-    // CRÉER
-    // =====================
-
-    // POST /livres → crée un nouveau livre
     @PostMapping
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Livre> createLivre(@RequestBody Livre livre) {
         try {
-            Livre savedLivre = livreService.saveLivre(livre);
-            return ResponseEntity.ok(savedLivre);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null); // En cas d'erreur → 400 Bad Request
-        }
-    }
-
-    // =====================
-    // METTRE À JOUR
-    // =====================
-
-    // PUT /livres/123 → met à jour le livre avec l'ID 123
-    @PutMapping("/{id}")
-    public ResponseEntity<Livre> updateLivre(@PathVariable Integer id, @RequestBody Livre livreDetails) {
-        try {
-            Livre updatedLivre = livreService.updateLivre(id, livreDetails);
-            return ResponseEntity.ok(updatedLivre);
+            return ResponseEntity.ok(livreService.saveLivre(livre));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);
         }
     }
 
-    // =====================
-    // SUPPRIMER
-    // =====================
-
-    // DELETE /livres/123 → supprime le livre avec l'ID 123
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteLivre(@PathVariable Integer id) {
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
+    public ResponseEntity<Livre> updateLivre(
+            @PathVariable Integer id, @RequestBody Livre livreDetails) {
         try {
-            livreService.deleteLivre(id);
-            return ResponseEntity.ok().build(); // 200 OK sans corps
+            return ResponseEntity.ok(livreService.updateLivre(id, livreDetails));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build(); // 404 Not Found
+            return ResponseEntity.badRequest().body(null);
         }
     }
 
-    // =====================
-    // RECHERCHE
-    // =====================
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
+    public ResponseEntity<?> deleteLivre(@PathVariable Integer id) {
+        try {
+            livreService.deleteLivre(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
-    // GET /livres/search?titre=Java&auteur=Smith
-    // GET /livres/search?titre=Java
-    // GET /livres/search?auteur=Smith
     @GetMapping("/search")
     public ResponseEntity<List<Livre>> searchLivres(
             @RequestParam(required = false) String titre,
@@ -94,8 +106,7 @@ public class LivreController {
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) String langue,
             @RequestParam(required = false) String categorie) {
-
-        List<Livre> livres = livreService.searchLivres(titre, auteur, isbn, genre, langue, categorie);
-        return ResponseEntity.ok(livres);
+        return ResponseEntity.ok(
+                livreService.searchLivres(titre, auteur, isbn, genre, langue, categorie));
     }
 }
