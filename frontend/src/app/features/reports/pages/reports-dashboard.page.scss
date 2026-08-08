@@ -1,0 +1,220 @@
+.reports-page {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-main);
+  font-size: var(--text-2xl);
+}
+
+.erreur-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: var(--space-4) 0;
+}
+
+/* ── Cartes KPI ─────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--text-muted);
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.kpi-card.success { color: var(--success); }
+.kpi-card.warning { color: var(--warning); }
+.kpi-card.danger  { color: var(--danger); }
+.kpi-card.info    { color: var(--info); }
+
+.kpi-nb {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--text-main);
+}
+.kpi-label {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* ── Panneaux secondaires ───────────────────────── */
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-6);
+}
+
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--text-main);
+  margin-bottom: var(--space-4);
+}
+
+.mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.mini-row:last-child { border-bottom: none; }
+.montant { font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--text-main); }
+
+.badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: var(--text-xs);
+  padding: .25rem .75rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger); }
+
+/* ── Graphique en barres verticales (emprunts/mois) ── */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  height: 200px;
+  padding-top: var(--space-4);
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.bar-value {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.bar {
+  width: 100%;
+  max-width: 40px;
+  background: linear-gradient(180deg, #8A6A2F, #C1A466);
+  border-radius: 6px 6px 0 0;
+  min-height: 4px; /* toujours visible même à 0 */
+  transition: var(--transition);
+}
+
+.bar-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+}
+
+/* ── Graphique en barres horizontales (top livres) ── */
+.hbar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 40px;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.hbar-titre {
+  font-size: var(--text-sm);
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hbar-track {
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  height: 20px;
+  overflow: hidden;
+}
+
+.hbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8A6A2F, #C1A466);
+  border-radius: var(--radius-sm);
+  min-width: 4px;
+  transition: var(--transition);
+}
+
+.hbar-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-main);
+  text-align: right;
+}
+
+/* ── État vide ──────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--text-muted);
+}
+.empty-icon { color: var(--text-light); margin-bottom: var(--space-2); }
+
+/* ── Skeleton ───────────────────────────────────── */
+.skeleton-card { gap: var(--space-2); }
+.skeleton {
+  background: linear-gradient(90deg, #F1EADA 25%, #E6DFCE 50%, #F1EADA 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+.sk-icon  { width: 22px; height: 22px; border-radius: 50%; }
+.sk-nb    { width: 50%; height: 28px; }
+.sk-label { width: 80%; height: 14px; }
+
+@keyframes loading-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Accessibilité : mouvement réduit ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card, .bar, .hbar-fill { transition: none; }
+  .skeleton { animation: none; background: var(--surface-sunken); }
+}

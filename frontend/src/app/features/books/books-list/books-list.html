@@ -153,10 +153,13 @@
       <div class="form-grid">
         <div class="form-group full-width">
           <label>Titre *</label>
-          <input class="form-control"
-            [(ngModel)]="livreEnCours().titre"
-            (ngModelChange)="livreEnCours.update(l => ({...l, titre: $event}))"
-            placeholder="ex: Les Misérables" />
+          <div class="form-group full-width">
+            <label>Titre *</label>
+            <input class="form-control"
+              [ngModel]="livreEnCours().titre"
+              (ngModelChange)="livreEnCours.update(l => ({...l, titre: $event}))"
+              placeholder="ex: Les Misérables" />
+          </div>
         </div>
         <div class="form-group full-width">
           <label>Auteur *</label>

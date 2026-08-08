@@ -1,0 +1,164 @@
+<div class="reports-page">
+
+  <!-- ── EN-TÊTE ─────────────────────────────────── -->
+  <div class="page-header">
+    <h1>
+      <svg lucideBarChart3 size="26"></svg>
+      Statistiques &amp; Rapports
+    </h1>
+  </div>
+
+  <!-- ── ERREUR ───────────────────────────────────── -->
+  <div class="erreur-banner" role="alert" *ngIf="erreur()">
+    <svg lucideAlertTriangle size="18"></svg>
+    {{ erreur() }}
+  </div>
+
+  <!-- ── SKELETON (chargement) ───────────────────── -->
+  <div class="kpi-grid" *ngIf="loading()">
+    <div class="kpi-card skeleton-card" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+      <div class="skeleton sk-icon"></div>
+      <div class="skeleton sk-nb"></div>
+      <div class="skeleton sk-label"></div>
+    </div>
+  </div>
+
+  <!-- ── CONTENU RÉEL ─────────────────────────────── -->
+  <ng-container *ngIf="!loading() && data() as d">
+
+    <!-- Cartes chiffres-clés -->
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <svg lucideBookOpen size="22"></svg>
+        <span class="kpi-nb">{{ d.totalLivres }}</span>
+        <span class="kpi-label">Livres actifs</span>
+      </div>
+
+      <div class="kpi-card success">
+        <svg lucideCheckCircle2 size="22"></svg>
+        <span class="kpi-nb">{{ d.exemplairesDisponibles }}</span>
+        <span class="kpi-label">Exemplaires disponibles</span>
+      </div>
+
+      <div class="kpi-card warning">
+        <svg lucideBookmark size="22"></svg>
+        <span class="kpi-nb">{{ d.exemplairesEmpruntes }}</span>
+        <span class="kpi-label">Exemplaires empruntés</span>
+      </div>
+
+      <div class="kpi-card info">
+        <svg lucideCalendarClock size="22"></svg>
+        <span class="kpi-nb">{{ d.exemplairesReserves }}</span>
+        <span class="kpi-label">Exemplaires réservés</span>
+      </div>
+
+      <div class="kpi-card danger">
+        <svg lucideBookX size="22"></svg>
+        <span class="kpi-nb">{{ d.exemplairesEnReparation }}</span>
+        <span class="kpi-label">En réparation</span>
+      </div>
+
+      <div class="kpi-card warning">
+        <svg lucideClock size="22"></svg>
+        <span class="kpi-nb">{{ d.empruntsEnCours }}</span>
+        <span class="kpi-label">Emprunts en cours</span>
+      </div>
+
+      <div class="kpi-card danger">
+        <svg lucideAlertTriangle size="22"></svg>
+        <span class="kpi-nb">{{ d.empruntsEnRetard }}</span>
+        <span class="kpi-label">Emprunts en retard</span>
+      </div>
+
+      <div class="kpi-card info">
+        <svg lucideCalendarClock size="22"></svg>
+        <span class="kpi-nb">{{ d.reservationsEnAttente }}</span>
+        <span class="kpi-label">Réservations en attente</span>
+      </div>
+
+    </div>
+
+    <!-- Amendes + utilisateurs -->
+    <div class="secondary-grid">
+
+      <div class="panel">
+        <h2><svg lucideCreditCard size="18"></svg> Amendes</h2>
+        <div class="mini-row">
+          <span class="badge badge-danger">
+            <svg lucideAlertTriangle size="14"></svg>
+            En attente
+          </span>
+          <span class="montant">{{ d.montantAmendesEnAttente | number }} FCFA</span>
+        </div>
+        <div class="mini-row">
+          <span class="badge badge-success">
+            <svg lucideCheckCircle2 size="14"></svg>
+            Payées
+          </span>
+          <span class="montant">{{ d.montantAmendesPayees | number }} FCFA</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><svg lucideUsers size="18"></svg> Utilisateurs actifs par rôle</h2>
+        <div class="mini-row">
+          <span>Étudiants</span>
+          <span class="montant">{{ d.utilisateursEtudiants }}</span>
+        </div>
+        <div class="mini-row">
+          <span>Enseignants</span>
+          <span class="montant">{{ d.utilisateursEnseignants }}</span>
+        </div>
+        <div class="mini-row">
+          <span>Public</span>
+          <span class="montant">{{ d.utilisateursPublic }}</span>
+        </div>
+        <div class="mini-row">
+          <span>Bibliothécaires</span>
+          <span class="montant">{{ d.utilisateursBibliothecaires }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Graphique 1 : emprunts par mois -->
+    <div class="panel chart-panel">
+      <h2>Emprunts — 6 derniers mois</h2>
+
+      <div class="empty-state" *ngIf="d.empruntsParMois.length === 0">
+        <svg lucideBookOpen size="40" class="empty-icon"></svg>
+        <p>Aucun emprunt sur cette période.</p>
+      </div>
+
+      <div class="bar-chart" *ngIf="d.empruntsParMois.length > 0">
+        <div class="bar-col" *ngFor="let m of d.empruntsParMois">
+          <span class="bar-value">{{ m.total }}</span>
+          <div class="bar" [style.height.%]="hauteurBarre(m.total)"></div>
+          <span class="bar-label">{{ m.mois }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique 2 : top livres -->
+    <div class="panel chart-panel">
+      <h2>Top 5 des livres les plus empruntés</h2>
+
+      <div class="empty-state" *ngIf="d.topLivres.length === 0">
+        <svg lucideBookOpen size="40" class="empty-icon"></svg>
+        <p>Aucun emprunt enregistré pour l'instant.</p>
+      </div>
+
+      <div class="hbar-chart" *ngIf="d.topLivres.length > 0">
+        <div class="hbar-row" *ngFor="let l of d.topLivres">
+          <span class="hbar-titre" [title]="l.titre">{{ l.titre }}</span>
+          <div class="hbar-track">
+            <div class="hbar-fill" [style.width.%]="largeurBarre(l.nombreEmprunts)"></div>
+          </div>
+          <span class="hbar-value">{{ l.nombreEmprunts }}</span>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

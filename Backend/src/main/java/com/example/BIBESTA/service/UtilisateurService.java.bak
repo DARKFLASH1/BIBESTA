@@ -81,6 +81,10 @@ public class UtilisateurService {
         return utilisateurRepository.save(existant);
     }
 
+    public Page<Utilisateur> findAllPagines(Pageable pageable) {
+        // JpaRepository fournit findAll(Pageable) automatiquement
+        return utilisateurRepository.findAll(pageable);
+    }
 
     public void deleteById(Integer id) {
         Utilisateur utilisateur = utilisateurRepository.findById(id)

@@ -10,26 +10,30 @@ import java.util.List;
 @Repository
 public interface EmpruntRepository extends JpaRepository<Emprunt, Integer> {
 
-    // Tous les emprunts d'un utilisateur
-    List<Emprunt> findByUtilisateurId(Integer utilisateurId);
+        // Tous les emprunts d'un utilisateur
+        List<Emprunt> findByUtilisateurId(Integer utilisateurId);
 
-    // Emprunts d'un utilisateur par statut
-    // Ex: tous les emprunts EN_COURS de Bachar
-    List<Emprunt> findByUtilisateurIdAndStatut(
-            Integer utilisateurId,
-            Statut statut);
+        // Emprunts d'un utilisateur par statut
+        // Ex: tous les emprunts EN_COURS de Bachar
+        List<Emprunt> findByUtilisateurIdAndStatut(
+                        Integer utilisateurId,
+                        Statut statut);
 
-    // Tous les emprunts par statut
-    List<Emprunt> findByStatut(Statut statut);
+        // Tous les emprunts par statut
+        List<Emprunt> findByStatut(Statut statut);
 
-    // Emprunts en retard :
-    // EN_COURS et dont la date de retour prévue est dépassée
-    List<Emprunt> findByStatutAndDateRetourPrevueBefore(
-            Statut statut,
-            LocalDate date);
+        // Emprunts en retard :
+        // EN_COURS et dont la date de retour prévue est dépassée
+        List<Emprunt> findByStatutAndDateRetourPrevueBefore(
+                        Statut statut,
+                        LocalDate date);
 
-    // Vérifie si un exemplaire est actuellement emprunté
-    boolean existsByExemplaireIdAndStatut(
-            Integer exemplaireId,
-            Statut statut);
+        // Vérifie si un exemplaire est actuellement emprunté
+        boolean existsByExemplaireIdAndStatut(
+                        Integer exemplaireId,
+                        Statut statut);
+
+        // Compte les emprunts par statut (raccourci plus léger que
+        // findByStatut().size())
+        long countByStatut(Statut statut);
 }

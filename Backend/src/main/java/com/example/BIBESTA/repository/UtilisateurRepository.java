@@ -22,4 +22,7 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Intege
 
     // Vérifie si un identifiant existe déjà
     boolean existsByIdentifiant(String identifiant);
+
+    // Compte les utilisateurs actifs par rôle
+    long countByRoleAndStatut(Utilisateur.Role role, Utilisateur.Statut statut);
 }
