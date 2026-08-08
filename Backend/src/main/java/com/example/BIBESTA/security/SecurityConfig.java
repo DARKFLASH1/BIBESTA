@@ -58,6 +58,8 @@ public class SecurityConfig {
                                                 .hasRole("BIBLIOTHECAIRE")
                                                 .requestMatchers(HttpMethod.GET, "/historique", "/historique/**")
                                                 .hasRole("BIBLIOTHECAIRE")
+                                                .requestMatchers(HttpMethod.GET, "/statistiques/**")
+                                                .hasRole("BIBLIOTHECAIRE")
                                                 .requestMatchers(HttpMethod.GET, "/notifications",
                                                                 "/notifications/{id}")
                                                 .hasRole("BIBLIOTHECAIRE")

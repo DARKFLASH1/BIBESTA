@@ -26,4 +26,11 @@ public interface AmendeRepository extends JpaRepository<Amende, Integer> {
 
     // Trouve l'amende d'un emprunt précis
     Optional<Amende> findByEmpruntId(Integer empruntId);
+
+    // Somme des montants des amendes, filtrée par statut
+    // JPQL = requête écrite en "langage objet" au lieu de SQL brut
+    // On l'utilise ici car Spring Data ne sait pas générer un SUM() tout seul
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(a.montant), 0) FROM Amende a WHERE a.statut = :statut")
+    java.math.BigDecimal sommeMontantParStatut(
+            @org.springframework.data.repository.query.Param("statut") Statut statut);
 }

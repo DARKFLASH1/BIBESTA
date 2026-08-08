@@ -38,4 +38,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
         // Toutes les réservations par statut
         List<Reservation> findByStatut(Statut statut);
+
+        // Compte les réservations par statut
+        long countByStatut(Statut statut);
 }
