@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 src/main/resources/application.properties
 bibliotheque.sql
+*.class
 ### STS ###
 .apt_generated
 .classpath
@@ -19,6 +20,7 @@ bibliotheque.sql
 *.iws
 *.iml
 *.ipr
+*.code-workspace
 
 ### NetBeans ###
 /nbproject/private/
@@ -32,3 +34,9 @@ build/
 
 ### VS Code ###
 .vscode/
+spring.log
+bibliotheque.mv.db
+application.properties
+*.env
+.claude/
+.claude
