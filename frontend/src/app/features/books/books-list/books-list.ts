@@ -51,6 +51,7 @@ export class BooksListPage implements OnInit {
   };
 
   // ── Modal ajout/modification ──────────────────────
+  erreurModal = signal(''); 
   modalOuvert  = signal(false);
   modeEdition  = signal(false);           // false = ajout, true = modif
   livreEnCours = signal<Livre>({          // livre dans le formulaire modal
@@ -115,6 +116,7 @@ export class BooksListPage implements OnInit {
 
   // ── Modal ─────────────────────────────────────────
   ouvrirModalAjout(): void {
+    this.erreurModal.set(''); 
     this.modeEdition.set(false);
     this.livreEnCours.set({
       titre: '', auteur: '', edition: '',
@@ -125,6 +127,7 @@ export class BooksListPage implements OnInit {
   }
 
   ouvrirModalModif(livre: Livre): void {
+    this.erreurModal.set(''); 
     this.modeEdition.set(true);
     // Copie le livre pour ne pas modifier la liste directement
     this.livreEnCours.set({ ...livre });
@@ -136,36 +139,42 @@ export class BooksListPage implements OnInit {
   }
 
   sauvegarder(): void {
-    const livre = this.livreEnCours();
-    if (!livre.titre || !livre.auteur) return; // validation minimale
-
-    this.sauvegarde.set(true);
-
-    if (this.modeEdition() && livre.id) {
-      // Modification
-      this.livreService.modifier(livre.id, livre).subscribe({
-        next: (updated) => {
-          // Met à jour uniquement le livre modifié dans la liste
-          this.livres.update(list =>
-            list.map(l => l.id === updated.id ? updated : l)
-          );
-          this.sauvegarde.set(false);
-          this.fermerModal();
-        },
-        error: () => this.sauvegarde.set(false)
-      });
-    } else {
-      // Création
-      this.livreService.creer(livre).subscribe({
-        next: (nouveau) => {
-          this.livres.update(list => [nouveau, ...list]); // ajoute en tête
-          this.sauvegarde.set(false);
-          this.fermerModal();
-        },
-        error: () => this.sauvegarde.set(false)
-      });
-    }
+  const livre = this.livreEnCours();
+  if (!livre.titre || !livre.auteur) {
+    this.erreurModal.set('Le titre et l\'auteur sont obligatoires.');
+    return;
   }
+
+  this.sauvegarde.set(true);
+  this.erreurModal.set('');
+
+  if (this.modeEdition() && livre.id) {
+    this.livreService.modifier(livre.id, livre).subscribe({
+      next: (updated) => {
+        this.livres.update(list => list.map(l => l.id === updated.id ? updated : l));
+        this.sauvegarde.set(false);
+        this.fermerModal();
+      },
+      error: (err) => {
+        this.sauvegarde.set(false);
+        this.erreurModal.set(err.error?.message || 'Erreur lors de la modification.');
+      }
+    });
+  } else {
+    this.livreService.creer(livre).subscribe({
+      next: (nouveau) => {
+        this.livres.update(list => [nouveau, ...list]);
+        this.sauvegarde.set(false);
+        this.fermerModal();
+      },
+      error: (err) => {
+        this.sauvegarde.set(false);
+        // err.error.message = ce que Spring Boot renvoie maintenant grâce au fix ci-dessus
+        this.erreurModal.set(err.error?.message || 'Erreur lors de la création du livre.');
+      }
+    });
+  }
+}
 
   supprimer(livre: Livre): void {
     if (!livre.id) return;

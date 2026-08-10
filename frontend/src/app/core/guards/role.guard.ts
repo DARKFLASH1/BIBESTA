@@ -6,15 +6,17 @@ export const roleGuard = (route: ActivatedRouteSnapshot) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Récupère le rôle requis défini dans les routes
-  const roleRequis = route.data['role'];
+  // La route définit maintenant une LISTE de rôles autorisés :
+  // data: { roles: ['BIBLIOTHECAIRE'] }
+  const rolesAutorises: string[] = route.data['roles'] ?? [];
   const roleActuel = authService.getRole();
 
-  if (roleActuel === roleRequis) {
-    return true;  // bon rôle → accès autorisé
+  if (roleActuel && rolesAutorises.includes(roleActuel)) {
+    return true;
   }
 
-  // Mauvais rôle → redirige vers dashboard
-  router.navigate(['/dashboard']);
+  // Mauvais rôle → renvoie vers une page qui existe réellement
+  // (l'ancienne version redirigeait vers '/dashboard', qui n'existe pas dans tes routes)
+  router.navigate(['/books']);
   return false;
 };
