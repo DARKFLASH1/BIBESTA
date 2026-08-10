@@ -32,12 +32,12 @@ export class NotificationsListPage implements OnInit {
   private http        = inject(HttpClient);
   private authService = inject(AuthService);
 
-  utilisateurId = this.authService.getCurrentUserId();
-
-  notifications  = signal<Notification[]>([]);
-  loading        = signal(true);
-  erreur         = signal('');
-  filtreActif    = signal<string>('tous');
+  utilisateurId     = this.authService.getCurrentUserId();
+  estBibliothecaire = this.authService.isBibliothecaire();
+  notifications     = signal<Notification[]>([]);
+  loading           = signal(true);
+  erreur            = signal('');
+  filtreActif       = signal<string>('tous');
 
   notificationsFiltrees = computed(() => {
     const filtre = this.filtreActif();

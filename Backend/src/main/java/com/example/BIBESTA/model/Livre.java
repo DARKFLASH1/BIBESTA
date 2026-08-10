@@ -51,6 +51,6 @@ public class Livre {
 
     // Désactivation logique : false = livre supprimé/désactivé
     @Column(name = "actif", nullable = false)
-    private boolean actif = true;
+    private Boolean actif = true;
 
 }

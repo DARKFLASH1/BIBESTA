@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout.component';
-import { authGuard } from './core/guards/auth.guard'; // ← protection JWT
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard'; // ← nouvel import
 
 export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    canActivate: [authGuard], // ← toutes les pages enfants sont protégées
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'books', pathMatch: 'full' },
       {
@@ -19,6 +20,8 @@ export const routes: Routes = [
       },
       {
         path: 'loans/manage',
+        canActivate: [roleGuard],                  
+        data: { roles: ['BIBLIOTHECAIRE'] },           
         loadComponent: () => import('./features/loans/pages/manage-loans.page').then(m => m.ManageLoansPage)
       },
       {
@@ -27,6 +30,8 @@ export const routes: Routes = [
       },
       {
         path: 'users',
+        canActivate: [roleGuard],                  
+        data: { roles: ['BIBLIOTHECAIRE'] },             
         loadComponent: () => import('./features/users/pages/users-list.page').then(m => m.UsersListPage)
       },
       {
@@ -43,12 +48,13 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
+        canActivate: [roleGuard],                  
+        data: { roles: ['BIBLIOTHECAIRE'] },        
         loadComponent: () => import('./features/reports/pages/reports-dashboard.page').then(m => m.ReportsDashboardPage)
       }
     ]
   },
   {
-    // ← route login accessible SANS être connecté
     path: 'login',
     loadComponent: () => import('./features/auth/login/login').then(m => m.LoginComponent)
   },

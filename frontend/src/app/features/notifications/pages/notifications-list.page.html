@@ -93,8 +93,8 @@
 
       <!-- Bouton supprimer -->
       <button class="btn-supprimer"
-        (click)="$event.stopPropagation(); supprimer(n)"
-        title="Supprimer">
+        *ngIf="estBibliothecaire"
+        (click)="$event.stopPropagation(); supprimer(n)">
         <svg lucideX size="16"></svg>
       </button>
 

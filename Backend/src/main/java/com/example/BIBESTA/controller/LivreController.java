@@ -68,11 +68,12 @@ public class LivreController {
 
     @PostMapping
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<Livre> createLivre(@RequestBody Livre livre) {
+    public ResponseEntity<?> createLivre(@RequestBody Livre livre) {
         try {
             return ResponseEntity.ok(livreService.saveLivre(livre));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null);
+            // On renvoie le message réel (ex: "Un livre avec cet ISBN existe déjà")
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 

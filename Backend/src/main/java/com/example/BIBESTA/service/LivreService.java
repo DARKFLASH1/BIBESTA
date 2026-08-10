@@ -39,12 +39,21 @@ public class LivreService {
      * @throws IllegalArgumentException si l'ISBN existe déjà
      */
     public Livre saveLivre(Livre livre) {
-        // Valider que l'ISBN est unique
+        if (livre.getActif() == null) {
+            livre.setActif(true);
+        }
+        // Normalise l'ISBN : une chaîne vide venant du formulaire Angular
+        // ("") doit être traitée comme "pas d'ISBN fourni", pas comme "ISBN invalide".
+        if (livre.getIsbn() != null && livre.getIsbn().isBlank()) {
+            livre.setIsbn(null);
+        }
+
+        // Valider que l'ISBN est unique (seulement s'il y en a un)
         if (livre.getIsbn() != null && livreRepository.findByIsbn(livre.getIsbn()).isPresent()) {
             throw new BusinessException("Un livre avec cet ISBN existe déjà");
         }
 
-        // Valider l'unicité de l'ISBN (10 ou 13 chiffres)
+        // Valider le format (seulement s'il y en a un)
         if (livre.getIsbn() != null && !isValidIsbn(livre.getIsbn())) {
             throw new BusinessException("ISBN invalide. Format accepté : 10 ou 13 chiffres.");
         }
@@ -150,10 +159,18 @@ public class LivreService {
      *                                  existe déjà pour un autre livre
      */
     public Livre updateLivre(int id, Livre livre) {
+
         Livre livreExistant = livreRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Livre non trouvé avec l'ID : " + id));
 
-        // Valider que l'ISBN n'est pas changé ou est unique
+        if (livre.getActif() == null) {
+            livre.setActif(livreExistant.getActif());
+        }
+        // Même normalisation qu'à la création
+        if (livre.getIsbn() != null && livre.getIsbn().isBlank()) {
+            livre.setIsbn(null);
+        }
+
         if (livre.getIsbn() != null && !livre.getIsbn().equals(livreExistant.getIsbn())) {
             if (livreRepository.findByIsbn(livre.getIsbn()).isPresent()) {
                 throw new BusinessException("Un autre livre avec cet ISBN existe déjà");

@@ -121,6 +121,7 @@
           <span *ngIf="livre.anneePublication">📅 {{ livre.anneePublication }}</span>
           <span *ngIf="livre.langue">🌍 {{ livre.langue }}</span>
           <span *ngIf="livre.isbn" class="isbn">ISBN : {{ livre.isbn }}</span>
+          <span *ngIf="livre.nombrePages">{{ livre.nombrePages }} pages</span>
         </div>
       </div>
 
@@ -150,10 +151,13 @@
     </div>
 
     <div class="modal-body">
+      <div class="modal-body">
+      <div class="erreur-banner" *ngIf="erreurModal()">
+        ⚠️ {{ erreurModal() }}
+      </div>
+      <div class="form-grid">
       <div class="form-grid">
         <div class="form-group full-width">
-          <label>Titre *</label>
-          <div class="form-group full-width">
             <label>Titre *</label>
             <input class="form-control"
               [ngModel]="livreEnCours().titre"
@@ -211,6 +215,13 @@
             placeholder="ex: 978-2-07-040850-4" />
         </div>
       </div>
+      <div class="form-group">
+          <label>Nombre de pages</label>
+          <input class="form-control" type="number" min="1"
+            [ngModel]="livreEnCours().nombrePages"
+            (ngModelChange)="livreEnCours.update(l => ({...l, nombrePages: $event}))"
+            placeholder="ex: 320" />
+        </div>
     </div>
 
     <div class="modal-footer">
