@@ -108,8 +108,9 @@
           </ng-container>
         </div>
 
-        <!-- Bouton retour -->
-        <div class="card-actions" *ngIf="emprunt.statut !== 'RETOURNE'">
+        <!-- Bouton retour (bibliothécaire uniquement, le backend refuse autrement) -->
+        <div class="card-actions"
+          *ngIf="emprunt.statut !== 'RETOURNE' && estBibliothecaire">
           <button class="btn btn-secondary"
             (click)="retourner(emprunt)"
             [disabled]="retourEnCours() === emprunt.id">

@@ -64,8 +64,8 @@ export class ReservationsListPage implements OnInit {
 
   nbEnAttente  = computed(() =>
     this.reservations().filter(r => r.statut === 'EN_ATTENTE').length);
-  nbDisponible = computed(() =>
-    this.reservations().filter(r => r.statut === 'DISPONIBLE').length);
+  nbConfirmee = computed(() =>
+    this.reservations().filter(r => r.statut === 'CONFIRMEE').length);
   nbAnnulee    = computed(() =>
     this.reservations().filter(r => r.statut === 'ANNULEE').length);
 
@@ -144,9 +144,8 @@ export class ReservationsListPage implements OnInit {
   badgeClass(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':  return 'badge-warning';
-      case 'DISPONIBLE':  return 'badge-success';
+      case 'CONFIRMEE':   return 'badge-success';
       case 'ANNULEE':     return 'badge-system';
-      case 'EXPIREE':     return 'badge-danger';
       default:            return 'badge-system';
     }
   }
@@ -154,9 +153,8 @@ export class ReservationsListPage implements OnInit {
   libelleStatut(statut: string): string {
     switch (statut) {
       case 'EN_ATTENTE':  return 'En attente';
-      case 'DISPONIBLE':  return 'Disponible';
+      case 'CONFIRMEE':   return 'Disponible';
       case 'ANNULEE':     return 'Annulée';
-      case 'EXPIREE':     return 'Expirée';
       default:            return statut;
     }
   }

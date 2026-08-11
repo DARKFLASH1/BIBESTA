@@ -47,6 +47,9 @@ export class MyLoansPage implements OnInit {
   // ID de l'utilisateur connecté
   private utilisateurId = this.authService.getCurrentUserId();
 
+  // Seul le bibliothécaire peut enregistrer un retour (backend : hasRole BIBLIOTHECAIRE)
+  estBibliothecaire = this.authService.isBibliothecaire();
+
   ngOnInit(): void {
     this.charger();
   }
