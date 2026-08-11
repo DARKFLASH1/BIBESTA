@@ -97,9 +97,8 @@
   flex-shrink: 0;
 }
 .stripe-en_attente { background: linear-gradient(to bottom, #C1690D, #E2924B); }
-.stripe-disponible { background: linear-gradient(to bottom, #2E7D46, #66A97D); }
+.stripe-confirmee  { background: linear-gradient(to bottom, #2E7D46, #66A97D); }
 .stripe-annulee    { background: linear-gradient(to bottom, #6B5F4E, #A69985); }
-.stripe-expiree    { background: linear-gradient(to bottom, #B23A2E, #D9695D); }
 
 .card-body {
   flex: 1;

@@ -43,27 +43,39 @@ public class EmpruntController {
 
     // GET /api/emprunts/utilisateur/2 → emprunts d'un utilisateur
     @GetMapping("/utilisateur/{utilisateurId}")
-    public ResponseEntity<List<Emprunt>> findByUtilisateur(
+    public ResponseEntity<List<EmpruntResponse>> findByUtilisateur(
             @PathVariable Integer utilisateurId) {
-        return ResponseEntity.ok(
-                empruntService.findByUtilisateurId(utilisateurId));
+        SecurityUtils.verifierAccesPropriete(utilisateurId);
+        List<EmpruntResponse> emprunts = empruntService.findByUtilisateurId(utilisateurId)
+                .stream()
+                .map(mapper::toEmpruntResponse)
+                .toList();
+        return ResponseEntity.ok(emprunts);
     }
 
     // GET /api/emprunts/utilisateur/2/en-cours
     // Emprunts en cours d'un utilisateur
     @GetMapping("/utilisateur/{utilisateurId}/en-cours")
-    public ResponseEntity<List<Emprunt>> findEnCours(
+    public ResponseEntity<List<EmpruntResponse>> findEnCours(
             @PathVariable Integer utilisateurId) {
-        return ResponseEntity.ok(
-                empruntService.findEnCoursByUtilisateurId(utilisateurId));
+        SecurityUtils.verifierAccesPropriete(utilisateurId);
+        List<EmpruntResponse> emprunts = empruntService.findEnCoursByUtilisateurId(utilisateurId)
+                .stream()
+                .map(mapper::toEmpruntResponse)
+                .toList();
+        return ResponseEntity.ok(emprunts);
     }
 
     // GET /api/emprunts/en-retard → tous les emprunts en retard
     // Réservé au bibliothécaire
     @GetMapping("/en-retard")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<List<Emprunt>> findEnRetard() {
-        return ResponseEntity.ok(empruntService.findEnRetard());
+    public ResponseEntity<List<EmpruntResponse>> findEnRetard() {
+        List<EmpruntResponse> emprunts = empruntService.findEnRetard()
+                .stream()
+                .map(mapper::toEmpruntResponse)
+                .toList();
+        return ResponseEntity.ok(emprunts);
     }
 
     // POST /api/emprunts?utilisateurId=2&exemplaireId=1
