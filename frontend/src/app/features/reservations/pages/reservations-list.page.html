@@ -20,6 +20,14 @@
   <!-- ── ERREUR ────────────────────────────────── -->
   <div class="erreur-banner" *ngIf="erreur()">⚠️ {{ erreur() }}</div>
 
+  <!-- ── ALERTE LECTEUR : réservations disponibles ── -->
+  <div class="alerte-disponible"
+    *ngIf="!estBibliothecaire && nbConfirmee() > 0">
+    <svg lucideBell size="18"></svg>
+    <strong>{{ nbConfirmee() }} livre{{ nbConfirmee() > 1 ? 's sont' : ' est' }} disponible{{ nbConfirmee() > 1 ? 's' : '' }} !</strong>
+    Venez le{{ nbConfirmee() > 1 ? 's' : '' }} récupérer à la bibliothèque dans les 48h.
+  </div>
+
   <!-- ── ONGLETS ────────────────────────────────── -->
   <div class="onglets" *ngIf="!loading()">
     <button class="onglet" [class.actif]="filtreActif() === 'tous'"
@@ -69,7 +77,8 @@
     *ngIf="!loading() && reservationsFiltrees().length > 0">
 
     <div class="resa-card" *ngFor="let r of reservationsFiltrees()"
-      [class.annulee]="r.statut === 'ANNULEE'">
+      [class.annulee]="r.statut === 'ANNULEE'"
+      [class.disponible]="r.statut === 'CONFIRMEE'">
 
       <!-- Bande colorée -->
       <div class="statut-stripe" [class]="'stripe-' + r.statut.toLowerCase()"></div>
@@ -100,9 +109,26 @@
           Réservé le {{ r.dateReservation | date:'dd/MM/yyyy' }}
         </div>
 
+        <!-- Date de confirmation (si disponible) -->
+        <div class="date-confirmation" *ngIf="r.statut === 'CONFIRMEE' && r.dateConfirmation">
+          <svg lucideBell size="13"></svg>
+          Disponible depuis le {{ r.dateConfirmation | date:'dd/MM/yyyy' }}
+          <span class="delai-alerte">(48h pour récupérer)</span>
+        </div>
+
         <!-- Actions -->
         <div class="card-actions"
           *ngIf="r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRMEE'">
+
+          <!-- Bouton CONFIRMER (bibliothécaire + EN_ATTENTE seulement) -->
+          <button class="btn btn-confirm btn-sm"
+            *ngIf="estBibliothecaire && r.statut === 'EN_ATTENTE'"
+            (click)="confirmerDisponibilite(r)"
+            [disabled]="confirmationEnCours() === r.livre.id">
+            <svg lucideCheckCircle2 size="14"></svg>
+            {{ confirmationEnCours() === r.livre.id ? 'Confirmation...' : 'Confirmer disponibilité' }}
+          </button>
+
           <button class="btn btn-danger btn-sm" (click)="annuler(r)">
             <svg lucideX size="14"></svg>
             Annuler
