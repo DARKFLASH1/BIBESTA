@@ -6,6 +6,7 @@ import { environment } from '.././../../../../environments/environment';
 export interface Reservation {
   id: number;
   dateReservation: string;
+  dateConfirmation: string | null;
   statut: 'EN_ATTENTE' | 'CONFIRMEE' | 'ANNULEE';
   utilisateur: {
     id: number;

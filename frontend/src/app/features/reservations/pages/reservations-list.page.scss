@@ -90,6 +90,11 @@
 
   &:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
   &.annulee { opacity: 0.65; }
+  &.disponible {
+    border-color: var(--success);
+    box-shadow: 0 0 0 2px rgba(46, 125, 70, 0.12), var(--shadow-sm);
+    animation: pulse-border 2.5s ease-in-out infinite;
+  }
 }
 
 .statut-stripe {
@@ -153,6 +158,27 @@
   padding-top: 0.75rem;
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.date-confirmation {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--success);
+  font-weight: 500;
+  background: var(--success-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  margin-top: 0.1rem;
+
+  .delai-alerte {
+    color: var(--warning);
+    font-size: 0.78rem;
+    font-weight: 400;
+  }
 }
 
 /* ── Badge ───────────────────────────────────────── */
@@ -194,6 +220,8 @@
 .btn-secondary:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); }
 .btn-danger { background: var(--danger-bg); color: var(--danger); }
 .btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-confirm { background: var(--success-bg); color: var(--success); border-color: transparent; }
+.btn-confirm:hover:not(:disabled) { background: var(--success); color: #fff; }
 .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.82rem; }
 .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.25rem; }
 
@@ -309,4 +337,26 @@
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(46, 125, 70, 0.12), var(--shadow-sm); }
+  50%       { box-shadow: 0 0 0 4px rgba(46, 125, 70, 0.25), var(--shadow-md); }
+}
+
+/* ── Alerte lecteur : livre disponible ───────────── */
+.alerte-disponible {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--success-bg);
+  border: 1.5px solid var(--success);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  animation: slideUp 0.35s ease;
+
+  strong { color: var(--success); }
 }

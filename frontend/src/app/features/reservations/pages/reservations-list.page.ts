@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucideCalendarClock, LucideClock, LucideCheckCircle2,
-  LucideX, LucidePlus, LucideAlertTriangle
+  LucideX, LucidePlus, LucideAlertTriangle, LucideBell
 } from '@lucide/angular';
 import { ReservationService, Reservation } from './services/reservation.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -25,7 +25,7 @@ interface Utilisateur {
   imports: [
     CommonModule, FormsModule,
     LucideCalendarClock, LucideClock, LucideCheckCircle2,
-    LucideX, LucidePlus, LucideAlertTriangle
+    LucideX, LucidePlus, LucideAlertTriangle, LucideBell
   ],
   templateUrl: './reservations-list.page.html',
   styleUrl: './reservations-list.page.scss'
@@ -41,6 +41,7 @@ export class ReservationsListPage implements OnInit {
   loading       = signal(true);
   erreur        = signal('');
   filtreActif   = signal<string>('tous');
+  confirmationEnCours = signal<number | null>(null); // livreId en cours de confirmation
 
   // Modal
   modalOuvert  = signal(false);
@@ -137,6 +138,22 @@ export class ReservationsListPage implements OnInit {
         this.reservations.update(list =>
           list.map(r => r.id === updated.id ? updated : r)
         );
+      }
+    });
+  }
+
+  confirmerDisponibilite(reservation: Reservation): void {
+    if (!confirm(`Confirmer la disponibilité du livre "${reservation.livre.titre}" et notifier le lecteur ?`)) return;
+    this.confirmationEnCours.set(reservation.livre.id);
+    this.reservationService.confirmer(reservation.livre.id).subscribe({
+      next: () => {
+        this.confirmationEnCours.set(null);
+        // Recharge la liste pour afficher le nouveau statut CONFIRMEE
+        this.charger();
+      },
+      error: (err) => {
+        this.erreur.set(err.error?.message || 'Erreur lors de la confirmation.');
+        this.confirmationEnCours.set(null);
       }
     });
   }
