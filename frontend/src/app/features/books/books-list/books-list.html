@@ -101,41 +101,15 @@
     </button>
   </div>
 
-  <!-- ── GRILLE DES LIVRES ──────────────────────── -->
   <div class="books-grid" *ngIf="!loading() && livres().length > 0">
-    <div class="book-card" *ngFor="let livre of livres()">
-
-      <!-- Bande colorée en haut -->
-      <div class="card-accent-bar"></div>
-
-      <div class="card-body">
-        <!-- Badge catégorie -->
-        <span class="badge badge-system" *ngIf="livre.categorie">
-          {{ livre.categorie }}
-        </span>
-
-        <h3 class="livre-titre">{{ livre.titre }}</h3>
-        <p class="livre-auteur">{{ livre.auteur }}</p>
-
-        <div class="livre-meta">
-          <span *ngIf="livre.anneePublication">📅 {{ livre.anneePublication }}</span>
-          <span *ngIf="livre.langue">🌍 {{ livre.langue }}</span>
-          <span *ngIf="livre.isbn" class="isbn">ISBN : {{ livre.isbn }}</span>
-          <span *ngIf="livre.nombrePages">{{ livre.nombrePages }} pages</span>
-        </div>
-      </div>
-
-      <!-- Actions (bibliothécaire uniquement) -->
-      <div class="card-actions" *ngIf="estBibliothecaire">
-        <button class="btn btn-secondary btn-sm" (click)="ouvrirModalModif(livre)" title="Modifier">
-          <svg lucidePencil size="15"></svg>
-        </button>
-        <button class="btn btn-danger btn-sm" (click)="supprimer(livre)" title="Supprimer">
-          <svg lucideX size="15"></svg>
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-livre-card
+    *ngFor="let livre of livres()"
+    [livre]="livre"
+    [estBibliothecaire]="estBibliothecaire"
+    (modifier)="ouvrirModalModif($event)"
+    (supprimer)="supprimer($event)">
+  </app-livre-card>
+</div>
 
 </div>
 

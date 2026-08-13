@@ -1,0 +1,49 @@
+<article class="livre-card">
+
+  <!-- Placeholder de couverture : pas de vraie image en base,
+       donc on affiche une icône sur un fond dégradé plutôt qu'une fausse photo -->
+  <div class="cover-placeholder">
+    <svg lucideBookOpen size="32"></svg>
+
+    @if (livre().categorie) {
+      <span class="badge badge-system cover-badge">
+        {{ livre().categorie }}
+      </span>
+    }
+  </div>
+
+  <div class="card-body">
+    <h3 class="livre-titre">{{ livre().titre }}</h3>
+    <p class="livre-auteur">{{ livre().auteur }}</p>
+
+    <div class="livre-meta">
+      @if (livre().anneePublication) {
+        <span>
+          <svg lucideCalendar size="14"></svg>
+          {{ livre().anneePublication }}
+        </span>
+      }
+      @if (livre().langue) {
+        <span>
+          <svg lucideGlobe size="14"></svg>
+          {{ livre().langue }}
+        </span>
+      }
+      @if (livre().isbn) {
+        <span class="isbn">ISBN : {{ livre().isbn }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- Actions : visibles uniquement pour le bibliothécaire -->
+  @if (estBibliothecaire()) {
+    <div class="card-actions">
+      <button class="btn btn-secondary btn-sm" (click)="onModifier()" title="Modifier" aria-label="Modifier le livre">
+        <svg lucidePencil size="15"></svg>
+      </button>
+      <button class="btn btn-danger btn-sm" (click)="onSupprimer()" title="Supprimer" aria-label="Supprimer le livre">
+        <svg lucideX size="15"></svg>
+      </button>
+    </div>
+  }
+</article>

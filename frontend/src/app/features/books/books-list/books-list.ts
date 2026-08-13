@@ -12,11 +12,11 @@ import {
 import { LivreService } from './service/livre.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Livre } from '../../../core/models/entities.model';
-
+import { LivreCardComponent } from '../../../shared/components/livre-card/livre-card';
 @Component({
   selector: 'app-books-list',
   standalone: true,
-  imports: [
+  imports: [LivreCardComponent,
     CommonModule,
     FormsModule,
     LucideSearch,
