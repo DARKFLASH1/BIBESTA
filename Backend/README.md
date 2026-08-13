@@ -15,8 +15,6 @@
 7. [Sécurité](#7-sécurité)
 8. [Automatisations planifiées](#8-automatisations-planifiées)
 9. [Installation et démarrage](#9-installation-et-démarrage)
-10. [Points d'attention pour la mise en production](#10-points-dattention-pour-la-mise-en-production)
-
 ---
 
 ## 1. Présentation générale
@@ -406,54 +404,3 @@ ng serve
 ```
 
 L'interface est accessible sur `http://localhost:4200`.
-
-### Ordre de création des données de test (Postman)
-
-Les entités ont des dépendances : créer dans cet ordre.
-
-1. `POST /auth/login` → récupérer le token (créer d'abord un bibliothécaire en base directement)
-2. `POST /utilisateurs` → créer des lecteurs
-3. `POST /livres` → créer des livres
-4. `POST /exemplaires/livre/{livreId}` → créer des exemplaires
-5. `POST /abonnements/utilisateur/{id}` → créer un abonnement
-6. `POST /paiements/abonnement/{id}` → payer l'abonnement (nécessaire pour emprunter)
-7. `POST /emprunts` → créer un emprunt
-8. `POST /reservations?utilisateurId=&livreId=` → créer une réservation
-
----
-
-## 10. Points d'attention pour la mise en production
-
-### Corrections à apporter avant déploiement
-
-| Priorité | Problème | Impact | Solution recommandée |
-|---|---|---|---|
-| 🔴 Critique | **Types de notifications incohérents** | Les services envoient des types (`"EMPRUNT"`, `"RETOUR"`, `"ANNULATION"`, `"RESERVATION_EXPIREE"`) qui n'existent pas dans l'enum `Notification.Type`. Le service fait un fallback silencieux vers `RAPPEL_RETOUR`, ce qui rend toutes ces notifications indiscernables. | Ajouter les types manquants à l'enum : `EMPRUNT, RETOUR, RETARD, ANNULATION, RESERVATION, RESERVATION_EXPIREE, PAIEMENT` |
-| 🔴 Critique | **Livres désactivés visibles dans le catalogue** | `LivreService.getAllLivres()` retourne tous les livres y compris ceux avec `actif = false`. Un livre "supprimé" reste visible dans le catalogue. | Ajouter `findByActifTrue()` dans `LivreRepository` et l'utiliser dans `getAllLivres()` et `searchLivres()` |
-| 🔴 Critique | **Bug d'expiration des réservations** | `expirerReservationsConfirmees()` compare `dateReservation + 2 jours` au lieu de la date de confirmation. Une réservation faite le 1er janvier et confirmée le 15 mars expirera immédiatement car `1er janvier + 2 jours < aujourd'hui`. | Ajouter un champ `dateConfirmation` dans `Reservation` et utiliser cette date pour le calcul des 48h |
-| 🔴 Critique | **Aucune transaction `@Transactional`** | Si une opération échoue à mi-chemin (ex: emprunt créé mais exemplaire non mis à jour), la base reste dans un état incohérent. | Ajouter `@Transactional` sur toutes les méthodes de service qui font plusieurs écritures en base |
-| 🟠 Important | **Paiements d'amendes non retournés dans `/paiements/utilisateur/{id}`** | `findByAbonnementUtilisateurId()` ne retourne que les paiements liés aux abonnements. Les paiements d'amendes sont invisibles. | Ajouter une méthode dans `PaiementRepository` qui combine les deux types |
-| 🟠 Important | **Aucun rappel avant échéance d'emprunt** | Le README décrit cette fonctionnalité mais elle n'est pas implémentée dans `ScheduledTasks`. | Ajouter une tâche qui envoie une notification 3 jours avant la date de retour prévue |
-| 🟡 Modéré | **Aucun rappel avant expiration d'abonnement** | Même problème : l'abonnement expire sans prévenir l'utilisateur. | Ajouter une tâche qui notifie 7 jours avant expiration |
-| 🟡 Modéré | **Statistiques et export non implémentés** | Le module `reports/` est prévu dans le README et le frontend mais aucun contrôleur n'existe côté backend. | Créer `StatistiqueController` avec les endpoints de reporting |
-| ⚪ Mineur | **`Exemplaire.id` est `Long` alors que les autres entités utilisent `Integer`** | Crée des conversions `intValue()` manuelles dans le code (ex: `LivreService`). | Uniformiser en `Integer` ou `Long` partout |
-| ⚪ Mineur | **Nommage non standard de l'enum `methode_paiement`** | La convention Java impose `MethodePaiement` (PascalCase) pour les enums, pas `methode_paiement`. | Renommer l'enum et le champ |
-
-### Ce qui fonctionne correctement
-
-- ✅ Authentification JWT complète (génération, validation, extraction du rôle et de l'id)
-- ✅ Autorisation par rôle sur tous les endpoints (`@PreAuthorize` + `SecurityConfig`)
-- ✅ Protection des données personnelles (`SecurityUtils.verifierAccesPropriete`)
-- ✅ Toutes les règles d'éligibilité à l'emprunt (statut compte, abonnement, amendes, quota)
-- ✅ File d'attente FIFO pour les réservations
-- ✅ Verrouillage de l'exemplaire à la confirmation de réservation
-- ✅ Calcul et création automatique des amendes au retour
-- ✅ Tâches planifiées (retards, abonnements expirés, réservations expirées)
-- ✅ Historisation automatique de toutes les actions
-- ✅ Suppressions logiques (utilisateurs et livres)
-- ✅ Hachage BCrypt des mots de passe
-- ✅ Gestion centralisée des erreurs avec codes HTTP corrects
-- ✅ Séparation état physique / disponibilité des exemplaires
-- ✅ Pagination sur les listes de livres et utilisateurs
-- ✅ Validation ISBN (format 10 ou 13 chiffres)
-- ✅ Contrainte : un paiement = un abonnement OU une amende, jamais les deux
