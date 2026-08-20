@@ -251,3 +251,13 @@
 
   </div>
 </div>
+
+@if (empruntARetourner()) {
+  <app-confirmation-dialog
+    title="Confirmer le retour"
+    [message]="'Confirmer le retour de \u00ab\u00a0' + empruntARetourner()!.livreTitre + '\u00a0\u00bb ?'"
+    confirmLabel="Confirmer le retour"
+    cancelLabel="Annuler"
+    (confirmed)="onConfirmationRetour($event)">
+  </app-confirmation-dialog>
+}

@@ -1,7 +1,64 @@
-<div class="confirmation-backdrop" (click)="onCancel()"></div>
-<div class="confirmation-modal">
-  <h2>Confirmation</h2>
-  <p>{{ message }}</p>
-  <button class="btn" (click)="confirm()">Confirm</button>
-  <button class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+<!--
+  On réutilise .modal-backdrop et .modal, déjà définis globalement dans
+  styles.scss (glassmorphism + animation slideUp) — on ne redéfinit rien,
+  conformément à la règle "toujours utiliser les variables/classes du
+  design system, jamais de valeurs brutes".
+
+  (click)="onCancel()" sur le fond : cliquer en dehors de la modale annule,
+  comme n'importe quelle modale classique.
+-->
+<div class="modal-backdrop" (click)="onCancel()">
+  <div
+    class="modal confirmation-modal"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirmation-title"
+    aria-describedby="confirmation-message"
+    (click)="$event.stopPropagation()">
+    <!--
+      $event.stopPropagation() : empêche le clic À L'INTÉRIEUR de la modale
+      de "remonter" jusqu'au backdrop et de fermer la modale par erreur.
+    -->
+
+    <div class="confirmation-icon" [class.confirmation-icon--danger]="variant() === 'danger'">
+      @if (variant() === 'danger') {
+        <svg lucideAlertTriangle [size]="26"></svg>
+      } @else {
+        <svg lucideHelpCircle [size]="26"></svg>
+      }
+    </div>
+
+    <h2 id="confirmation-title">{{ title() }}</h2>
+    <p id="confirmation-message">{{ message() }}</p>
+
+    <div class="confirmation-actions">
+      <!-- Bouton "Annuler" : premier élément du piège de focus -->
+      <button
+        #cancelBtn
+        type="button"
+        class="btn btn-secondary"
+        (click)="onCancel()"
+        (keydown.tab)="onTabFromCancel($event)">
+        <svg lucideX [size]="16"></svg>
+        {{ cancelLabel() }}
+      </button>
+
+      <!-- Bouton "Confirmer" : couleur différente selon le variant -->
+      <button
+        #confirmBtn
+        type="button"
+        class="btn"
+        [class.btn-primary]="variant() !== 'danger'"
+        [class.btn-danger]="variant() === 'danger'"
+        (click)="onConfirm()"
+        (keydown.tab)="onTabFromConfirm($event)">
+        @if (variant() === 'danger') {
+          <svg lucideTrash2 [size]="16"></svg>
+        } @else {
+          <svg lucideCheck [size]="16"></svg>
+        }
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  </div>
 </div>

@@ -193,3 +193,24 @@
 
   </div>
 </div>
+
+@if (reservationAAnnuler()) {
+  <app-confirmation-dialog
+    variant="danger"
+    title="Annuler la réservation"
+    [message]="'Annuler la r\u00e9servation de \u00ab\u00a0' + reservationAAnnuler()!.livre.titre + '\u00a0\u00bb ?'"
+    confirmLabel="Annuler la réservation"
+    cancelLabel="Retour"
+    (confirmed)="onConfirmationAnnuler($event)">
+  </app-confirmation-dialog>
+}
+
+@if (reservationAConfirmer()) {
+  <app-confirmation-dialog
+    title="Confirmer la disponibilité"
+    [message]="'Confirmer la disponibilit\u00e9 de \u00ab\u00a0' + reservationAConfirmer()!.livre.titre + '\u00a0\u00bb et notifier le lecteur ?'"
+    confirmLabel="Confirmer et notifier"
+    cancelLabel="Annuler"
+    (confirmed)="onConfirmationDisponibilite($event)">
+  </app-confirmation-dialog>
+}

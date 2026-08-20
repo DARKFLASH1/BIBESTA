@@ -8,6 +8,7 @@ import {
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 interface Abonnement {
   id: number;
@@ -43,6 +44,7 @@ interface Utilisateur {
   selector: 'app-subscriptions-list',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideBadgeCheck, LucidePlus, LucideX,
     LucideCheckCircle2, LucideClock, LucideAlertTriangle
@@ -62,6 +64,7 @@ export class SubscriptionsListPage implements OnInit {
   loading      = signal(true);
   erreur       = signal('');
   filtreActif  = signal<string>('tous');
+  abonnementASupprimer = signal<Abonnement | null>(null);
 
   abonnementsFiltres = computed(() => {
     const filtre = this.filtreActif();
@@ -182,7 +185,13 @@ export class SubscriptionsListPage implements OnInit {
   }
 
   supprimer(abonnement: Abonnement): void {
-    if (!confirm('Supprimer cet abonnement ?')) return;
+    this.abonnementASupprimer.set(abonnement);
+  }
+
+  onConfirmationSupprimer(confirme: boolean): void {
+    const abonnement = this.abonnementASupprimer();
+    this.abonnementASupprimer.set(null);
+    if (!confirme || !abonnement) return;
     this.http.delete(`${environment.apiUrl}/abonnements/${abonnement.id}`).subscribe({
       next: () => this.abonnements.update(list => list.filter(a => a.id !== abonnement.id)),
       error: (err) => this.erreur.set(err.error?.message || 'Erreur.')

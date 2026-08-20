@@ -8,13 +8,20 @@ export enum Role {
   PUBLIC = 'PUBLIC'
 }
 
-export enum EtatExemplaire {
+// État physique de l'exemplaire (indépendant de sa disponibilité)
+export enum EtatPhysique {
   BON_ETAT = 'BON_ETAT',
+  USAGE = 'USAGE',
+  ENDOMMAGE = 'ENDOMMAGE',
+  PERDU = 'PERDU'
+}
+
+// Statut de disponibilité de l'exemplaire (indépendant de son état physique)
+export enum StatutDisponibilite {
   DISPONIBLE = 'DISPONIBLE',
   EMPRUNTE = 'EMPRUNTE',
-  EN_REPARATION = 'EN_REPARATION',
-  MAUVAIS_ETAT = 'MAUVAIS_ETAT',
-  RESERVE = 'RESERVE'
+  RESERVE = 'RESERVE',
+  EN_REPARATION = 'EN_REPARATION'
 }
 
 export enum StatutEmprunt {
@@ -74,7 +81,8 @@ export interface Livre {
 export interface Exemplaire {
   id?: number;
   numExemplaire: string;
-  etat: EtatExemplaire;
+  etatPhysique: EtatPhysique;
+  statutDisponibilite: StatutDisponibilite;
   livreId: number;
   livre?: Livre; // Pour l'affichage frontend
 }

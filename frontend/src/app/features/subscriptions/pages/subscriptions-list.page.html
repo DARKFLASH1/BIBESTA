@@ -259,3 +259,14 @@
 
   </div>
 </div>
+
+@if (abonnementASupprimer()) {
+  <app-confirmation-dialog
+    variant="danger"
+    title="Supprimer l'abonnement"
+    [message]="'Supprimer l\'abonnement ' + abonnementASupprimer()!.type + ' de ' + abonnementASupprimer()!.utilisateur.prenom + ' ' + abonnementASupprimer()!.utilisateur.nom + ' ?'"
+    confirmLabel="Supprimer"
+    cancelLabel="Annuler"
+    (confirmed)="onConfirmationSupprimer($event)">
+  </app-confirmation-dialog>
+}

@@ -225,8 +225,7 @@ public class LivreService {
         // au statut EN_COURS.
         List<Exemplaire> exemplaires = exemplaireRepository.findByLivreId(livre.getId());
         for (Exemplaire exemplaire : exemplaires) {
-            if (empruntRepository.existsByExemplaireIdAndStatut(
-                    exemplaire.getId().intValue(), Statut.EN_COURS)) {
+            if (empruntRepository.existsByExemplaireIdAndStatut(exemplaire.getId(), Statut.EN_COURS)) {
                 return true;
             }
         }

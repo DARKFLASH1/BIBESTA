@@ -11,11 +11,13 @@ import { LivreService } from '../../books/books-list/service/livre.service';
 import { Livre } from '../../../core/models/entities.model';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 interface Exemplaire {
   id: number;
   numExemplaire: string;
-  etat: string;
+  etatPhysique: string;
+  statutDisponibilite: string;
 }
 
 interface Utilisateur {
@@ -30,6 +32,7 @@ interface Utilisateur {
   selector: 'app-manage-loans',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideBookmark, LucideClock, LucideCheckCircle2,
     LucideAlertTriangle, LucideCalendar, LucideUndo2,
@@ -69,6 +72,9 @@ export class ManageLoansPage implements OnInit {
   modalOuvert   = signal(false);
   sauvegarde    = signal(false);
   retourEnCours = signal<number | null>(null);
+
+  // ── Dialog de confirmation retour ─────────────────
+  empruntARetourner = signal<EmpruntResponse | null>(null);
 
   // Données pour le formulaire
   livres       = signal<Livre[]>([]);
@@ -152,7 +158,14 @@ export class ManageLoansPage implements OnInit {
   }
 
   retourner(emprunt: EmpruntResponse): void {
-    if (!confirm(`Confirmer le retour de "${emprunt.livreTitre}" ?`)) return;
+    this.empruntARetourner.set(emprunt);
+  }
+
+  onConfirmationRetour(confirme: boolean): void {
+    const emprunt = this.empruntARetourner();
+    this.empruntARetourner.set(null);
+    if (!confirme || !emprunt) return;
+
     this.retourEnCours.set(emprunt.id);
     this.empruntService.enregistrerRetour(emprunt.id).subscribe({
       next: (updated) => {

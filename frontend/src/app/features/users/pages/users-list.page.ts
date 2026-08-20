@@ -7,6 +7,7 @@ import {
 } from '@lucide/angular';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 interface Utilisateur {
   id: number;
@@ -36,6 +37,7 @@ interface UtilisateurForm {
   selector: 'app-users-list',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideUsers, LucidePlus, LucideX,
     LucidePencil, LucideSearch, LucideUser
@@ -88,6 +90,7 @@ export class UsersListPage implements OnInit {
   modalOuvert  = signal(false);
   modeEdition  = signal(false);
   sauvegarde   = signal(false);
+  utilisateurASupprimer = signal<Utilisateur | null>(null);
   userEnCours  = signal<number | null>(null); // id en cours de modif
 
   form: UtilisateurForm = {
@@ -175,7 +178,14 @@ export class UsersListPage implements OnInit {
   }
 
   supprimer(u: Utilisateur): void {
-    if (!confirm(`Supprimer "${u.prenom} ${u.nom}" ?`)) return;
+    this.utilisateurASupprimer.set(u);
+  }
+
+  onConfirmationSupprimer(confirme: boolean): void {
+    const u = this.utilisateurASupprimer();
+    this.utilisateurASupprimer.set(null);
+    if (!confirme || !u) return;
+
     this.http.delete(`${this.apiUrl}/${u.id}`).subscribe({
       next: () => this.utilisateurs.update(list => list.filter(x => x.id !== u.id)),
       error: (err) => this.erreur.set(err.error?.message || 'Erreur lors de la suppression.')

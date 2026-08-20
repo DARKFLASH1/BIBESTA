@@ -8,6 +8,7 @@ import {
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 interface Amende {
   id: number;
@@ -44,6 +45,7 @@ interface Paiement {
   selector: 'app-fines-list',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideCreditCard, LucideAlertTriangle,
     LucideCheckCircle2, LucideX, LucideInfo
@@ -83,6 +85,9 @@ export class FinesListPage implements OnInit {
   modalPaiementOuvert = signal(false);
   amendeSelectionnee  = signal<Amende | null>(null);
   methodePaiement     = signal<string>('ESPECES');
+
+  // ── Dialog confirmation annulation ────────────────
+  amendeAAnnuler = signal<Amende | null>(null);
   paiementEnCours     = signal(false);
 
   ngOnInit(): void {
@@ -139,7 +144,13 @@ export class FinesListPage implements OnInit {
   }
 
   annulerAmende(amende: Amende): void {
-    if (!confirm(`Annuler cette amende de ${amende.montant} FCFA ?`)) return;
+    this.amendeAAnnuler.set(amende);
+  }
+
+  onConfirmationAnnulation(confirme: boolean): void {
+    const amende = this.amendeAAnnuler();
+    this.amendeAAnnuler.set(null);
+    if (!confirme || !amende) return;
 
     this.http.patch<Amende>(
       `${environment.apiUrl}/amendes/${amende.id}/annuler`, {}

@@ -25,11 +25,11 @@ public class Paiement {
     private LocalDate datePaiement;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "methode_paiement", nullable = false, length = 50)
+    @Column(name = "methodePaiement", nullable = false, length = 50)
     // Ex: "ESPECES", "MOBILE_MONEY", "CARTE_BANCAIRE"
-    private methode_paiement methode_paiement;
+    private methodePaiement methodePaiement;
 
-    public enum methode_paiement {
+    public enum methodePaiement {
         ESPECES, MOBILE_MONEY, CARTE_BANCAIRE
     }
 
