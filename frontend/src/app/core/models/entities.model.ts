@@ -96,3 +96,66 @@ export interface Emprunt {
   exemplaireId: number;
   utilisateurId: number;
 }
+
+export interface Reservation {
+  id?: number;
+  dateReservation: string;
+  dateConfirmation?: string;
+  statut: StatutReservation;
+  utilisateurId: number;
+  livreId: number;
+  utilisateur?: Utilisateur;
+  livre?: Livre;
+}
+
+export interface Amende {
+  id?: number;
+  montant: number;
+  raison?: string;
+  date: string;
+  statut: StatutAmende;
+  empruntId: number;
+}
+
+export interface Paiement {
+  id?: number;
+  montant: number;
+  datePaiement: string;
+  methodePaiement: 'ESPECES' | 'MOBILE_MONEY' | 'CARTE_BANCAIRE';
+  statut: 'EFFECTUE' | 'ANNULE' | 'EN_ATTENTE';
+  abonnementId?: number;
+  amendeId?: number;
+}
+
+export interface Abonnement {
+  id?: number;
+  type: string;
+  dateDebut: string;
+  dateFin: string;
+  statutPaiement: 'EN_ATTENTE' | 'PAYE' | 'EXPIRE';
+  montant: number;
+  utilisateurId: number;
+  utilisateur?: Utilisateur;
+}
+
+export interface Notification {
+  id?: number;
+  type: TypeNotification;
+  contenu?: string;
+  date: string;
+  statut: 'LU' | 'NON_LU';
+  utilisateurId: number;
+  utilisateur?: Utilisateur;
+}
+
+export interface Historique {
+  id?: number;
+  dateMouvement: string;
+  type: 'EMPRUNT' | 'RETOUR' | 'RESERVATION' | 'ANNULATION' | 'PAIEMENT' | 'CONNEXION';
+  description?: string;
+  utilisateurId: number;
+  utilisateur?: Utilisateur;
+  empruntId?: number;
+  livreId?: number;
+  reservationId?: number;
+}
