@@ -78,6 +78,19 @@ public class EmpruntController {
         return ResponseEntity.ok(emprunts);
     }
 
+    // GET /api/emprunts/recent?size=5 → les derniers emprunts
+    // Réservé au bibliothécaire
+    @GetMapping("/recent")
+    @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
+    public ResponseEntity<List<EmpruntResponse>> findRecent(
+            @RequestParam(defaultValue = "5") int size) {
+        List<Emprunt> emprunts = empruntService.findRecent(size);
+        List<EmpruntResponse> responses = emprunts.stream()
+                .map(mapper::toEmpruntResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
     // POST /api/emprunts?utilisateurId=2&exemplaireId=1
     // Crée un nouvel emprunt
     @PostMapping

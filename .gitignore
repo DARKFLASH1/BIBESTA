@@ -1,52 +1,73 @@
 ```
-# Dependencies
-node_modules/
+# Java/Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
 
-# Build artifacts
-dist/
+# Compiled class file
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# STS 4 Eclipse settings
+.springbeans
+
+# Visual Studio Code
+.vscode/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# NetBeans
+nbproject/private/
 build/
-*.js.map
-*.tsbuildinfo
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Docker
+.dockerenv
+Dockerfile
+docker-compose.yml
 
 # Environment variables
 .env
 .env.local
 *.env.*
 
-# Logs
-*.log
-
-# IDE files
-.vscode/
-.idea/
+# Temporary files
+*.tmp
+*.temp
+*.bak
 *.swp
 *.swo
-*.tmp
-
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Distribution / packaging
-.Python
-*.egg-info/
-.eggs/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Testing
-.pytest_cache/
-.mypy_cache/
-.tox/
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 ```

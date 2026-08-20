@@ -3,6 +3,8 @@ package com.example.BIBESTA.repository;
 import com.example.BIBESTA.model.Emprunt;
 import com.example.BIBESTA.model.Emprunt.Statut;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,4 +38,8 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Integer> {
         // Compte les emprunts par statut (raccourci plus léger que
         // findByStatut().size())
         long countByStatut(Statut statut);
+        
+        // Récupère les derniers emprunts triés par date décroissante
+        @Query("SELECT e FROM Emprunt e ORDER BY e.dateDebut DESC")
+        List<Emprunt> findTopByOrderByDateDebutDesc(Pageable pageable);
 }

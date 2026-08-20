@@ -239,4 +239,10 @@ public class EmpruntService {
                                                         "Date limite dépassée : " + emprunt.getDateRetourPrevue());
                 }
         }
+        
+        // Récupère les derniers emprunts triés par date décroissante
+        public List<Emprunt> findRecent(int size) {
+                return empruntRepository.findTopByOrderByDateDebutDesc(
+                        org.springframework.data.domain.PageRequest.of(0, size));
+        }
 }
