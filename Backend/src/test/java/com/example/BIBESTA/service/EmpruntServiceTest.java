@@ -68,7 +68,7 @@ class EmpruntServiceTest {
 
         // Création d'un exemplaire de test
         exemplaire = new Exemplaire();
-        exemplaire.setId(1L);
+        exemplaire.setId(1);
         exemplaire.setLivre(livre);
         exemplaire.setEtat(Exemplaire.Etat.DISPONIBLE);
 
