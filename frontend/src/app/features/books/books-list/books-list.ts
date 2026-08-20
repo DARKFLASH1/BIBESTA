@@ -13,10 +13,13 @@ import { LivreService } from './service/livre.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Livre } from '../../../core/models/entities.model';
 import { LivreCardComponent } from '../../../shared/components/livre-card/livre-card';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 @Component({
   selector: 'app-books-list',
   standalone: true,
-  imports: [LivreCardComponent,
+  imports: [
+    ConfirmationDialogComponent,
+    LivreCardComponent,
     CommonModule,
     FormsModule,
     LucideSearch,
@@ -51,7 +54,7 @@ export class BooksListPage implements OnInit {
   };
 
   // ── Modal ajout/modification ──────────────────────
-  erreurModal = signal(''); 
+  erreurModal = signal('');
   modalOuvert  = signal(false);
   modeEdition  = signal(false);           // false = ajout, true = modif
   livreEnCours = signal<Livre>({          // livre dans le formulaire modal
@@ -60,6 +63,9 @@ export class BooksListPage implements OnInit {
     langue: '', isbn: '', nombrePages: undefined
   });
   sauvegarde   = signal(false);           // bouton désactivé pendant l'enregistrement
+
+  // ── Dialog de confirmation suppression ───────────
+  livreASupprimer = signal<Livre | null>(null); // null = dialog fermé
 
   // ── Rôle ─────────────────────────────────────────
   estBibliothecaire = this.authService.isBibliothecaire();
@@ -176,9 +182,18 @@ export class BooksListPage implements OnInit {
   }
 }
 
+  // Ouvre le dialog de confirmation
   supprimer(livre: Livre): void {
     if (!livre.id) return;
-    if (!confirm(`Supprimer "${livre.titre}" ?`)) return;
+    this.livreASupprimer.set(livre);
+  }
+
+  // Callback du dialog : true = confirmé, false = annulé
+  onConfirmationSupprimer(confirme: boolean): void {
+    const livre = this.livreASupprimer();
+    this.livreASupprimer.set(null); // ferme le dialog dans tous les cas
+
+    if (!confirme || !livre?.id) return;
 
     this.livreService.supprimer(livre.id).subscribe({
       next: () => {

@@ -11,6 +11,7 @@ import { LivreService } from '../../books/books-list/service/livre.service';
 import { Livre } from '../../../core/models/entities.model';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 interface Utilisateur {
   id: number;
@@ -23,6 +24,7 @@ interface Utilisateur {
   selector: 'app-reservations-list',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideCalendarClock, LucideClock, LucideCheckCircle2,
     LucideX, LucidePlus, LucideAlertTriangle, LucideBell
@@ -41,7 +43,9 @@ export class ReservationsListPage implements OnInit {
   loading       = signal(true);
   erreur        = signal('');
   filtreActif   = signal<string>('tous');
-  confirmationEnCours = signal<number | null>(null); // livreId en cours de confirmation
+  confirmationEnCours = signal<number | null>(null);
+  reservationAAnnuler   = signal<Reservation | null>(null);
+  reservationAConfirmer = signal<Reservation | null>(null);
 
   // Modal
   modalOuvert  = signal(false);
@@ -132,25 +136,29 @@ export class ReservationsListPage implements OnInit {
   }
 
   annuler(reservation: Reservation): void {
-    if (!confirm(`Annuler la réservation de "${reservation.livre.titre}" ?`)) return;
-    this.reservationService.annuler(reservation.id).subscribe({
-      next: (updated) => {
-        this.reservations.update(list =>
-          list.map(r => r.id === updated.id ? updated : r)
-        );
-      }
+    this.reservationAAnnuler.set(reservation);
+  }
+
+  onConfirmationAnnuler(confirme: boolean): void {
+    const r = this.reservationAAnnuler();
+    this.reservationAAnnuler.set(null);
+    if (!confirme || !r) return;
+    this.reservationService.annuler(r.id).subscribe({
+      next: (updated) => this.reservations.update(list => list.map(x => x.id === updated.id ? updated : x))
     });
   }
 
   confirmerDisponibilite(reservation: Reservation): void {
-    if (!confirm(`Confirmer la disponibilité du livre "${reservation.livre.titre}" et notifier le lecteur ?`)) return;
-    this.confirmationEnCours.set(reservation.livre.id);
-    this.reservationService.confirmer(reservation.livre.id).subscribe({
-      next: () => {
-        this.confirmationEnCours.set(null);
-        // Recharge la liste pour afficher le nouveau statut CONFIRMEE
-        this.charger();
-      },
+    this.reservationAConfirmer.set(reservation);
+  }
+
+  onConfirmationDisponibilite(confirme: boolean): void {
+    const r = this.reservationAConfirmer();
+    this.reservationAConfirmer.set(null);
+    if (!confirme || !r) return;
+    this.confirmationEnCours.set(r.livre.id);
+    this.reservationService.confirmer(r.livre.id).subscribe({
+      next: () => { this.confirmationEnCours.set(null); this.charger(); },
       error: (err) => {
         this.erreur.set(err.error?.message || 'Erreur lors de la confirmation.');
         this.confirmationEnCours.set(null);

@@ -6,11 +6,13 @@ import {
 } from '@lucide/angular';
 import { EmpruntService, EmpruntResponse } from './services/emprunt.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-my-loans',
   standalone: true,
   imports: [
+    ConfirmationDialogComponent,
     CommonModule,
     LucideBookmark, LucideClock, LucideCheckCircle2,
     LucideAlertTriangle, LucideCalendar, LucideUndo2
@@ -27,6 +29,7 @@ export class MyLoansPage implements OnInit {
   loading   = signal(true);
   erreur    = signal('');
   retourEnCours = signal<number | null>(null); // id de l'emprunt en cours de retour
+  empruntARetourner = signal<EmpruntResponse | null>(null);
 
   // Filtre actif : 'tous' | 'en_cours' | 'retourne' | 'en_retard'
   filtreActif = signal<string>('tous');
@@ -69,12 +72,17 @@ export class MyLoansPage implements OnInit {
   }
 
   retourner(emprunt: EmpruntResponse): void {
-    if (!confirm(`Confirmer le retour de "${emprunt.livreTitre}" ?`)) return;
+    this.empruntARetourner.set(emprunt);
+  }
+
+  onConfirmationRetour(confirme: boolean): void {
+    const emprunt = this.empruntARetourner();
+    this.empruntARetourner.set(null);
+    if (!confirme || !emprunt) return;
 
     this.retourEnCours.set(emprunt.id);
     this.empruntService.enregistrerRetour(emprunt.id).subscribe({
       next: (updated) => {
-        // Met à jour l'emprunt dans la liste sans recharger tout
         this.emprunts.update(list =>
           list.map(e => e.id === updated.id ? updated : e)
         );

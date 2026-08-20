@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +51,7 @@ public class AmendeService {
 
         // CRÉER UNE AMENDE AUTOMATIQUEMENT
         // Appelée par EmpruntService quand un retour est en retard
+        @Transactional
         public Amende creerAmende(Integer empruntId) {
 
                 // 1. Vérifie que l'emprunt existe
@@ -105,6 +107,7 @@ public class AmendeService {
         }
 
         // MARQUER UNE AMENDE COMME PAYÉE
+        @Transactional
         public Amende marquerPayee(Integer amendeId) {
 
                 Amende amende = amendeRepository.findById(amendeId)

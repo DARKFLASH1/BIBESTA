@@ -25,7 +25,7 @@ import lombok.ToString;
 public class Exemplaire {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "numExemplaire", nullable = false, length = 255)
     private String numExemplaire;

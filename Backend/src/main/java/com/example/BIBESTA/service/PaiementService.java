@@ -65,7 +65,7 @@ public class PaiementService {
                 paiement.setAmende(null); // jamais les deux à la fois
                 paiement.setMontant(abonnement.getMontant());
                 paiement.setDatePaiement(LocalDate.now());
-                paiement.setMethode_paiement(Paiement.methode_paiement.valueOf(methodePaiement));
+                paiement.setMethodePaiement(Paiement.methodePaiement.valueOf(methodePaiement));
                 paiement.setStatut(Statut.EFFECTUE);
 
                 // 4. Met à jour le statut de l'abonnement → PAYE
@@ -118,7 +118,7 @@ public class PaiementService {
                 paiement.setAbonnement(null); // jamais les deux à la fois
                 paiement.setMontant(amende.getMontant());
                 paiement.setDatePaiement(LocalDate.now());
-                paiement.setMethode_paiement(Paiement.methode_paiement.valueOf(methodePaiement));
+                paiement.setMethodePaiement(Paiement.methodePaiement.valueOf(methodePaiement));
                 paiement.setStatut(Statut.EFFECTUE);
 
                 // 5. Marque l'amende comme payée

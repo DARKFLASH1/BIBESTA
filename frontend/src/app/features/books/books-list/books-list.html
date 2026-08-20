@@ -4,7 +4,7 @@
   <div class="page-header">
     <div class="header-left">
       <h1>
-        <svg lucideBookOpen size="28"></svg>
+        <svg lucideBookOpen [size]="28"></svg>
         Catalogue des livres
       </h1>
       <span class="compteur" *ngIf="!loading()">
@@ -17,7 +17,7 @@
       *ngIf="estBibliothecaire"
       class="btn btn-primary"
       (click)="ouvrirModalAjout()">
-      <svg lucidePlus size="18"></svg>
+      <svg lucidePlus [size]="18"></svg>
       Ajouter un livre
     </button>
   </div>
@@ -25,7 +25,7 @@
   <!-- ── BARRE DE RECHERCHE ────────────────────── -->
   <div class="search-bar">
     <div class="search-input-wrapper">
-      <svg lucideSearch size="18" class="search-icon"></svg>
+      <svg lucideSearch [size]="18" class="search-icon"></svg>
       <input
         class="form-control search-input"
         type="text"
@@ -35,7 +35,7 @@
     </div>
 
     <button class="btn btn-secondary" (click)="afficherFiltres.update(v => !v)">
-      <svg lucideSlidersHorizontal size="18"></svg>
+      <svg lucideSlidersHorizontal [size]="18"></svg>
       Filtres
     </button>
 
@@ -70,7 +70,7 @@
     </div>
     <div class="filtres-actions">
       <button class="btn btn-secondary" (click)="reinitialiser()">
-        <svg lucideX size="16"></svg>
+        <svg lucideX [size]="16"></svg>
         Réinitialiser
       </button>
       <button class="btn btn-primary" (click)="lancerRecherche()">Appliquer</button>
@@ -93,7 +93,7 @@
 
   <!-- ── ÉTAT VIDE ──────────────────────────────── -->
   <div class="empty-state" *ngIf="!loading() && livres().length === 0">
-    <svg lucideBookOpen size="48" class="empty-icon"></svg>
+    <svg lucideBookOpen [size]="48" class="empty-icon"></svg>
     <h3>Aucun livre trouvé</h3>
     <p>Essayez d'élargir vos critères de recherche.</p>
     <button class="btn btn-secondary" (click)="reinitialiser()">
@@ -120,7 +120,7 @@
     <div class="modal-header">
       <h2>{{ modeEdition() ? 'Modifier le livre' : 'Ajouter un livre' }}</h2>
       <button class="btn-icon" (click)="fermerModal()">
-        <svg lucideX size="20"></svg>
+        <svg lucideX [size]="20"></svg>
       </button>
     </div>
 
@@ -207,3 +207,15 @@
 
   </div>
 </div>
+
+<!-- ══ DIALOG DE CONFIRMATION SUPPRESSION ════════════════ -->
+@if (livreASupprimer()) {
+  <app-confirmation-dialog
+    variant="danger"
+    title="Supprimer le livre"
+    [message]="'Supprimer \u00ab\u00a0' + livreASupprimer()!.titre + '\u00a0\u00bb ?\nCette action est irr\u00e9versible.'"
+    confirmLabel="Supprimer"
+    cancelLabel="Annuler"
+    (confirmed)="onConfirmationSupprimer($event)">
+  </app-confirmation-dialog>
+}

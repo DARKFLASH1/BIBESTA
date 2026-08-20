@@ -1,42 +1,58 @@
-.confirmation-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+// .modal-backdrop et .modal (fond flouté, animation d'entrée, ombre)
+// viennent déjà de styles.scss — on ne touche qu'à la mise en page
+// interne propre à CETTE modale (icône, centrage du texte, boutons).
+
 .confirmation-modal {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 90%;
-  max-height: 80%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
+
+.confirmation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: var(--space-4);
+
+  // Variante neutre : teinte laiton claire (--accent-light), cohérente
+  // avec les badges "système" du design system.
+  background: var(--accent-light);
+  color: var(--accent);
+
+  // Variante danger : teinte rouge claire (--danger-bg), jamais le rouge
+  // pur — on reste sur les variables sémantiques du projet.
+  &--danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+}
+
 .confirmation-modal h2 {
-  margin-top: 0;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xl);
 }
+
 .confirmation-modal p {
-  margin: 1rem 0;
+  margin: 0 0 var(--space-6);
+  color: var(--text-muted);
+  line-height: 1.6;
 }
-.btn {
-  padding: 0.5rem 1rem;
-  margin: 0.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #007bff;
-  color: white;
-}
-.btn-secondary {
-  background-color: #6c757d;
+
+.confirmation-actions {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  justify-content: center;
+
+  // Les boutons héritent déjà de min-height: 44px via la classe .btn
+  // globale (cible tactile) — rien à répéter ici.
+  .btn {
+    flex: 1;
+    justify-content: center;
+    max-width: 200px;
+  }
 }

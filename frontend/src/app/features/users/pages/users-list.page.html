@@ -256,3 +256,14 @@
 
   </div>
 </div>
+
+@if (utilisateurASupprimer()) {
+  <app-confirmation-dialog
+    variant="danger"
+    title="Supprimer l'utilisateur"
+    [message]="'Supprimer \u00ab\u00a0' + utilisateurASupprimer()!.prenom + ' ' + utilisateurASupprimer()!.nom + '\u00a0\u00bb ?'"
+    confirmLabel="Supprimer"
+    cancelLabel="Annuler"
+    (confirmed)="onConfirmationSupprimer($event)">
+  </app-confirmation-dialog>
+}

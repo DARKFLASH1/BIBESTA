@@ -15,6 +15,8 @@
 7. [Sécurité](#7-sécurité)
 8. [Automatisations planifiées](#8-automatisations-planifiées)
 9. [Installation et démarrage](#9-installation-et-démarrage)
+10. [Points d'attention pour la mise en production](#10-points-dattention-pour-la-mise-en-production)
+
 ---
 
 ## 1. Présentation générale
@@ -404,3 +406,70 @@ ng serve
 ```
 
 L'interface est accessible sur `http://localhost:4200`.
+
+### Ordre de création des données de test (Postman)
+
+Les entités ont des dépendances : créer dans cet ordre.
+
+1. `POST /auth/login` → récupérer le token (créer d'abord un bibliothécaire en base directement)
+2. `POST /utilisateurs` → créer des lecteurs
+3. `POST /livres` → créer des livres
+4. `POST /exemplaires/livre/{livreId}` → créer des exemplaires
+5. `POST /abonnements/utilisateur/{id}` → créer un abonnement
+6. `POST /paiements/abonnement/{id}` → payer l'abonnement (nécessaire pour emprunter)
+7. `POST /emprunts` → créer un emprunt
+8. `POST /reservations?utilisateurId=&livreId=` → créer une réservation
+
+---
+
+## 10. Points d'attention pour la mise en production
+
+> **Mise à jour (18 août 2026) :** les 10 points identifiés lors de l'audit initial ont été corrigés. Le tableau ci-dessous est conservé comme **journal historique** (utile pour comprendre pourquoi certains choix de code ont été faits), suivi de la liste à jour de ce qui fonctionne.
+
+### Journal des corrections apportées
+
+| Priorité | Problème (constaté à l'audit) | Statut | Correction appliquée |
+|---|---|---|---|
+| 🔴 Critique | **Types de notifications incohérents** | ✅ Corrigé | Les 12 types manquants ont été ajoutés à l'enum `Notification.Type` (`EMPRUNT, RETOUR, RETARD, ANNULATION, RESERVATION, RESERVATION_DISPONIBLE, RESERVATION_EXPIREE, AMENDE, PAIEMENT, RAPPEL_RETOUR, ABONNEMENT_EXPIRE, RAPPEL_ABONNEMENT`). Tous les appels dans les services utilisent désormais une valeur valide de l'enum. |
+| 🔴 Critique | **Livres désactivés visibles dans le catalogue** | ✅ Corrigé | `LivreRepository.findByActifTrue()` ajouté et utilisé dans `getAllLivres()`, la recherche et la pagination. |
+| 🔴 Critique | **Bug d'expiration des réservations** | ✅ Corrigé | Champ `dateConfirmation` ajouté à `Reservation`, rempli à la confirmation, et utilisé (avec vérification `null`) dans le calcul des 48h d'expiration. |
+| 🔴 Critique | **Aucune transaction `@Transactional`** | ✅ Corrigé | Présent sur `AbonnementService`, `EmpruntService`, `PaiementService`, `ReservationService`, `ScheduledTasks`, et désormais `AmendeService` (`creerAmende()`, `marquerPayee()`), qui faisaient chacune 2 écritures (amende + notification) sans protection transactionnelle. |
+| 🟠 Important | **Paiements d'amendes non retournés dans `/paiements/utilisateur/{id}`** | ✅ Corrigé | `PaiementRepository.findAllByUtilisateurId()` (requête `@Query` combinant abonnements et amendes) créée et utilisée par `PaiementService`. |
+| 🟠 Important | **Aucun rappel avant échéance d'emprunt** | ✅ Corrigé | Tâche ajoutée dans `ScheduledTasks` : notification envoyée 3 jours avant `dateRetourPrevue`. |
+| 🟡 Modéré | **Aucun rappel avant expiration d'abonnement** | ✅ Corrigé | Tâche ajoutée dans `ScheduledTasks` : notification envoyée 7 jours avant `dateFin` (abonnements `PAYE`). |
+| 🟡 Modéré | **Statistiques et export non implémentés** | ✅ Corrigé | `StatistiqueController` créé avec l'endpoint `/statistiques/dashboard` (protégé `BIBLIOTHECAIRE`), consommé par le frontend (`features/reports`). |
+| ⚪ Mineur | **`Exemplaire.id` est `Long` alors que les autres entités utilisent `Integer`** | ✅ Corrigé | Champ uniformisé en `Integer`. La conversion manuelle `.intValue()` dans `LivreService.isLivreEmprunte()` a été supprimée, devenue inutile. |
+| ⚪ Mineur | **Nommage non standard de l'enum `methode_paiement`** | ✅ Corrigé | Enum renommé `MethodePaiement` (PascalCase) et champ renommé `methodePaiement` (camelCase) dans `Paiement.java` et `PaiementService.java`. La colonne SQL reste `methode_paiement` (convention snake_case en base, aucune migration nécessaire). **Effet de bord positif :** la réponse JSON de l'API renvoie désormais la clé `"methodePaiement"` au lieu de `"methode_paiement"`, ce qui correspond à ce que le frontend attendait déjà. |
+
+### Points restants côté frontend (hors périmètre backend ci-dessus)
+
+| Sujet | Statut |
+|---|---|
+| `ConfirmationDialogComponent` non utilisé, 8 `alert()`/`confirm()` natifs restants | 🔄 En cours — le composant a été entièrement retravaillé (signaux Angular 19, design system, accessibilité clavier, variante `danger`) mais **pas encore branché** dans les 8 fichiers concernés |
+| `EtatExemplaire` (frontend) fusionne état physique et disponibilité, contrairement au backend qui sépare `etatPhysique` / `statutDisponibilite` | ⏳ Non commencé |
+| `ExemplaireService` frontend dédié (chargement de la disponibilité à la demande, pas en bulk) | ⏳ Non commencé |
+
+### Ce qui fonctionne correctement
+
+- ✅ Authentification JWT complète (génération, validation, extraction du rôle et de l'id)
+- ✅ Autorisation par rôle sur tous les endpoints (`@PreAuthorize` + `SecurityConfig`)
+- ✅ Protection des données personnelles (`SecurityUtils.verifierAccesPropriete`)
+- ✅ Toutes les règles d'éligibilité à l'emprunt (statut compte, abonnement, amendes, quota)
+- ✅ File d'attente FIFO pour les réservations
+- ✅ Verrouillage de l'exemplaire à la confirmation de réservation
+- ✅ Calcul et création automatique des amendes au retour
+- ✅ Tâches planifiées (retards, abonnements expirés, réservations expirées, **rappels J-3 emprunt et J-7 abonnement**)
+- ✅ Historisation automatique de toutes les actions
+- ✅ Suppressions logiques (utilisateurs et livres)
+- ✅ Hachage BCrypt des mots de passe
+- ✅ Gestion centralisée des erreurs avec codes HTTP corrects
+- ✅ Séparation état physique / disponibilité des exemplaires (**backend uniquement — voir points restants frontend ci-dessus**)
+- ✅ Pagination sur les listes de livres et utilisateurs
+- ✅ Validation ISBN (format 10 ou 13 chiffres)
+- ✅ Contrainte : un paiement = un abonnement OU une amende, jamais les deux
+- ✅ Notifications avec types cohérents (12 types, sans fallback silencieux)
+- ✅ Catalogue filtré sur les livres actifs uniquement
+- ✅ Toutes les écritures multi-tables protégées par `@Transactional`
+- ✅ Statistiques et tableau de bord bibliothécaire (`/statistiques/dashboard`)
+- ✅ Types d'identifiants uniformisés (`Integer`) sur toutes les entités
+- ✅ Nommage des enums conforme aux conventions Java (PascalCase)

@@ -209,3 +209,14 @@
 
   </div>
 </div>
+
+@if (amendeAAnnuler()) {
+  <app-confirmation-dialog
+    variant="danger"
+    title="Annuler l'amende"
+    [message]="'Annuler cette amende de ' + amendeAAnnuler()!.montant + ' FCFA ?'"
+    confirmLabel="Annuler l'amende"
+    cancelLabel="Retour"
+    (confirmed)="onConfirmationAnnulation($event)">
+  </app-confirmation-dialog>
+}
