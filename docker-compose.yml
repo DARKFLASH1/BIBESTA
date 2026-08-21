@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: bibesta_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bibliotheque
+      MYSQL_USER: bibesta_user
+      MYSQL_PASSWORD: bibesta_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./Backend/src/main/resources/db:/docker-entrypoint-initdb.d
+    networks:
+      - bibesta_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: bibesta_backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bibliotheque?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull
+      SPRING_DATASOURCE_USERNAME: bibesta_user
+      SPRING_DATASOURCE_PASSWORD: bibesta_password
+      JWT_SECRET: ma_cle_secrete_tres_longue_pour_jwt_signature_2024_bibesta
+      DB_USERNAME: bibesta_user
+      DB_PASSWORD: bibesta_password
+    ports:
+      - "8080:8080"
+    networks:
+      - bibesta_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bibesta_frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+    networks:
+      - bibesta_network
+
+networks:
+  bibesta_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
