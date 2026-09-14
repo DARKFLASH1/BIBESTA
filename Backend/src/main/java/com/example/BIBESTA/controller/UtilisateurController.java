@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -49,7 +50,7 @@ public class UtilisateurController {
 
     @PostMapping
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<Utilisateur> save(@RequestBody UtilisateurRequest request) {
+    public ResponseEntity<Utilisateur> save(@Valid @RequestBody UtilisateurRequest request) {
         Utilisateur saved = utilisateurService.save(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -58,7 +59,7 @@ public class UtilisateurController {
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Utilisateur> update(
             @PathVariable Integer id,
-            @RequestBody UtilisateurRequest request) {
+            @Valid @RequestBody UtilisateurRequest request) {
         return ResponseEntity.ok(utilisateurService.update(id, request));
     }
 

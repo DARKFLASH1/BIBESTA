@@ -50,4 +50,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
         // Compte les réservations par statut
         long countByStatut(Statut statut);
+
+        // Compte les réservations d'un livre par statut (1 réservation CONFIRMEE
+        // = 1 exemplaire RESERVE → permet de ne libérer que le bon nombre
+        // d'exemplaires lors d'une expiration/annulation).
+        long countByLivreIdAndStatut(Integer livreId, Statut statut);
 }

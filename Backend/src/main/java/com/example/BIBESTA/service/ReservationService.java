@@ -4,7 +4,7 @@ import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.model.Reservation.Statut;
-import com.example.BIBESTA.model.Exemplaire.Etat;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +131,7 @@ public class ReservationService {
                 // Verrouille l'exemplaire disponible → RESERVE
                 // pour que personne d'autre ne puisse l'emprunter entre-temps
                 Exemplaire exemplaire = disponibles.get(0);
-                exemplaire.setEtat(Etat.RESERVE);
+                exemplaire.setStatutDisponibilite(StatutDisponibilite.RESERVE);
                 exemplaireRepository.save(exemplaire);
 
                 // Notifie l'utilisateur
@@ -159,15 +159,21 @@ public class ReservationService {
                                 reservation.setStatut(Statut.ANNULEE);
                                 reservationRepository.save(reservation);
 
-                                // Libère l'exemplaire réservé → DISPONIBLE
-                                // et relance la réservation suivante dans la file
+                                // Libère le nombre d'exemplaires correspondant au nombre de
+                                // réservations CONFIRMEE encore actives (1 réservation
+                                // CONFIRMEE = 1 exemplaire RESERVE).
+                                Integer livreId = reservation.getLivre().getId();
+                                long confirmationsRestantes = reservationRepository
+                                                .countByLivreIdAndStatut(livreId, Statut.CONFIRMEE);
                                 List<Exemplaire> reserves = exemplaireRepository
                                                 .findByLivreIdAndStatutDisponibilite(
-                                                                reservation.getLivre().getId(),
+                                                                livreId,
                                                                 StatutDisponibilite.RESERVE);
-                                for (Exemplaire exemplaire : reserves) {
-                                        exemplaire.setEtat(Etat.DISPONIBLE);
-                                        exemplaireRepository.save(exemplaire);
+                                int aLiberer = (int) Math.min(confirmationsRestantes, reserves.size());
+                                for (int i = 0; i < aLiberer; i++) {
+                                        Exemplaire ex = reserves.get(i);
+                                        ex.setStatutDisponibilite(StatutDisponibilite.DISPONIBLE);
+                                        exemplaireRepository.save(ex);
                                 }
 
                                 // Notifie l'utilisateur
@@ -190,15 +196,42 @@ public class ReservationService {
                 Reservation reservation = reservationRepository.findById(reservationId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Réservation non trouvée"));
 
-                // On ne peut annuler que les réservations EN_ATTENTE
-                if (reservation.getStatut() != Statut.EN_ATTENTE) {
-                        throw new BusinessException(
-                                        "Impossible d'annuler une réservation " + reservation.getStatut());
+                if (reservation.getStatut() == Statut.ANNULEE) {
+                        throw new BusinessException("Cette réservation est déjà annulée");
                 }
+
+                boolean etaitConfirmee = reservation.getStatut() == Statut.CONFIRMEE;
 
                 reservation.setStatut(Statut.ANNULEE);
 
-                // Notifie l'utilisateur
+                // Si la réservation était CONFIRMEE, l'exemplaire réservé est
+                // libéré avant de relancer la file (P2.3)
+                if (etaitConfirmee) {
+                        Integer livreId = reservation.getLivre().getId();
+                        List<Exemplaire> reserves = exemplaireRepository
+                                        .findByLivreIdAndStatutDisponibilite(
+                                                        livreId,
+                                                        StatutDisponibilite.RESERVE);
+                        if (!reserves.isEmpty()) {
+                                Exemplaire ex = reserves.get(0);
+                                ex.setStatutDisponibilite(StatutDisponibilite.DISPONIBLE);
+                                exemplaireRepository.save(ex);
+                        }
+
+                        Reservation saved = reservationRepository.save(reservation);
+
+                        notificationService.creer(
+                                        reservation.getUtilisateur().getId(),
+                                        "ANNULATION",
+                                        "Votre réservation pour '" +
+                                                        reservation.getLivre().getTitre() + "' a été annulée.");
+
+                        // Relance la confirmation pour le lecteur suivant dans la file
+                        confirmerReservationsSiDisponible(livreId);
+                        return saved;
+                }
+
+                // Réservation EN_ATTENTE : annulation simple
                 notificationService.creer(
                                 reservation.getUtilisateur().getId(),
                                 "ANNULATION",

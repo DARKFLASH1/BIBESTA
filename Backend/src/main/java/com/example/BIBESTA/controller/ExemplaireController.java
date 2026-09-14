@@ -1,7 +1,7 @@
 package com.example.BIBESTA.controller;
 
 import com.example.BIBESTA.model.Exemplaire;
-import com.example.BIBESTA.model.Exemplaire.Etat;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.service.ExemplaireService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -53,13 +53,13 @@ public class ExemplaireController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // PATCH /api/exemplaires/1/etat?nouvelEtat=EMPRUNTE → change l'état
+    // PATCH /api/exemplaires/1/etat?nouvelEtat=EMPRUNTE → change la disponibilité
     @PatchMapping("/{id}/etat")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     // @PatchMapping = modification partielle (juste l'état, pas tout l'objet)
     public ResponseEntity<Exemplaire> updateEtat(
             @PathVariable Integer id,
-            @RequestParam Etat nouvelEtat) {
+            @RequestParam StatutDisponibilite nouvelEtat) {
         return ResponseEntity.ok(exemplaireService.updateEtat(id, nouvelEtat));
     }
 

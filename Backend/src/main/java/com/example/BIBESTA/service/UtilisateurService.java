@@ -43,6 +43,11 @@ public class UtilisateurService {
             throw new BusinessException("Cet identifiant est déjà pris");
         }
 
+        // En création, le mot de passe est obligatoire (l'édition le gère en option)
+        if (request.motDePasse() == null || request.motDePasse().isBlank()) {
+            throw new BusinessException("Le mot de passe est obligatoire");
+        }
+
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setNom(request.nom());
         utilisateur.setPrenom(request.prenom());

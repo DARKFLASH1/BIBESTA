@@ -12,6 +12,7 @@ import com.example.BIBESTA.dto.emprunt.EmpruntResponse;
 import com.example.BIBESTA.dto.emprunt.EmpruntRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.example.BIBESTA.security.SecurityUtils;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/emprunts")
@@ -96,7 +97,7 @@ public class EmpruntController {
     @PostMapping
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> creerEmprunt(
-            @RequestBody EmpruntRequest request) {
+            @Valid @RequestBody EmpruntRequest request) {
         Emprunt emprunt = empruntService.creerEmprunt(
                 request.utilisateurId(),
                 request.exemplaireId());

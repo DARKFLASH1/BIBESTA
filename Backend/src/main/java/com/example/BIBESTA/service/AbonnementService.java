@@ -55,10 +55,34 @@ public class AbonnementService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Utilisateur non trouvé avec l'id : " + utilisateurId));
 
+        // (P2.10) Le compte doit être ACTIF pour souscrire un abonnement
+        if (utilisateur.getStatut() != Utilisateur.Statut.ACTIF) {
+            throw new BusinessException(
+                    "Ce compte est " + utilisateur.getStatut().name().toLowerCase()
+                            + ". Il ne peut pas souscrire d'abonnement.");
+        }
+
+        // (P2.10) Le montant doit être strictement positif
+        if (abonnement.getMontant() == null
+                || abonnement.getMontant().signum() <= 0) {
+            throw new BusinessException("Le montant de l'abonnement doit être supérieur à 0");
+        }
+
         // Vérifie que la date de fin est après la date de début
-        if (abonnement.getDateFin().isBefore(abonnement.getDateDebut())) {
+        if (abonnement.getDateDebut() == null || abonnement.getDateFin() == null
+                || abonnement.getDateFin().isBefore(abonnement.getDateDebut())) {
             throw new BusinessException(
                     "La date de fin doit être après la date de début");
+        }
+
+        // (P2.10) Pas de chevauchement avec un abonnement déjà PAYE
+        if (abonnement.getStatutPaiement() == StatutPaiement.PAYE
+                && abonnementRepository
+                        .existsByUtilisateurIdAndStatutPaiementAndDateFinGreaterThanEqual(
+                                utilisateurId, StatutPaiement.PAYE,
+                                abonnement.getDateDebut())) {
+            throw new BusinessException(
+                    "Un abonnement payé est déjà actif à cette période");
         }
 
         // Associe l'abonnement à l'utilisateur

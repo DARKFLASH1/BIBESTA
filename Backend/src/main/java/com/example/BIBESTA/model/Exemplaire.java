@@ -56,39 +56,13 @@ public class Exemplaire {
         EN_REPARATION
     }
 
-    // Compatibilité : ancien champ "etat" → getter/setter
-    // Pour ne pas casser le code existant qui utilise getEtat()/setEtat()
-    @Deprecated
-    public Etat getEtat() {
-        return switch (statutDisponibilite) {
-            case DISPONIBLE -> Etat.DISPONIBLE;
-            case EMPRUNTE -> Etat.EMPRUNTE;
-            case RESERVE -> Etat.RESERVE;
-            case EN_REPARATION -> Etat.EN_REPARATION;
-        };
-    }
-
-    @Deprecated
-    public void setEtat(Etat etat) {
-        this.statutDisponibilite = switch (etat) {
-            case DISPONIBLE -> StatutDisponibilite.DISPONIBLE;
-            case EMPRUNTE -> StatutDisponibilite.EMPRUNTE;
-            case RESERVE -> StatutDisponibilite.RESERVE;
-            case EN_REPARATION -> StatutDisponibilite.EN_REPARATION;
-            case BON_ETAT -> StatutDisponibilite.DISPONIBLE;
-            case MAUVAIS_ETAT -> StatutDisponibilite.EN_REPARATION;
-        };
-    }
-
-    // Ancien enum conservé pour compatibilité
-    public enum Etat {
-        DISPONIBLE,
-        EMPRUNTE,
-        RESERVE,
-        EN_REPARATION,
-        BON_ETAT,
-        MAUVAIS_ETAT
-    }
+    // P2.13 : l'ancien enum composite Etat (DISPONIBLE/EMPRUNTE/RESERVE/
+    // EN_REPARATION/BON_ETAT/MAUVAIS_ETAT) et les shims getEtat()/setEtat()
+    // ont été supprimés. Le modèle utilise désormais deux enums séparées :
+    //   EtatPhysique      → état physique (bon état, usage, endommagé…)
+    //   StatutDisponibilite → disponibilité (disponible, emprunté, réservé…)
+    // Cela clarifie la sémantique et supprime les coercions silencieuses
+    // (setEtat(BON_ETAT) → DISPONIBLE).
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livre_id", nullable = false)

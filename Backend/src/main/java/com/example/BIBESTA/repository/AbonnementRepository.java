@@ -47,4 +47,11 @@ public interface AbonnementRepository extends JpaRepository<Abonnement, Integer>
             Integer utilisateurId,
             StatutPaiement statut,
             LocalDate date);
+
+    // Vérifie si un abonnement PAYE reste actif après la date de début d'un nouvel
+    // abonnement (dateFin >= dateDebut du nouveau) → chevauchement détecté en P2.10.
+    boolean existsByUtilisateurIdAndStatutPaiementAndDateFinGreaterThanEqual(
+            Integer utilisateurId,
+            StatutPaiement statut,
+            LocalDate dateDebut);
 }

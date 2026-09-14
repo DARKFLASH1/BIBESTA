@@ -1,10 +1,12 @@
 package com.example.BIBESTA.service;
 
+import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +51,7 @@ public class HistoriqueService {
 
     // ENREGISTRER UN MOUVEMENT
     // Méthode centrale appelée par tous les autres services
+    @Transactional
     public Historique enregistrer(
             Integer utilisateurId,
             String type,
@@ -71,7 +74,8 @@ public class HistoriqueService {
         try {
             typeEnum = Historique.Type.valueOf(type);
         } catch (IllegalArgumentException e) {
-            typeEnum = Historique.Type.CONNEXION; // fallback par défaut
+            // (P2.8) erreur explicite au lieu du fallback silencieux CONNEXION
+            throw new BusinessException("Type d'historique inconnu : " + type);
         }
         historique.setType(typeEnum);
         historique.setDescription(description);

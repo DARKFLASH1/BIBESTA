@@ -35,7 +35,9 @@ public class Amende {
     // "Une amende concerne exactement un emprunt"
     @OneToOne(fetch = FetchType.LAZY)
     // @OneToOne = un emprunt a au maximum une amende
-    @JoinColumn(name = "emprunt_id", nullable = false)
+    // unique = true : contrainte DB en plus du modèle JPA (empêche 2 amendes
+    // pour un même emprunt, même en cas de course de transactions)
+    @JoinColumn(name = "emprunt_id", nullable = false, unique = true)
     private Emprunt emprunt;
 
     public enum Statut {
