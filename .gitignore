@@ -30,3 +30,8 @@ mvnw.cmd
 .claude/
 # Plan local (non versionné)
 PLAN_CORRECTIONS_AUDIT.md
+
+# Backend service de build local (jamais versionné)
+Backend/package.json
+Backend/package-lock.json
+Backend/HELP.md
