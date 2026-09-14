@@ -52,34 +52,20 @@ public class AmendeController {
 
     @PostMapping("/emprunt/{empruntId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> creerAmende(@PathVariable Integer empruntId) {
-        try {
-            Amende amende = amendeService.creerAmende(empruntId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(amende);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Amende> creerAmende(@PathVariable Integer empruntId) {
+        Amende amende = amendeService.creerAmende(empruntId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(amende);
     }
 
     @PatchMapping("/{id}/payee")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> marquerPayee(@PathVariable Integer id) {
-        try {
-            Amende amende = amendeService.marquerPayee(id);
-            return ResponseEntity.ok(amende);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Amende> marquerPayee(@PathVariable Integer id) {
+        return ResponseEntity.ok(amendeService.marquerPayee(id));
     }
 
     @PatchMapping("/{id}/annuler")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> annuler(@PathVariable Integer id) {
-        try {
-            Amende amende = amendeService.annuler(id);
-            return ResponseEntity.ok(amende);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Amende> annuler(@PathVariable Integer id) {
+        return ResponseEntity.ok(amendeService.annuler(id));
     }
 }

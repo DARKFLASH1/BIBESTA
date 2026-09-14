@@ -8,12 +8,20 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 
+// Correspond aux champs renvoyés par Notification.java
+// (contenu / date / statut LU|NON_LU) et à l'enum Type du backend.
+type TypeNotification =
+  | 'EMPRUNT' | 'RETOUR' | 'RETARD' | 'RESERVATION'
+  | 'RESERVATION_DISPONIBLE' | 'RESERVATION_EXPIREE'
+  | 'AMENDE' | 'PAIEMENT' | 'ANNULATION'
+  | 'RAPPEL_RETOUR' | 'ABONNEMENT_EXPIRE' | 'RAPPEL_ABONNEMENT';
+
 interface Notification {
   id: number;
-  type: string;
-  contenue: string;
-  dateEnvoi: string;
-  statut: 'LUE' | 'NON_LUE';
+  type: TypeNotification;
+  contenu: string;
+  date: string;
+  statut: 'LU' | 'NON_LU';
 }
 
 @Component({
@@ -42,13 +50,13 @@ export class NotificationsListPage implements OnInit {
   notificationsFiltrees = computed(() => {
     const filtre = this.filtreActif();
     if (filtre === 'tous')     return this.notifications();
-    if (filtre === 'non_lues') return this.notifications().filter(n => n.statut === 'NON_LUE');
-    if (filtre === 'lues')     return this.notifications().filter(n => n.statut === 'LUE');
+    if (filtre === 'non_lues') return this.notifications().filter(n => n.statut === 'NON_LU');
+    if (filtre === 'lues')     return this.notifications().filter(n => n.statut === 'LU');
     return this.notifications();
   });
 
   nbNonLues = computed(() =>
-    this.notifications().filter(n => n.statut === 'NON_LUE').length
+    this.notifications().filter(n => n.statut === 'NON_LU').length
   );
 
   ngOnInit(): void { this.charger(); }
@@ -64,7 +72,7 @@ export class NotificationsListPage implements OnInit {
   }
 
   marquerLue(notification: Notification): void {
-    if (notification.statut === 'LUE') return;
+    if (notification.statut === 'LU') return;
 
     this.http.patch<Notification>(
       `${environment.apiUrl}/notifications/${notification.id}/lue`, {}
@@ -84,7 +92,7 @@ export class NotificationsListPage implements OnInit {
     ).subscribe({
       next: () => {
         this.notifications.update(list =>
-          list.map(n => ({ ...n, statut: 'LUE' as const }))
+          list.map(n => ({ ...n, statut: 'LU' as const }))
         );
       }
     });
@@ -102,23 +110,33 @@ export class NotificationsListPage implements OnInit {
     });
   }
 
-  // Icône selon le type de notification
+  // Icône selon le type de notification (aligné sur l'enum Type du backend)
   iconeType(type: string): string {
     switch (type) {
-      case 'AMENDE':       return 'alertTriangle';
-      case 'RAPPEL':       return 'clock';
-      case 'DISPONIBLE':   return 'checkCircle2';
-      default:             return 'info';
+      case 'AMENDE':               return 'alertTriangle';
+      case 'RETARD':
+      case 'RAPPEL_RETOUR':
+      case 'RAPPEL_ABONNEMENT':
+      case 'ABONNEMENT_EXPIRE':    return 'clock';
+      case 'RETOUR':
+      case 'PAIEMENT':
+      case 'RESERVATION_DISPONIBLE': return 'checkCircle2';
+      default:                     return 'info';
     }
   }
 
   // Classe CSS selon le type
   classeType(type: string): string {
     switch (type) {
-      case 'AMENDE':     return 'type-danger';
-      case 'RAPPEL':     return 'type-warning';
-      case 'DISPONIBLE': return 'type-success';
-      default:           return 'type-info';
+      case 'AMENDE':               return 'type-danger';
+      case 'RETARD':
+      case 'RAPPEL_RETOUR':
+      case 'RAPPEL_ABONNEMENT':
+      case 'ABONNEMENT_EXPIRE':    return 'type-warning';
+      case 'RETOUR':
+      case 'PAIEMENT':
+      case 'RESERVATION_DISPONIBLE': return 'type-success';
+      default:                     return 'type-info';
     }
   }
 }

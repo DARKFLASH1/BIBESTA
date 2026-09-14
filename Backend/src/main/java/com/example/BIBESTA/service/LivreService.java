@@ -3,10 +3,8 @@ package com.example.BIBESTA.service;
 import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Emprunt.Statut;
-import com.example.BIBESTA.model.Exemplaire;
 import com.example.BIBESTA.model.Livre;
 import com.example.BIBESTA.repository.EmpruntRepository;
-import com.example.BIBESTA.repository.ExemplaireRepository;
 import com.example.BIBESTA.repository.LivreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,15 +17,12 @@ import org.springframework.data.domain.Pageable;
 public class LivreService {
 
     private final LivreRepository livreRepository;
-    private final ExemplaireRepository exemplaireRepository;
     private final EmpruntRepository empruntRepository;
 
     @Autowired
     public LivreService(LivreRepository livreRepository,
-            ExemplaireRepository exemplaireRepository,
             EmpruntRepository empruntRepository) {
         this.livreRepository = livreRepository;
-        this.exemplaireRepository = exemplaireRepository;
         this.empruntRepository = empruntRepository;
     }
 
@@ -223,13 +218,9 @@ public class LivreService {
     private boolean isLivreEmprunte(Livre livre) {
         // Un livre est "emprunté" si au moins un de ses exemplaires a un emprunt
         // au statut EN_COURS.
-        List<Exemplaire> exemplaires = exemplaireRepository.findByLivreId(livre.getId());
-        for (Exemplaire exemplaire : exemplaires) {
-            if (empruntRepository.existsByExemplaireIdAndStatut(exemplaire.getId(), Statut.EN_COURS)) {
-                return true;
-            }
-        }
-        return false;
+        // Requête unique SQL (JOIN exemplaire) : remplace l'ancien parcours
+        // 1 requête par exemplaire (N+1).
+        return empruntRepository.existsByLivreIdAndStatut(livre.getId(), Statut.EN_COURS);
     }
 
 }

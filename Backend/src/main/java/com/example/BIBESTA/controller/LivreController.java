@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -68,35 +69,22 @@ public class LivreController {
 
     @PostMapping
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> createLivre(@RequestBody Livre livre) {
-        try {
-            return ResponseEntity.ok(livreService.saveLivre(livre));
-        } catch (RuntimeException e) {
-            // On renvoie le message réel (ex: "Un livre avec cet ISBN existe déjà")
-            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
-        }
+    public ResponseEntity<Livre> createLivre(@RequestBody Livre livre) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(livreService.saveLivre(livre));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<Livre> updateLivre(
             @PathVariable Integer id, @RequestBody Livre livreDetails) {
-        try {
-            return ResponseEntity.ok(livreService.updateLivre(id, livreDetails));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null);
-        }
+        return ResponseEntity.ok(livreService.updateLivre(id, livreDetails));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> deleteLivre(@PathVariable Integer id) {
-        try {
-            livreService.deleteLivre(id);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> deleteLivre(@PathVariable Integer id) {
+        livreService.deleteLivre(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")

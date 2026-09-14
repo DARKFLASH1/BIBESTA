@@ -2,6 +2,7 @@ package com.example.BIBESTA.controller;
 
 import com.example.BIBESTA.dto.Mapper;
 import com.example.BIBESTA.dto.reservation.ReservationResponse;
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Reservation;
 import com.example.BIBESTA.security.SecurityUtils; // ← import ajouté
 import com.example.BIBESTA.service.ReservationService;
@@ -70,43 +71,31 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<?> creerReservation(
+    public ResponseEntity<ReservationResponse> creerReservation(
             @RequestParam Integer utilisateurId,
             @RequestParam Integer livreId) {
-        try {
-            // Un lecteur ne peut réserver que pour lui-même
-            SecurityUtils.verifierAccesPropriete(utilisateurId);
-            Reservation reservation = reservationService
-                    .creerReservation(utilisateurId, livreId);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(mapper.toReservationResponse(reservation));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // Un lecteur ne peut réserver que pour lui-même
+        SecurityUtils.verifierAccesPropriete(utilisateurId);
+        Reservation reservation = reservationService
+                .creerReservation(utilisateurId, livreId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(mapper.toReservationResponse(reservation));
     }
 
     @PutMapping("/{id}/annuler")
-    public ResponseEntity<?> annuler(@PathVariable Integer id) {
-        try {
-            // Retrouve la réservation et vérifie que l'utilisateur peut y accéder
-            Reservation reservation = reservationService.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Réservation non trouvée"));
-            SecurityUtils.verifierAccesPropriete(reservation.getUtilisateur().getId());
-            Reservation updated = reservationService.annuler(id);
-            return ResponseEntity.ok(mapper.toReservationResponse(updated));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ReservationResponse> annuler(@PathVariable Integer id) {
+        // Retrouve la réservation et vérifie que l'utilisateur peut y accéder
+        Reservation reservation = reservationService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation non trouvée"));
+        SecurityUtils.verifierAccesPropriete(reservation.getUtilisateur().getId());
+        Reservation updated = reservationService.annuler(id);
+        return ResponseEntity.ok(mapper.toReservationResponse(updated));
     }
 
     @PutMapping("/confirmer/{livreId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> confirmer(@PathVariable Integer livreId) {
-        try {
-            reservationService.confirmerReservationsSiDisponible(livreId);
-            return ResponseEntity.ok("Réservations vérifiées et confirmées");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<String> confirmer(@PathVariable Integer livreId) {
+        reservationService.confirmerReservationsSiDisponible(livreId);
+        return ResponseEntity.ok("Réservations vérifiées et confirmées");
     }
 }

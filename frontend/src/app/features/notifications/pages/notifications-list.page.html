@@ -65,16 +65,22 @@
 
     <div class="notif-card"
       *ngFor="let n of notificationsFiltrees()"
-      [class.non-lue]="n.statut === 'NON_LUE'"
+      [class.non-lue]="n.statut === 'NON_LU'"
       (click)="marquerLue(n)">
 
       <!-- Icône type -->
       <div class="notif-icone" [ngClass]="classeType(n.type)">
         <svg lucideAlertTriangle size="20" *ngIf="n.type === 'AMENDE'"></svg>
-        <svg lucideClock size="20"        *ngIf="n.type === 'RAPPEL'"></svg>
-        <svg lucideCheckCircle2 size="20" *ngIf="n.type === 'DISPONIBLE'"></svg>
+        <svg lucideClock size="20"
+          *ngIf="['RETARD','RAPPEL_RETOUR','RAPPEL_ABONNEMENT','ABONNEMENT_EXPIRE'].includes(n.type)">
+        </svg>
+        <svg lucideCheckCircle2 size="20"
+          *ngIf="['RETOUR','PAIEMENT','RESERVATION_DISPONIBLE'].includes(n.type)">
+        </svg>
         <svg lucideInfo size="20"
-          *ngIf="n.type !== 'AMENDE' && n.type !== 'RAPPEL' && n.type !== 'DISPONIBLE'">
+          *ngIf="n.type !== 'AMENDE'
+            && !['RETARD','RAPPEL_RETOUR','RAPPEL_ABONNEMENT','ABONNEMENT_EXPIRE'].includes(n.type)
+            && !['RETOUR','PAIEMENT','RESERVATION_DISPONIBLE'].includes(n.type)">
         </svg>
       </div>
 
@@ -83,12 +89,12 @@
           <span class="notif-type">{{ n.type }}</span>
           <div class="notif-meta">
             <span class="notif-date">
-              {{ n.dateEnvoi | date:'dd/MM/yyyy HH:mm' }}
+              {{ n.date | date:'dd/MM/yyyy HH:mm' }}
             </span>
-            <span class="dot-non-lue" *ngIf="n.statut === 'NON_LUE'"></span>
+            <span class="dot-non-lue" *ngIf="n.statut === 'NON_LU'"></span>
           </div>
         </div>
-        <p class="notif-contenu">{{ n.contenue }}</p>
+        <p class="notif-contenu">{{ n.contenu }}</p>
       </div>
 
       <!-- Bouton supprimer -->

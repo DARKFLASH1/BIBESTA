@@ -179,19 +179,14 @@
             💵 Espèces
           </div>
           <div class="methode-card"
-            [class.actif]="methodePaiement() === 'CARTE'"
-            (click)="methodePaiement.set('CARTE')">
-            💳 Carte
+            [class.actif]="methodePaiement() === 'CARTE_BANCAIRE'"
+            (click)="methodePaiement.set('CARTE_BANCAIRE')">
+            💳 Carte bancaire
           </div>
           <div class="methode-card"
-            [class.actif]="methodePaiement() === 'MOBILE'"
-            (click)="methodePaiement.set('MOBILE')">
+            [class.actif]="methodePaiement() === 'MOBILE_MONEY'"
+            (click)="methodePaiement.set('MOBILE_MONEY')">
             📱 Mobile Money
-          </div>
-          <div class="methode-card"
-            [class.actif]="methodePaiement() === 'VIREMENT'"
-            (click)="methodePaiement.set('VIREMENT')">
-            🏦 Virement
           </div>
         </div>
       </div>

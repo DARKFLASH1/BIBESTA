@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -61,16 +59,34 @@ public class UtilisateurService {
         return utilisateurRepository.save(utilisateur);
     }
 
-    // Met à jour un utilisateur existant
+    // Met à jour un utilisateur existant.
+    // Champs modifiables : nom, prenom, email, contact, dateNaissance, sexe,
+    // role, motDePasse (seulement si non vide).
+    // Champ NON modifiable : identifiant (c'est le login du compte, le changer
+    // silencieusement invaliderait les tokens/sessions en cours).
     public Utilisateur update(Integer id, UtilisateurRequest request) {
 
         Utilisateur existant = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
 
+        // L'email doit rester unique (en excluant l'utilisateur lui-même,
+        // sinon un update sans changement leverait à tort une erreur).
+        if (request.email() != null && !request.email().equals(existant.getEmail())
+                && utilisateurRepository.existsByEmail(request.email())) {
+            throw new BusinessException("Cet email est déjà utilisé");
+        }
+
+        // L'identifiant est volontairement non modifiable (c'est le login du compte).
+        if (request.identifiant() != null && !request.identifiant().equals(existant.getIdentifiant())) {
+            throw new BusinessException("L'identifiant ne peut pas être modifié");
+        }
+
         existant.setNom(request.nom());
         existant.setPrenom(request.prenom());
         existant.setEmail(request.email());
         existant.setContact(request.contact());
+        existant.setDateNaissance(request.dateNaissance());
+        existant.setSexe(request.sexe());
         existant.setRole(request.role());
 
         // Si un nouveau mot de passe est fourni → on le hashe et met à jour
