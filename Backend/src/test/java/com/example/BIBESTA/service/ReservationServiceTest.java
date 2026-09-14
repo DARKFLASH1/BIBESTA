@@ -1,6 +1,7 @@
 package com.example.BIBESTA.service;
 
 import com.example.BIBESTA.model.*;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +36,9 @@ class ReservationServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private HistoriqueService historiqueService;
+
     @InjectMocks
     private ReservationService reservationService;
 
@@ -46,38 +49,43 @@ class ReservationServiceTest {
     @BeforeEach
     void setUp() {
         utilisateur = new Utilisateur();
-        utilisateur.setId(1L);
+        utilisateur.setId(1);
         utilisateur.setNom("Test");
         utilisateur.setPrenom("User");
         utilisateur.setEmail("test@example.com");
+        utilisateur.setStatut(Utilisateur.Statut.ACTIF);
 
         livre = new Livre();
-        livre.setId(1L);
+        livre.setId(1);
         livre.setTitre("Test Livre");
         livre.setAuteur("Auteur Test");
         livre.setIsbn("1234567890");
 
         exemplaire = new Exemplaire();
-        exemplaire.setId(1L);
+        exemplaire.setId(1);
         exemplaire.setLivre(livre);
-        exemplaire.setEtat(Exemplaire.Etat.DISPONIBLE);
+        exemplaire.setStatutDisponibilite(StatutDisponibilite.DISPONIBLE);
     }
 
     @Test
     void testCreerReservation() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
-        when(livreRepository.findById(1L)).thenReturn(Optional.of(livre));
-        when(exemplaireRepository.findByLivreAndEtat(livre, Exemplaire.Etat.DISPONIBLE))
-                .thenReturn(List.of(exemplaire));
-        
+        when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
+        when(livreRepository.findById(1)).thenReturn(Optional.of(livre));
+        when(reservationRepository.existsByUtilisateurIdAndLivreIdAndStatut(
+                1, 1, Reservation.Statut.EN_ATTENTE)).thenReturn(false);
+
         Reservation reservation = new Reservation();
         reservation.setUtilisateur(utilisateur);
         reservation.setLivre(livre);
         reservation.setDateReservation(LocalDate.now());
-        
-        when(reservationRepository.save(any(Reservation.class))).thenReturn(reservation);
+        reservation.setStatut(Reservation.Statut.EN_ATTENTE);
+        reservation.setId(1);
 
-        Reservation result = reservationService.creerReservation(1L, 1L);
+        when(reservationRepository.save(any(Reservation.class))).thenReturn(reservation);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
+        doNothing().when(historiqueService).enregistrerReservation(any(), any(), any());
+
+        Reservation result = reservationService.creerReservation(1, 1);
 
         assertNotNull(result);
         assertEquals(utilisateur, result.getUtilisateur());
@@ -88,44 +96,49 @@ class ReservationServiceTest {
     @Test
     void testAnnulerReservation() {
         Reservation reservation = new Reservation();
-        reservation.setId(1L);
+        reservation.setId(1);
         reservation.setStatut(Reservation.Statut.EN_ATTENTE);
-        
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        reservation.setUtilisateur(utilisateur);
+        reservation.setLivre(livre);
+
+        when(reservationRepository.findById(1)).thenReturn(Optional.of(reservation));
         when(reservationRepository.save(any(Reservation.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
 
-        reservationService.annulerReservation(1L);
+        Reservation result = reservationService.annuler(1);
 
-        assertEquals(Reservation.Statut.ANNULEE, reservation.getStatut());
+        assertEquals(Reservation.Statut.ANNULEE, result.getStatut());
         verify(reservationRepository, times(1)).save(reservation);
     }
 
     @Test
-    void testTraiterReservation_ExemplaireDisponible() {
+    void testConfirmerReservationsSiDisponible() {
         Reservation reservation = new Reservation();
-        reservation.setId(1L);
+        reservation.setId(1);
         reservation.setStatut(Reservation.Statut.EN_ATTENTE);
         reservation.setLivre(livre);
-        
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
-        when(exemplaireRepository.findByLivreAndEtat(livre, Exemplaire.Etat.DISPONIBLE))
+        reservation.setUtilisateur(utilisateur);
+
+        when(exemplaireRepository.findByLivreIdAndStatutDisponibilite(1, StatutDisponibilite.DISPONIBLE))
                 .thenReturn(List.of(exemplaire));
+        when(reservationRepository.findByLivreIdAndStatutOrderByDateReservationAsc(1, Reservation.Statut.EN_ATTENTE))
+                .thenReturn(List.of(reservation));
         when(exemplaireRepository.save(any(Exemplaire.class))).thenAnswer(i -> i.getArguments()[0]);
         when(reservationRepository.save(any(Reservation.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
 
-        reservationService.traiterReservation(1L);
+        reservationService.confirmerReservationsSiDisponible(1);
 
-        assertEquals(Reservation.Statut.TRAITEE, reservation.getStatut());
-        assertEquals(Exemplaire.Etat.RESERVE, exemplaire.getEtat());
+        assertEquals(Reservation.Statut.CONFIRMEE, reservation.getStatut());
+        assertEquals(StatutDisponibilite.RESERVE, exemplaire.getStatutDisponibilite());
     }
 
     @Test
     void testGetReservationsParUtilisateur() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
-        when(reservationRepository.findByUtilisateurAndStatut(utilisateur, Reservation.Statut.EN_ATTENTE))
+        when(reservationRepository.findByUtilisateurIdAndStatut(1, Reservation.Statut.EN_ATTENTE))
                 .thenReturn(List.of(new Reservation()));
 
-        List<Reservation> result = reservationService.getReservationsParUtilisateur(1L, Reservation.Statut.EN_ATTENTE);
+        List<Reservation> result = reservationService.findEnAttenteByUtilisateurId(1);
 
         assertNotNull(result);
         assertEquals(1, result.size());

@@ -27,9 +27,17 @@ public class Paiement {
     @Enumerated(EnumType.STRING)
     @Column(name = "methodePaiement", nullable = false, length = 50)
     // Ex: "ESPECES", "MOBILE_MONEY", "CARTE_BANCAIRE"
-    private methodePaiement methodePaiement;
+    // Le TYPE est en PascalCase (MethodePaiement) — convention Java pour les
+    // enums/classes.
+    // La VARIABLE reste en camelCase (methodePaiement) — convention Java pour les
+    // champs.
+    // Aucun impact sur la base (colonne "methodePaiement" inchangée) ni sur le JSON
+    // envoyé
+    // à Angular (clé "methodePaiement" inchangée, car c'est le nom de la VARIABLE
+    // qui compte).
+    private MethodePaiement methodePaiement;
 
-    public enum methodePaiement {
+    public enum MethodePaiement {
         ESPECES, MOBILE_MONEY, CARTE_BANCAIRE
     }
 

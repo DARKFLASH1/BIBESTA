@@ -65,7 +65,7 @@ public class PaiementService {
                 paiement.setAmende(null); // jamais les deux à la fois
                 paiement.setMontant(abonnement.getMontant());
                 paiement.setDatePaiement(LocalDate.now());
-                paiement.setMethodePaiement(Paiement.methodePaiement.valueOf(methodePaiement));
+                paiement.setMethodePaiement(Paiement.MethodePaiement.valueOf(methodePaiement));
                 paiement.setStatut(Statut.EFFECTUE);
 
                 // 4. Met à jour le statut de l'abonnement → PAYE
@@ -118,7 +118,7 @@ public class PaiementService {
                 paiement.setAbonnement(null); // jamais les deux à la fois
                 paiement.setMontant(amende.getMontant());
                 paiement.setDatePaiement(LocalDate.now());
-                paiement.setMethodePaiement(Paiement.methodePaiement.valueOf(methodePaiement));
+                paiement.setMethodePaiement(Paiement.MethodePaiement.valueOf(methodePaiement));
                 paiement.setStatut(Statut.EFFECTUE);
 
                 // 5. Marque l'amende comme payée
@@ -128,6 +128,7 @@ public class PaiementService {
         }
 
         // ANNULER UN PAIEMENT
+        @Transactional
         public Paiement annuler(Integer paiementId) {
 
                 Paiement paiement = paiementRepository.findById(paiementId)
@@ -141,6 +142,40 @@ public class PaiementService {
                 }
 
                 paiement.setStatut(Statut.ANNULE);
-                return paiementRepository.save(paiement);
+                Paiement annule = paiementRepository.save(paiement);
+
+                // Si le paiement finançait un abonnement, on revient à EN_ATTENTE
+                // (sauf si un autre paiement EFFECTUE subsiste pour le même abonnement)
+                if (paiement.getAbonnement() != null) {
+                        Abonnement abonnement = paiement.getAbonnement();
+                        boolean autrePaiementEffectue = paiementRepository
+                                        .findByAbonnementId(abonnement.getId())
+                                        .stream()
+                                        .anyMatch(p -> !p.getId().equals(paiementId)
+                                                        && p.getStatut() == Statut.EFFECTUE);
+                        if (!autrePaiementEffectue
+                                        && abonnement.getStatutPaiement() == StatutPaiement.PAYE) {
+                                abonnement.setStatutPaiement(StatutPaiement.EN_ATTENTE);
+                                abonnementRepository.save(abonnement);
+                        }
+                }
+
+                // Si le paiement finançait une amende, on la remet en attente
+                // (sauf si un autre paiement EFFECTUE subsiste pour la même amende)
+                if (paiement.getAmende() != null) {
+                        Amende amende = paiement.getAmende();
+                        boolean autrePaiementEffectue = paiementRepository
+                                        .findByAmendeId(amende.getId())
+                                        .stream()
+                                        .anyMatch(p -> !p.getId().equals(paiementId)
+                                                        && p.getStatut() == Statut.EFFECTUE);
+                        if (!autrePaiementEffectue
+                                        && amende.getStatut() == Amende.Statut.PAYEE) {
+                                amende.setStatut(Amende.Statut.EN_ATTENTE);
+                                amendeRepository.save(amende);
+                        }
+                }
+
+                return annule;
         }
 }

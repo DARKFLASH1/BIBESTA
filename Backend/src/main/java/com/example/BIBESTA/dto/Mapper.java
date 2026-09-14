@@ -45,16 +45,24 @@ public class Mapper {
     }
 
     // Convertit Reservation → ReservationResponse
+    // Appeler .getUtilisateur().getNom() ici force Hibernate à vraiment
+    // charger les données (au lieu de laisser passer le proxy technique
+    // "ByteBuddyInterceptor" que Jackson ne sait pas transformer en JSON).
     public ReservationResponse toReservationResponse(Reservation r) {
         return new ReservationResponse(
                 r.getId(),
                 r.getDateReservation(),
+                r.getDateConfirmation(),
                 r.getStatut(),
-                r.getUtilisateur().getId(),
-                r.getUtilisateur().getNom(),
-                r.getUtilisateur().getPrenom(),
-                r.getLivre().getId(),
-                r.getLivre().getTitre());
+                new ReservationResponse.UtilisateurInfo(
+                        r.getUtilisateur().getId(),
+                        r.getUtilisateur().getNom(),
+                        r.getUtilisateur().getPrenom(),
+                        r.getUtilisateur().getIdentifiant()),
+                new ReservationResponse.LivreInfo(
+                        r.getLivre().getId(),
+                        r.getLivre().getTitre(),
+                        r.getLivre().getAuteur()));
     }
 
     // Convertit Livre → LivreResponse

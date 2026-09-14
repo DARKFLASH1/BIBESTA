@@ -1,6 +1,7 @@
 package com.example.BIBESTA.service;
 
 import com.example.BIBESTA.model.*;
+import com.example.BIBESTA.model.Abonnement.StatutPaiement;
 import com.example.BIBESTA.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,8 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,80 +37,83 @@ class AbonnementServiceTest {
     @BeforeEach
     void setUp() {
         utilisateur = new Utilisateur();
-        utilisateur.setId(1L);
+        utilisateur.setId(1);
         utilisateur.setNom("Test");
         utilisateur.setEmail("test@example.com");
 
         abonnement = new Abonnement();
-        abonnement.setId(1L);
+        abonnement.setId(1);
         abonnement.setUtilisateur(utilisateur);
+        abonnement.setType("MENSUEL");
+        abonnement.setMontant(new BigDecimal("5000.00"));
         abonnement.setDateDebut(LocalDate.now());
-        abonnement.setDateFin(LocalDate.now().plusMonths(12));
-        abonnement.setStatut(Abonnement.Statut.ACTIF);
+        abonnement.setDateFin(LocalDate.now().plusMonths(1));
+        abonnement.setStatutPaiement(StatutPaiement.EN_ATTENTE);
     }
 
     @Test
-    void testCreerAbonnement() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
+    void testSaveAbonnement() {
+        when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
         when(abonnementRepository.save(any(Abonnement.class))).thenReturn(abonnement);
 
-        Abonnement result = abonnementService.creerAbonnement(1L, 12);
+        Abonnement result = abonnementService.save(1, abonnement);
 
         assertNotNull(result);
         assertEquals(utilisateur, result.getUtilisateur());
-        assertEquals(Abonnement.Statut.ACTIF, result.getStatut());
         verify(abonnementRepository, times(1)).save(any(Abonnement.class));
     }
 
     @Test
-    void testRenouvelerAbonnement() {
-        when(abonnementRepository.findById(1L)).thenReturn(Optional.of(abonnement));
-        when(abonnementRepository.save(any(Abonnement.class))).thenAnswer(i -> i.getArguments()[0]);
+    void testHasAbonnementActif_Vrai() {
+        when(abonnementRepository.existsByUtilisateurIdAndStatutPaiementAndDateFinAfter(
+                1, StatutPaiement.PAYE, LocalDate.now())).thenReturn(true);
 
-        abonnementService.renouvelerAbonnement(1L, 6);
-
-        LocalDate nouvelleDateFin = LocalDate.now().plusMonths(6);
-        assertTrue(abonnement.getDateFin().isAfter(nouvelleDateFin.minusDays(5)));
-        assertEquals(Abonnement.Statut.ACTIF, abonnement.getStatut());
-    }
-
-    @Test
-    void testVerifierAbonnementValide_Actif() {
-        when(abonnementRepository.findByUtilisateurAndStatut(utilisateur, Abonnement.Statut.ACTIF))
-                .thenReturn(List.of(abonnement));
-
-        boolean result = abonnementService.verifierAbonnementValide(utilisateur);
+        boolean result = abonnementService.hasAbonnementActif(1);
 
         assertTrue(result);
     }
 
     @Test
-    void testVerifierAbonnementValide_Inactif() {
-        when(abonnementRepository.findByUtilisateurAndStatut(utilisateur, Abonnement.Statut.ACTIF))
-                .thenReturn(List.of());
+    void testHasAbonnementActif_Faux() {
+        when(abonnementRepository.existsByUtilisateurIdAndStatutPaiementAndDateFinAfter(
+                1, StatutPaiement.PAYE, LocalDate.now())).thenReturn(false);
 
-        boolean result = abonnementService.verifierAbonnementValide(utilisateur);
+        boolean result = abonnementService.hasAbonnementActif(1);
 
         assertFalse(result);
     }
 
     @Test
-    void testDesactiverAbonnement() {
-        when(abonnementRepository.findById(1L)).thenReturn(Optional.of(abonnement));
+    void testUpdateStatut() {
+        when(abonnementRepository.findById(1)).thenReturn(Optional.of(abonnement));
         when(abonnementRepository.save(any(Abonnement.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        abonnementService.desactiverAbonnement(1L);
+        Abonnement result = abonnementService.updateStatut(1, StatutPaiement.PAYE);
 
-        assertEquals(Abonnement.Statut.EXPIRE, abonnement.getStatut());
+        assertEquals(StatutPaiement.PAYE, result.getStatutPaiement());
         verify(abonnementRepository, times(1)).save(abonnement);
     }
 
     @Test
-    void testGetAbonnementsActifs() {
-        when(abonnementRepository.findByStatut(Abonnement.Statut.ACTIF))
-                .thenReturn(List.of(abonnement));
+    void testExpireAbonnementsDepasses() {
+        abonnement.setDateFin(LocalDate.now().minusDays(1));
+        abonnement.setStatutPaiement(StatutPaiement.PAYE);
 
-        List<Abonnement> result = abonnementService.getAbonnementsActifs();
+        when(abonnementRepository.findByDateFinBefore(any(LocalDate.class)))
+                .thenReturn(List.of(abonnement));
+        when(abonnementRepository.save(any(Abonnement.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        abonnementService.expireAbonnementsDepasses();
+
+        assertEquals(StatutPaiement.EXPIRE, abonnement.getStatutPaiement());
+        verify(abonnementRepository, times(1)).save(abonnement);
+    }
+
+    @Test
+    void testFindByUtilisateurId() {
+        when(abonnementRepository.findByUtilisateurId(1)).thenReturn(List.of(abonnement));
+
+        List<Abonnement> result = abonnementService.findByUtilisateurId(1);
 
         assertNotNull(result);
         assertEquals(1, result.size());

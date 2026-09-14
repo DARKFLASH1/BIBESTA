@@ -28,80 +28,99 @@ class PaiementServiceTest {
     private AmendeRepository amendeRepository;
 
     @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private AbonnementRepository abonnementRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private AmendeService amendeService;
+
+    @Mock
+    private HistoriqueService historiqueService;
 
     @InjectMocks
     private PaiementService paiementService;
 
     private Utilisateur utilisateur;
     private Amende amende;
+    private Abonnement abonnement;
     private Paiement paiement;
 
     @BeforeEach
     void setUp() {
         utilisateur = new Utilisateur();
-        utilisateur.setId(1L);
+        utilisateur.setId(1);
         utilisateur.setNom("Test");
         utilisateur.setEmail("test@example.com");
 
         amende = new Amende();
-        amende.setId(1L);
+        amende.setId(1);
         amende.setMontant(new BigDecimal("10.00"));
-        amende.setStatut(Amende.Statut.NON_PAYEE);
-        amende.setUtilisateur(utilisateur);
+        amende.setStatut(Amende.Statut.EN_ATTENTE);
+
+        abonnement = new Abonnement();
+        abonnement.setId(1);
+        abonnement.setMontant(new BigDecimal("5000.00"));
+        abonnement.setType("MENSUEL");
+        abonnement.setDateDebut(LocalDate.now());
+        abonnement.setDateFin(LocalDate.now().plusMonths(1));
+        abonnement.setStatutPaiement(Abonnement.StatutPaiement.EN_ATTENTE);
+        abonnement.setUtilisateur(utilisateur);
 
         paiement = new Paiement();
-        paiement.setId(1L);
+        paiement.setId(1);
         paiement.setMontant(new BigDecimal("10.00"));
-        paiement.setStatut(Paiement.Statut.VALIDE);
+        paiement.setStatut(Paiement.Statut.EFFECTUE);
     }
 
     @Test
     void testPayerAmende() {
-        when(amendeRepository.findById(1L)).thenReturn(Optional.of(amende));
+        when(amendeRepository.findById(1)).thenReturn(Optional.of(amende));
+        when(paiementRepository.existsByAmendeId(1)).thenReturn(false);
         when(paiementRepository.save(any(Paiement.class))).thenReturn(paiement);
-        when(amendeRepository.save(any(Amende.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(amendeService.marquerPayee(1)).thenReturn(amende);
 
-        Paiement result = paiementService.payerAmende(1L, "CARTE", "REF123");
+        Paiement result = paiementService.payerAmende(1, "ESPECES");
 
         assertNotNull(result);
-        assertEquals(Paiement.Statut.VALIDE, result.getStatut());
-        assertEquals(Amende.Statut.PAYEE, amende.getStatut());
+        assertEquals(Paiement.Statut.EFFECTUE, result.getStatut());
         verify(paiementRepository, times(1)).save(any(Paiement.class));
     }
 
     @Test
     void testPayerAbonnement() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
+        when(abonnementRepository.findById(1)).thenReturn(Optional.of(abonnement));
         when(paiementRepository.save(any(Paiement.class))).thenReturn(paiement);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
+        doNothing().when(historiqueService).enregistrerPaiement(any(), any());
 
-        Paiement result = paiementService.payerAbonnement(1L, "CARTE", "REF456");
+        Paiement result = paiementService.payerAbonnement(1, "MOBILE_MONEY");
 
         assertNotNull(result);
-        assertEquals(Paiement.Statut.VALIDE, result.getStatut());
+        assertEquals(Paiement.Statut.EFFECTUE, result.getStatut());
         verify(paiementRepository, times(1)).save(any(Paiement.class));
+        assertEquals(Abonnement.StatutPaiement.PAYE, abonnement.getStatutPaiement());
     }
 
     @Test
-    void testGetPaiementsParUtilisateur() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
-        when(paiementRepository.findByUtilisateurAndStatut(utilisateur, Paiement.Statut.VALIDE))
-                .thenReturn(List.of(paiement));
+    void testAnnulerPaiement() {
+        when(paiementRepository.findById(1)).thenReturn(Optional.of(paiement));
+        when(paiementRepository.save(any(Paiement.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        List<Paiement> result = paiementService.getPaiementsParUtilisateur(1L, Paiement.Statut.VALIDE);
+        Paiement result = paiementService.annuler(1);
+
+        assertEquals(Paiement.Statut.ANNULE, result.getStatut());
+        verify(paiementRepository, times(1)).save(paiement);
+    }
+
+    @Test
+    void testFindByUtilisateurId() {
+        when(paiementRepository.findAllByUtilisateurId(1)).thenReturn(List.of(paiement));
+
+        List<Paiement> result = paiementService.findByUtilisateurId(1);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-    }
-
-    @Test
-    void testRembourserPaiement() {
-        when(paiementRepository.findById(1L)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(any(Paiement.class))).thenAnswer(i -> i.getArguments()[0]);
-
-        paiementService.rembourserPaiement(1L);
-
-        assertEquals(Paiement.Statut.REMBOURSE, paiement.getStatut());
-        verify(paiementRepository, times(1)).save(paiement);
     }
 }
