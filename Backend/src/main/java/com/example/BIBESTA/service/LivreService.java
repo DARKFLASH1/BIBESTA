@@ -76,34 +76,30 @@ public class LivreService {
                         query, query, query, pageable);
     }
 
-    // Recherche multicritère — actifs seulement
+    // Recherche multicritère — actifs seulement (P2.11)
     public List<Livre> searchLivres(String titre, String auteur, String isbn,
             String genre, String langue, String categorie) {
 
-        if (titre == null && auteur == null && isbn == null &&
-                genre == null && langue == null && categorie == null) {
-            return getAllLivres(); // déjà filtré
+        String t = normaliser(titre);
+        String a = normaliser(auteur);
+        String i = normaliser(isbn);
+        String g = normaliser(genre);
+        String l = normaliser(langue);
+        String c = normaliser(categorie);
+
+        // Aucun critère → renvoie tous les livres actifs
+        if (t == null && a == null && i == null
+                && g == null && l == null && c == null) {
+            return getAllLivres();
         }
-        if (titre != null && !titre.isEmpty()) {
-            return livreRepository.findByTitreContainingIgnoreCaseAndActifTrue(titre);
-        }
-        if (auteur != null && !auteur.isEmpty()) {
-            return livreRepository.findByAuteurContainingIgnoreCaseAndActifTrue(auteur);
-        }
-        if (isbn != null && !isbn.isEmpty()) {
-            return livreRepository.findByIsbnAndActifTrue(isbn)
-                    .map(List::of).orElse(List.of());
-        }
-        if (genre != null && !genre.isEmpty()) {
-            return livreRepository.findByGenreContainingIgnoreCaseAndActifTrue(genre);
-        }
-        if (categorie != null && !categorie.isEmpty()) {
-            return livreRepository.findByCategorieContainingIgnoreCaseAndActifTrue(categorie);
-        }
-        if (langue != null && !langue.isEmpty()) {
-            return livreRepository.findByLangueContainingIgnoreCaseAndActifTrue(langue);
-        }
-        return List.of();
+
+        // Requête combinée unique : tous les critères fournis sont combinés
+        // avec AND (au lieu d'appliquer le seul premier non vide comme avant).
+        return livreRepository.searchMulticriteres(t, a, i, g, l, c);
+    }
+
+    private String normaliser(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
     }
 
     /**

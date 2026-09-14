@@ -3,7 +3,6 @@ package com.example.BIBESTA.service;
 import com.example.BIBESTA.exception.BusinessException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Exemplaire;
-import com.example.BIBESTA.model.Exemplaire.Etat;
 import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.model.Livre;
 import com.example.BIBESTA.repository.ExemplaireRepository;
@@ -59,20 +58,20 @@ public class ExemplaireService {
         exemplaire.setLivre(livre);
 
         // Par défaut, un nouvel exemplaire est DISPONIBLE
-        if (exemplaire.getEtat() == null) {
-            exemplaire.setEtat(Etat.DISPONIBLE);
+        if (exemplaire.getStatutDisponibilite() == null) {
+            exemplaire.setStatutDisponibilite(StatutDisponibilite.DISPONIBLE);
         }
 
         return exemplaireRepository.save(exemplaire);
     }
 
-    // Change l'état d'un exemplaire (DISPONIBLE, EMPRUNTE, etc.)
-    public Exemplaire updateEtat(Integer id, Etat nouvelEtat) {
+    // Change la disponibilité d'un exemplaire (DISPONIBLE, EMPRUNTE, etc.)
+    public Exemplaire updateEtat(Integer id, StatutDisponibilite nouvelEtat) {
 
         Exemplaire exemplaire = exemplaireRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exemplaire non trouvé"));
 
-        exemplaire.setEtat(nouvelEtat);
+        exemplaire.setStatutDisponibilite(nouvelEtat);
         return exemplaireRepository.save(exemplaire);
     }
 
@@ -83,7 +82,7 @@ public class ExemplaireService {
                 .orElseThrow(() -> new ResourceNotFoundException("Exemplaire non trouvé"));
 
         // On ne peut pas supprimer un exemplaire emprunté
-        if (exemplaire.getEtat() == Etat.EMPRUNTE) {
+        if (exemplaire.getStatutDisponibilite() == StatutDisponibilite.EMPRUNTE) {
             throw new BusinessException("Impossible de supprimer un exemplaire emprunté");
         }
 

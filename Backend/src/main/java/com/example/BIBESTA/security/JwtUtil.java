@@ -39,29 +39,14 @@ public class JwtUtil {
                 .compact();
     }
 
-    // EXTRAIT l'identifiant depuis un token
-    public String extraireIdentifiant(String token) {
-        return getClaims(token).getSubject();
-    }
-
-    // EXTRAIT le rôle depuis un token
-    public String extraireRole(String token) {
-        return getClaims(token).get("role", String.class);
-    }
-
-    // EXTRAIT l'ID depuis un token
-    public Integer extraireId(String token) {
-        return getClaims(token).get("id", Integer.class);
-    }
-
-    // VÉRIFIE si un token est valide
-    public boolean estValide(String token) {
-        try {
-            getClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+    // Parse le token en UNE SEULE FOIS et renvoie les claims.
+    // Lève JwtException / IllegalArgumentException si le token est invalide.
+    // Méthode unique utilisée par JwtFilter : on évite de parser 4× le même
+    // token (estValide + extraireIdentifiant + extraireRole + extraireId),
+    // et on re-vérifie le statut du compte en base plutôt que de se fier aux
+    // claims figés (P2.7).
+    public Claims extraireClaims(String token) {
+        return getClaims(token);
     }
 
     // Méthode interne : extrait toutes les données du token

@@ -4,6 +4,8 @@ import com.example.BIBESTA.model.Livre;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -53,4 +55,22 @@ public interface LivreRepository extends JpaRepository<Livre, Integer> {
     // seulement
     Page<Livre> findByActifTrueAndTitreContainingIgnoreCaseOrActifTrueAndAuteurContainingIgnoreCaseOrActifTrueAndCategorieContainingIgnoreCase(
             String titre, String auteur, String categorie, Pageable pageable);
+
+    // Recherche combinée multi-critères (P2.11) : TOUS les critères fournis
+    // s'appliquent (ET). Un critère null / vide est simplement ignoré.
+    // Avant : searchLivres n'appliquait que le premier critère non vide.
+    @Query("SELECT l FROM Livre l WHERE l.actif = true "
+            + "AND (:titre IS NULL OR :titre = '' OR LOWER(l.titre) LIKE LOWER(CONCAT('%', :titre, '%'))) "
+            + "AND (:auteur IS NULL OR :auteur = '' OR LOWER(l.auteur) LIKE LOWER(CONCAT('%', :auteur, '%'))) "
+            + "AND (:isbn IS NULL OR :isbn = '' OR l.isbn = :isbn) "
+            + "AND (:genre IS NULL OR :genre = '' OR LOWER(l.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) "
+            + "AND (:langue IS NULL OR :langue = '' OR LOWER(l.langue) LIKE LOWER(CONCAT('%', :langue, '%'))) "
+            + "AND (:categorie IS NULL OR :categorie = '' OR LOWER(l.categorie) LIKE LOWER(CONCAT('%', :categorie, '%')))")
+    List<Livre> searchMulticriteres(
+            @Param("titre") String titre,
+            @Param("auteur") String auteur,
+            @Param("isbn") String isbn,
+            @Param("genre") String genre,
+            @Param("langue") String langue,
+            @Param("categorie") String categorie);
 }

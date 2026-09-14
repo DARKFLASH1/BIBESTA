@@ -37,6 +37,13 @@ public class GlobalExceptionHandler {
                 new ApiError(400, ex.getMessage(), LocalDateTime.now()));
     }
 
+    // Conflit d'état métier (doublon, pas de retard, etc.) → 409
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ApiError(409, ex.getMessage(), LocalDateTime.now()));
+    }
+
     // Gère les erreurs de validation spring (noms/statuts/ids mal formés) → 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(

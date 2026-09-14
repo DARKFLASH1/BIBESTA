@@ -1,6 +1,7 @@
 package com.example.BIBESTA.service;
 
 import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ConflictException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Amende;
 import com.example.BIBESTA.model.Amende.Statut;
@@ -60,7 +61,7 @@ public class AmendeService {
 
                 // 2. Vérifie qu'il n'y a pas déjà une amende pour cet emprunt
                 if (amendeRepository.existsByEmpruntId(empruntId)) {
-                        throw new BusinessException(
+                        throw new ConflictException(
                                         "Une amende existe déjà pour cet emprunt");
                 }
 
@@ -75,7 +76,7 @@ public class AmendeService {
                                 dateRetourReelle);
 
                 if (joursRetard <= 0) {
-                        throw new BusinessException(
+                        throw new ConflictException(
                                         "Pas de retard détecté pour cet emprunt");
                 }
 

@@ -1,5 +1,9 @@
 package com.example.BIBESTA.security;
 
+import com.example.BIBESTA.model.Utilisateur;
+import com.example.BIBESTA.repository.UtilisateurRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +22,7 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Override
     protected void doFilterInternal(
@@ -35,23 +40,38 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        if (!jwtUtil.estValide(token)) {
+        // Parse le token UNE SEULE FOIS (P2.7) : avant, on le parsait 4 fois
+        // (estValide + extraireIdentifiant + extraireRole + extraireId).
+        Claims claims;
+        try {
+            claims = jwtUtil.extraireClaims(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            // Token invalide / expiré → pas d'authentification
             filterChain.doFilter(request, response);
             return;
         }
 
-        String identifiant = jwtUtil.extraireIdentifiant(token);
-        String role = jwtUtil.extraireRole(token);
-        Integer userId = jwtUtil.extraireId(token); // ← on extrait l'id
+        Integer userId = claims.get("id", Integer.class);
 
-        // On crée un objet qui porte les infos de l'utilisateur connecté
-        // principal = "qui est-ce ?" → on y met l'id numérique
-        // credentials = "son mot de passe" → null (déjà vérifié via JWT)
-        // authorities = "ses droits" → son rôle
+        // Re-vérifie le statut du compte en BASE (P2.7) : le rôle et le statut
+        // figurants dans le token peuvent être périmés (compte désactivé,
+        // rôle changé…) jusqu'à l'expiration du token. On rejette les comptes
+        // supprimés ou non-ACTIF, et on reprend le rôle réel depuis la base.
+        Utilisateur utilisateur = userId == null
+                ? null
+                : utilisateurRepository.findById(userId).orElse(null);
+
+        if (utilisateur == null || utilisateur.getStatut() != Utilisateur.Statut.ACTIF) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // principal = id numérique (comme avant) ; credentials = identifiant ;
+        // authorities = rôle réel lu en base (frais, plus fiable que le token)
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                userId, // ← l'id est maintenant le "principal"
-                identifiant, // ← l'identifiant en credentials (pour info)
-                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                utilisateur.getId(),
+                utilisateur.getIdentifiant(),
+                List.of(new SimpleGrantedAuthority("ROLE_" + utilisateur.getRole().name())));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 

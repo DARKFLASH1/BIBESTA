@@ -70,7 +70,7 @@ class EmpruntServiceTest {
         exemplaire = new Exemplaire();
         exemplaire.setId(1);
         exemplaire.setLivre(livre);
-        exemplaire.setEtat(Exemplaire.Etat.DISPONIBLE);
+        exemplaire.setStatutDisponibilite(Exemplaire.StatutDisponibilite.DISPONIBLE);
 
         // Création d'un utilisateur de test
         utilisateur = new Utilisateur();
@@ -116,7 +116,7 @@ class EmpruntServiceTest {
     void testCreerEmprunt_Success() {
         // Mock des dépendances
         when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
-        when(exemplaireRepository.findById(1)).thenReturn(Optional.of(exemplaire));
+        when(exemplaireRepository.findByIdVerrouille(1)).thenReturn(Optional.of(exemplaire));
         when(abonnementService.hasAbonnementActif(1)).thenReturn(true);
         when(amendeRepository.findByEmpruntUtilisateurIdAndStatut(1, Amende.Statut.EN_ATTENTE))
                 .thenReturn(List.of());
@@ -152,9 +152,9 @@ class EmpruntServiceTest {
 
     @Test
     void testCreerEmprunt_ExemplaireNonDisponible() {
-        exemplaire.setEtat(Exemplaire.Etat.EMPRUNTE);
+        exemplaire.setStatutDisponibilite(Exemplaire.StatutDisponibilite.EMPRUNTE);
         when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
-        when(exemplaireRepository.findById(1)).thenReturn(Optional.of(exemplaire));
+        when(exemplaireRepository.findByIdVerrouille(1)).thenReturn(Optional.of(exemplaire));
 
         BusinessException exception = assertThrows(BusinessException.class, 
                 () -> empruntService.creerEmprunt(1, 1));
@@ -165,7 +165,7 @@ class EmpruntServiceTest {
     @Test
     void testCreerEmprunt_SansAbonnementActif() {
         when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
-        when(exemplaireRepository.findById(1)).thenReturn(Optional.of(exemplaire));
+        when(exemplaireRepository.findByIdVerrouille(1)).thenReturn(Optional.of(exemplaire));
         when(abonnementService.hasAbonnementActif(1)).thenReturn(false);
 
         BusinessException exception = assertThrows(BusinessException.class, 
@@ -180,7 +180,7 @@ class EmpruntServiceTest {
         amende.setStatut(Amende.Statut.EN_ATTENTE);
         
         when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
-        when(exemplaireRepository.findById(1)).thenReturn(Optional.of(exemplaire));
+        when(exemplaireRepository.findByIdVerrouille(1)).thenReturn(Optional.of(exemplaire));
         when(abonnementService.hasAbonnementActif(1)).thenReturn(true);
         when(amendeRepository.findByEmpruntUtilisateurIdAndStatut(1, Amende.Statut.EN_ATTENTE))
                 .thenReturn(List.of(amende));
@@ -200,7 +200,7 @@ class EmpruntServiceTest {
         );
         
         when(utilisateurRepository.findById(1)).thenReturn(Optional.of(utilisateur));
-        when(exemplaireRepository.findById(1)).thenReturn(Optional.of(exemplaire));
+        when(exemplaireRepository.findByIdVerrouille(1)).thenReturn(Optional.of(exemplaire));
         when(abonnementService.hasAbonnementActif(1)).thenReturn(true);
         when(amendeRepository.findByEmpruntUtilisateurIdAndStatut(1, Amende.Statut.EN_ATTENTE))
                 .thenReturn(List.of());

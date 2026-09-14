@@ -9,6 +9,7 @@ import com.example.BIBESTA.repository.NotificationRepository;
 import com.example.BIBESTA.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,7 @@ public class NotificationService {
     // Crée une nouvelle notification pour un utilisateur
     // Cette méthode sera appelée automatiquement par les autres services
     // Ex: EmpruntService appellera cette méthode en cas de retard
+    @Transactional
     public Notification creer(Integer utilisateurId, String typeStr, String contenu) {
 
         // Vérifie que l'utilisateur existe
@@ -55,12 +57,14 @@ public class NotificationService {
                         "Utilisateur non trouvé avec l'id : " + utilisateurId));
 
         // Convertit la String en enum Notification.Type
+        // (P2.8) : si le type n'est pas reconnu → erreur explicite au lieu
+        // d'un fallback silencieux qui crée des données incohérentes.
         Notification.Type type;
         try {
             type = Notification.Type.valueOf(typeStr);
         } catch (IllegalArgumentException e) {
-            // Si le type n'existe pas dans l'enum, on utilise RAPPEL_RETOUR par défaut
-            type = Notification.Type.RAPPEL_RETOUR;
+            throw new BusinessException(
+                    "Type de notification inconnu : " + typeStr);
         }
 
         // Crée la notification
@@ -85,6 +89,7 @@ public class NotificationService {
     }
 
     // Marque toutes les notifications d'un utilisateur comme lues
+    @Transactional
     public void marquerToutesCommeLues(Integer utilisateurId) {
 
         List<Notification> nonLues = notificationRepository
@@ -98,6 +103,7 @@ public class NotificationService {
     }
 
     // Supprime une notification
+    @Transactional
     public void deleteById(Integer id) {
         if (!notificationRepository.existsById(id)) {
             throw new ResourceNotFoundException("Notification non trouvée");

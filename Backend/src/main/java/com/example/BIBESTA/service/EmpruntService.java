@@ -1,10 +1,11 @@
 package com.example.BIBESTA.service;
 
 import com.example.BIBESTA.exception.BusinessException;
+import com.example.BIBESTA.exception.ConflictException;
 import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.*;
 import com.example.BIBESTA.model.Emprunt.Statut;
-import com.example.BIBESTA.model.Exemplaire.Etat;
+import com.example.BIBESTA.model.Exemplaire.StatutDisponibilite;
 import com.example.BIBESTA.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class EmpruntService {
+
+        private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EmpruntService.class);
 
         private final EmpruntRepository empruntRepository;
         private final UtilisateurRepository utilisateurRepository;
@@ -78,13 +81,16 @@ public class EmpruntService {
                 }
 
                 // 2. Vérifie que l'exemplaire existe
-                Exemplaire exemplaire = exemplaireRepository.findById(exemplaireId)
+                // Verrou pessimiste : 2 bibliothécaires ne peuvent pas emprunter le
+                // même exemplaire en même temps (la 2e requête attend la 1re et
+                // voit alors l'état déjà passé à EMPRUNTE).
+                Exemplaire exemplaire = exemplaireRepository.findByIdVerrouille(exemplaireId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Exemplaire non trouvé"));
 
                 // 3. Vérifie que l'exemplaire est disponible
-                if (exemplaire.getEtat() != Etat.DISPONIBLE) {
+                if (exemplaire.getStatutDisponibilite() != StatutDisponibilite.DISPONIBLE) {
                         throw new BusinessException(
-                                        "Cet exemplaire n'est pas disponible : " + exemplaire.getEtat());
+                                        "Cet exemplaire n'est pas disponible : " + exemplaire.getStatutDisponibilite());
                 }
 
                 // 4. Vérifie que l'exemplaire n'est pas déjà emprunté
@@ -135,8 +141,8 @@ public class EmpruntService {
                 emprunt.setDateRetourPrevue(LocalDate.now().plusDays(14));
                 emprunt.setStatut(Statut.EN_COURS);
 
-                // 9. Change l'état de l'exemplaire → EMPRUNTE
-                exemplaire.setEtat(Etat.EMPRUNTE);
+                // 9. Change la disponibilité de l'exemplaire → EMPRUNTE
+                exemplaire.setStatutDisponibilite(StatutDisponibilite.EMPRUNTE);
                 exemplaireRepository.save(exemplaire);
 
                 // 10. Sauvegarde l'emprunt
@@ -179,7 +185,7 @@ public class EmpruntService {
 
                 // 4. Remet l'exemplaire → DISPONIBLE
                 Exemplaire exemplaire = emprunt.getExemplaire();
-                exemplaire.setEtat(Etat.DISPONIBLE);
+                exemplaire.setStatutDisponibilite(StatutDisponibilite.DISPONIBLE);
                 exemplaireRepository.save(exemplaire);
 
                 // 5. Sauvegarde l'emprunt
@@ -194,9 +200,9 @@ public class EmpruntService {
                         // Retard détecté → crée une amende automatiquement
                         try {
                                 amendeService.creerAmende(empruntId);
-                        } catch (BusinessException e) {
-                                // Si amende déjà existante → on ignore
-                                System.out.println("Amende déjà existante : " + e.getMessage());
+                        } catch (ConflictException e) {
+                                // Amende déjà existante pour cet emprunt → on ignore
+                                log.warn("Amende déjà existante pour l'emprunt {} : {}", empruntId, e.getMessage());
                         }
                 } else {
                         // Pas de retard → notification de retour normal
