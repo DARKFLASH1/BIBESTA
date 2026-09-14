@@ -1,10 +1,10 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, afterNextRender } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { 
   LucideBookOpen, LucideBookmark, LucideCalendarClock, 
   LucideUsers, LucideCreditCard, LucideBadgeCheck, 
-  LucideBell, LucideBarChart3, LucideLibrary,
+  LucideBell, LucideBarChart3, LucideLibrary, LucideLayoutDashboard,
   LucideMenu, LucideX, LucideUser, LucideLogOut
 } from '@lucide/angular';
 
@@ -15,7 +15,7 @@ import {
     RouterOutlet, RouterLink, RouterLinkActive,
     LucideBookOpen, LucideBookmark, LucideCalendarClock,
     LucideUsers, LucideCreditCard, LucideBadgeCheck,
-    LucideBell, LucideBarChart3, LucideLibrary,
+    LucideBell, LucideBarChart3, LucideLibrary, LucideLayoutDashboard,
     LucideMenu, LucideX, LucideUser, LucideLogOut
   ],
   templateUrl: './main-layout.component.html',
@@ -29,10 +29,23 @@ export class MainLayoutComponent {
   isSidebarOpen = signal(false);
   isMobile      = signal(false);
 
+  constructor() {
+    // Détection réelle du mode mobile (media query CSS) au lieu d'un
+    // signal(false) figé : la sidebar devient un tiroir sur petits écrans.
+    afterNextRender(() => {
+      const mql = window.matchMedia('(max-width: 768px)');
+      const onMediaChange = (e: MediaQueryList | MediaQueryListEvent) =>
+        this.isMobile.set(e.matches);
+      onMediaChange(mql);
+      mql.addEventListener('change', onMediaChange);
+    });
+  }
+
   nomUtilisateur  = this.authService.getCurrentUserNom();
   roleUtilisateur = this.authService.getCurrentUserRole();
 
   menuItems = [
+    { label: 'Tableau de bord',  route: '/dashboard',     icon: 'layoutDashboard', roles: ['BIBLIOTHECAIRE'] },
     { label: 'Catalogue',        route: '/books',         icon: 'bookOpen',      roles: ['BIBLIOTHECAIRE', 'ENSEIGNANT', 'ETUDIANT', 'PUBLIC'] },
     { label: 'Mes emprunts',     route: '/loans',         icon: 'bookmark',      roles: ['ENSEIGNANT', 'ETUDIANT', 'PUBLIC'] },
     { label: 'Emprunts',         route: '/loans/manage',  icon: 'bookmark',      roles: ['BIBLIOTHECAIRE'] },

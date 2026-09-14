@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models/auth.model';
-import { LucideLibrary, LucideEye, LucideEyeOff } from '@lucide/angular';
+import { LucideLibrary, LucideEye } from '@lucide/angular';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, LucideLibrary, LucideEye, LucideEyeOff],
+  imports: [FormsModule, CommonModule, LucideLibrary, LucideEye],
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })

@@ -1,4 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://localhost:8080/api'
+    // URL relative : le frontend et l'API sont servis par le même domaine en prod
+    apiUrl: '/api'
 };

@@ -4,6 +4,28 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
+// Correspond au DTO StatistiqueResponse du backend
+export interface StatistiqueResponse {
+  totalLivres: number;
+  totalExemplaires: number;
+  exemplairesDisponibles: number;
+  exemplairesEmpruntes: number;
+  exemplairesReserves: number;
+  exemplairesEnReparation: number;
+  empruntsEnCours: number;
+  empruntsEnRetard: number;
+  empruntsRetournes: number;
+  reservationsEnAttente: number;
+  montantAmendesEnAttente: string;
+  montantAmendesPayees: string;
+  utilisateursEtudiants: number;
+  utilisateursEnseignants: number;
+  utilisateursPublic: number;
+  utilisateursBibliothecaires: number;
+  empruntsParMois: { mois: string; total: number }[];
+  topLivres: { titre: string; nombreEmprunts: number }[];
+}
+
 export interface DashboardStats {
   totalLivres: number;
   totalUtilisateurs: number;
@@ -33,13 +55,10 @@ export interface EmpruntRetard {
 export interface StatistiqueMensuelle {
   mois: string;
   emprunts: number;
-  retours: number;
 }
 
 export interface LivrePopulaire {
-  id: number;
   titre: string;
-  auteur: string;
   nombreEmprunts: number;
 }
 
@@ -50,21 +69,34 @@ export class DashboardService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/statistiques`;
 
+  getDashboard(): Observable<StatistiqueResponse> {
+    // Un seul appel HTTP, utilisé par tous les getters dérivés
+    return this.http.get<StatistiqueResponse>(`${this.apiUrl}/dashboard`);
+  }
+
   getStats(): Observable<DashboardStats> {
-    return this.http.get<any>(`${this.apiUrl}/dashboard`).pipe(
-      map(response => ({
-        totalLivres: response.totalLivres || 0,
-        totalUtilisateurs: (response.utilisateursEtudiants || 0) + 
-                           (response.utilisateursEnseignants || 0) + 
-                           (response.utilisateursPublic || 0) + 
-                           (response.utilisateursBibliothecaires || 0),
-        empruntsEnCours: response.empruntsEnCours || 0,
-        amendesImpayees: response.montantAmendesEnAttente ? 
-          parseFloat(response.montantAmendesEnAttente) : 0,
-        livresDisponibles: response.exemplairesDisponibles || 0,
-        reservationsEnAttente: response.reservationsEnAttente || 0
-      }))
-    );
+    return this.getDashboard().pipe(map(response => ({
+      totalLivres: response.totalLivres || 0,
+      totalUtilisateurs: (response.utilisateursEtudiants || 0) +
+        (response.utilisateursEnseignants || 0) +
+        (response.utilisateursPublic || 0) +
+        (response.utilisateursBibliothecaires || 0),
+      empruntsEnCours: response.empruntsEnCours || 0,
+      amendesImpayees: response.montantAmendesEnAttente ?
+        parseFloat(response.montantAmendesEnAttente) : 0,
+      livresDisponibles: response.exemplairesDisponibles || 0,
+      reservationsEnAttente: response.reservationsEnAttente || 0
+    })));
+  }
+
+  getStatistiquesMensuelles(): Observable<StatistiqueMensuelle[]> {
+    return this.getDashboard().pipe(map(response =>
+      (response.empruntsParMois || []).map(m => ({ mois: m.mois, emprunts: m.total || 0 }))
+    ));
+  }
+
+  getLivresPopulaires(): Observable<LivrePopulaire[]> {
+    return this.getDashboard().pipe(map(response => response.topLivres || []));
   }
 
   getActiviteRecente(): Observable<ActiviteRecente[]> {
@@ -93,33 +125,6 @@ export class DashboardService {
         dateRetourPrevue: e.dateRetourPrevue,
         joursRetard: e.joursRetard || 0
       })))
-    );
-  }
-
-  getStatistiquesMensuelles(): Observable<StatistiqueMensuelle[]> {
-    return this.http.get<any>(`${this.apiUrl}/dashboard`).pipe(
-      map(response => {
-        const empruntsParMois = response.empruntsParMois || [];
-        return empruntsParMois.map((m: any) => ({
-          mois: m.mois,
-          emprunts: m.total || 0,
-          retours: Math.floor(m.total * 0.9) // Approximation si non disponible
-        }));
-      })
-    );
-  }
-
-  getLivresPopulaires(): Observable<LivrePopulaire[]> {
-    return this.http.get<any>(`${this.apiUrl}/dashboard`).pipe(
-      map(response => {
-        const topLivres = response.topLivres || [];
-        return topLivres.map((l: any, index: number) => ({
-          id: index + 1,
-          titre: l.titre,
-          auteur: '', // Non disponible dans le DTO actuel
-          nombreEmprunts: l.nombreEmprunts
-        }));
-      })
     );
   }
 }

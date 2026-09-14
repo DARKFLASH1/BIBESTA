@@ -5,7 +5,6 @@ import {
   LucideSearch,
   LucideBookOpen,
   LucidePlus,
-  LucidePencil,
   LucideX,
   LucideSlidersHorizontal
 } from '@lucide/angular';
@@ -25,7 +24,6 @@ import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog
     LucideSearch,
     LucideBookOpen,
     LucidePlus,
-    LucidePencil,
     LucideX,
     LucideSlidersHorizontal
   ],
@@ -198,6 +196,9 @@ export class BooksListPage implements OnInit {
     this.livreService.supprimer(livre.id).subscribe({
       next: () => {
         this.livres.update(list => list.filter(l => l.id !== livre.id));
+      },
+      error: (err) => {
+        this.erreurModal.set(err.error?.message || 'Erreur lors de la suppression du livre.');
       }
     });
   }
