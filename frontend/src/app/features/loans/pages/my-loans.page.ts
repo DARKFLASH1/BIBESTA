@@ -4,7 +4,8 @@ import {
   LucideBookmark, LucideClock, LucideCheckCircle2,
   LucideAlertTriangle, LucideCalendar, LucideUndo2
 } from '@lucide/angular';
-import { EmpruntService, EmpruntResponse } from './services/emprunt.service';
+import { EmpruntService } from './services/emprunt.service';
+import { EmpruntResponse } from '../../../core/models/entities.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
 

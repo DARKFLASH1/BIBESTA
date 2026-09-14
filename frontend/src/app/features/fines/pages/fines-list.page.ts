@@ -9,37 +9,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
-
-interface Amende {
-  id: number;
-  montant: number;
-  raison: string;
-  date: string;
-  statut: 'EN_ATTENTE' | 'PAYEE' | 'ANNULEE';
-  emprunt: {
-    id: number;
-    utilisateur: {
-      id: number;
-      nom: string;
-      prenom: string;
-    };
-    livre?: {
-      titre: string;
-    };
-    exemplaire?: {
-      numExemplaire: string;
-      livre?: { titre: string };
-    };
-  };
-}
-
-interface Paiement {
-  id: number;
-  montant: number;
-  date: string;
-  methodePaiement: string;
-  statut: string;
-}
+import { Amende, Paiement, StatutAmende } from '../../../core/models/entities.model';
 
 @Component({
   selector: 'app-fines-list',
@@ -131,7 +101,7 @@ export class FinesListPage implements OnInit {
       next: () => {
         // Met à jour le statut de l'amende localement
         this.amendes.update(list =>
-          list.map(a => a.id === amende.id ? { ...a, statut: 'PAYEE' as const } : a)
+          list.map(a => a.id === amende.id ? { ...a, statut: StatutAmende.PAYEE } : a)
         );
         this.paiementEnCours.set(false);
         this.fermerModal();
@@ -166,9 +136,7 @@ export class FinesListPage implements OnInit {
 
   // Récupère le titre du livre depuis l'emprunt
   titreLivre(amende: Amende): string {
-    return amende.emprunt?.exemplaire?.livre?.titre
-      || amende.emprunt?.livre?.titre
-      || 'Livre inconnu';
+    return amende.emprunt?.exemplaire?.livre?.titre || 'Livre inconnu';
   }
 
   nomUtilisateur(amende: Amende): string {

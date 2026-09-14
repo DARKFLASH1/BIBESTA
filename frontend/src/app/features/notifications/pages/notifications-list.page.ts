@@ -7,22 +7,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
-
-// Correspond aux champs renvoyés par Notification.java
-// (contenu / date / statut LU|NON_LU) et à l'enum Type du backend.
-type TypeNotification =
-  | 'EMPRUNT' | 'RETOUR' | 'RETARD' | 'RESERVATION'
-  | 'RESERVATION_DISPONIBLE' | 'RESERVATION_EXPIREE'
-  | 'AMENDE' | 'PAIEMENT' | 'ANNULATION'
-  | 'RAPPEL_RETOUR' | 'ABONNEMENT_EXPIRE' | 'RAPPEL_ABONNEMENT';
-
-interface Notification {
-  id: number;
-  type: TypeNotification;
-  contenu: string;
-  date: string;
-  statut: 'LU' | 'NON_LU';
-}
+import { Notification, TypeNotification } from '../../../core/models/entities.model';
 
 @Component({
   selector: 'app-notifications-list',

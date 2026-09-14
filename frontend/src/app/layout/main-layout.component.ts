@@ -1,5 +1,5 @@
-import { Component, signal, inject, computed, afterNextRender } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, signal, inject, afterNextRender } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { 
   LucideBookOpen, LucideBookmark, LucideCalendarClock, 
@@ -24,7 +24,6 @@ import {
 export class MainLayoutComponent {
 
   private authService = inject(AuthService);
-  private router      = inject(Router);
 
   isSidebarOpen = signal(false);
   isMobile      = signal(false);
@@ -57,15 +56,14 @@ export class MainLayoutComponent {
     { label: 'Statistiques',     route: '/reports',       icon: 'barChart3',     roles: ['BIBLIOTHECAIRE'] }
   ];
 
-  // ── NOUVEAU : ne garde que les items autorisés pour le rôle connecté ──
-  // computed() recalcule automatiquement si le rôle change (ex: reconnexion)
-  menuItemsVisibles = computed(() =>
-    this.menuItems.filter(item => item.roles.includes(this.roleUtilisateur))
+  // Filtré une seule fois : le rôle est figé pour la session (source JWT).
+  menuItemsVisibles = this.menuItems.filter(
+    item => item.roles.includes(this.roleUtilisateur)
   );
 
+  // logout() navigue déjà vers /login → pas de double navigation.
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
   }
 
   toggleSidebar(): void { this.isSidebarOpen.update(v => !v); }

@@ -6,27 +6,12 @@ import {
   LucideAlertTriangle, LucideCalendar, LucideUndo2,
   LucidePlus, LucideX, LucideRefreshCw
 } from '@lucide/angular';
-import { EmpruntService, EmpruntResponse } from './services/emprunt.service';
+import { EmpruntService } from './services/emprunt.service';
 import { LivreService } from '../../books/books-list/service/livre.service';
-import { Livre } from '../../../core/models/entities.model';
+import { Livre, Exemplaire, Utilisateur, EmpruntResponse } from '../../../core/models/entities.model';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
-
-interface Exemplaire {
-  id: number;
-  numExemplaire: string;
-  etatPhysique: string;
-  statutDisponibilite: string;
-}
-
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  identifiant: string;
-  role: string;
-}
 
 @Component({
   selector: 'app-manage-loans',
@@ -115,15 +100,19 @@ export class ManageLoansPage implements OnInit {
   }
 
   // Quand un livre est sélectionné → charge ses exemplaires disponibles
-  onLivreChange(livreId: number): void {
-    this.livreSelectionne.set(livreId);
+  onLivreChange(valeur: string | number | null): void {
+    const livreId = typeof valeur === 'number'
+      ? valeur
+      : parseInt(valeur ?? '', 10);
+    const id = Number.isFinite(livreId) && livreId > 0 ? livreId : null;
+    this.livreSelectionne.set(id);
     this.exemplaireSelectionne.set(null);
     this.exemplaires.set([]);
 
-    if (!livreId) return;
+    if (id === null) return;
 
     this.http.get<Exemplaire[]>(
-      `${environment.apiUrl}/exemplaires/livre/${livreId}/disponibles`
+      `${environment.apiUrl}/exemplaires/livre/${id}/disponibles`
     ).subscribe({
       next: (data) => this.exemplaires.set(data),
       error: () => this.exemplaires.set([])

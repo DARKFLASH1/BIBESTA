@@ -5,6 +5,9 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
 
+// Source unique de vérité : le token JWT (id, rôle, nom, prénom).
+// localStorage ne stocke QUE le token ; plus aucune clé "role"/"id"/"nom"
+// dupliquée qu'on pourrait désynchroniser (P2.16).
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
@@ -15,9 +18,6 @@ export class AuthService {
     private router: Router
   ) {}
 
-  // ── Aide centrale : sommes-nous dans un vrai navigateur ? ──
-  // Toutes les méthodes qui touchent localStorage passent par ici.
-  // Ça évite d'oublier la protection sur l'une d'elles (l'erreur qu'on vient de corriger).
   private isBrowser(): boolean {
     return typeof window !== 'undefined';
   }
@@ -25,12 +25,8 @@ export class AuthService {
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, request).pipe(
       tap(response => {
-        if (!this.isBrowser()) return; // le login n'a de sens que côté navigateur
+        if (!this.isBrowser()) return;
         localStorage.setItem('token', response.token);
-        localStorage.setItem('role', response.role);
-        localStorage.setItem('nom', response.nom);
-        localStorage.setItem('prenom', response.prenom);
-        localStorage.setItem('id', response.id.toString());
       })
     );
   }
@@ -42,10 +38,8 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     if (!this.isBrowser()) return false;
-
     const token = localStorage.getItem('token');
     if (!token) return false;
-
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const estExpire = payload.exp * 1000 < Date.now();
@@ -62,29 +56,9 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  getRole(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem('role');
-  }
-
-  getId(): number {
-    if (!this.isBrowser()) return 0;
-    return parseInt(localStorage.getItem('id') || '0');
-  }
-
-  isBibliothecaire(): boolean {
-    return this.getRole() === 'BIBLIOTHECAIRE';
-  }
-
-  getNomComplet(): string {
-    if (!this.isBrowser()) return '';
-    const nom = localStorage.getItem('nom') || '';
-    const prenom = localStorage.getItem('prenom') || '';
-    return `${prenom} ${nom}`;
-  }
-
+  // Décode le token JWT en UNE fois. Retourne null si absent/invalide.
   private decodePayload(): any {
-    const token = this.getToken(); // déjà protégé, donc null si SSR
+    const token = this.getToken();
     if (!token) return null;
     try {
       return JSON.parse(atob(token.split('.')[1]));
@@ -93,8 +67,24 @@ export class AuthService {
     }
   }
 
-  getCurrentUserId(): number {
+  getId(): number {
     return this.decodePayload()?.id ?? 0;
+  }
+
+  getRole(): string | null {
+    return this.decodePayload()?.role ?? null;
+  }
+
+  getCurrentUserId(): number {
+    return this.getId();
+  }
+
+  getCurrentUserRole(): string {
+    return this.decodePayload()?.role || '';
+  }
+
+  isBibliothecaire(): boolean {
+    return this.getRole() === 'BIBLIOTHECAIRE';
   }
 
   getCurrentUserNom(): string {
@@ -102,7 +92,12 @@ export class AuthService {
     return payload?.nom || payload?.sub || '';
   }
 
-  getCurrentUserRole(): string {
-    return this.decodePayload()?.role || '';
+  getNomComplet(): string {
+    const payload = this.decodePayload();
+    if (!payload) return '';
+    const nom    = payload?.prenom || '';
+    const prenom = payload?.nom || '';
+    const complet = `${nom} ${prenom}`.trim();
+    return complet || payload?.sub || '';
   }
 }

@@ -198,7 +198,7 @@
   <app-confirmation-dialog
     variant="danger"
     title="Annuler la réservation"
-    [message]="'Annuler la r\u00e9servation de \u00ab\u00a0' + reservationAAnnuler()!.livre.titre + '\u00a0\u00bb ?'"
+    [message]="'Annuler la réservation de « ' + reservationAAnnuler()!.livre.titre + ' » ?'"
     confirmLabel="Annuler la réservation"
     cancelLabel="Retour"
     (confirmed)="onConfirmationAnnuler($event)">
@@ -208,7 +208,7 @@
 @if (reservationAConfirmer()) {
   <app-confirmation-dialog
     title="Confirmer la disponibilité"
-    [message]="'Confirmer la disponibilit\u00e9 de \u00ab\u00a0' + reservationAConfirmer()!.livre.titre + '\u00a0\u00bb et notifier le lecteur ?'"
+    [message]="'Confirmer la disponibilité de « ' + reservationAConfirmer()!.livre.titre + ' » et notifier le lecteur ?'"
     confirmLabel="Confirmer et notifier"
     cancelLabel="Annuler"
     (confirmed)="onConfirmationDisponibilite($event)">

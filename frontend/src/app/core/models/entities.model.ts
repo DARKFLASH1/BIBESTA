@@ -8,7 +8,6 @@ export enum Role {
   PUBLIC = 'PUBLIC'
 }
 
-// État physique de l'exemplaire (indépendant de sa disponibilité)
 export enum EtatPhysique {
   BON_ETAT = 'BON_ETAT',
   USAGE = 'USAGE',
@@ -16,7 +15,6 @@ export enum EtatPhysique {
   PERDU = 'PERDU'
 }
 
-// Statut de disponibilité de l'exemplaire (indépendant de son état physique)
 export enum StatutDisponibilite {
   DISPONIBLE = 'DISPONIBLE',
   EMPRUNTE = 'EMPRUNTE',
@@ -27,7 +25,8 @@ export enum StatutDisponibilite {
 export enum StatutEmprunt {
   EN_COURS = 'EN_COURS',
   EN_RETARD = 'EN_RETARD',
-  RETOURNE = 'RETOURNE'
+  RETOURNE = 'RETOURNE',
+  A_RENDRE_BIENTOT = 'A_RENDRE_BIENTOT'
 }
 
 export enum StatutReservation {
@@ -43,21 +42,44 @@ export enum StatutAmende {
 }
 
 export enum TypeNotification {
-  ABONNEMENT_EXPIRE = 'ABONNEMENT_EXPIRE',
-  AMENDE = 'AMENDE',
-  RAPPEL_RETOUR = 'RAPPEL_RETOUR',
+  EMPRUNT = 'EMPRUNT',
+  RETOUR = 'RETOUR',
+  RETARD = 'RETARD',
+  RESERVATION = 'RESERVATION',
   RESERVATION_DISPONIBLE = 'RESERVATION_DISPONIBLE',
-  RETARD = 'RETARD'
+  RESERVATION_EXPIREE = 'RESERVATION_EXPIREE',
+  AMENDE = 'AMENDE',
+  PAIEMENT = 'PAIEMENT',
+  ANNULATION = 'ANNULATION',
+  RAPPEL_RETOUR = 'RAPPEL_RETOUR',
+  ABONNEMENT_EXPIRE = 'ABONNEMENT_EXPIRE',
+  RAPPEL_ABONNEMENT = 'RAPPEL_ABONNEMENT'
 }
 
 // ==========================================
-// INTERFACES (Entités)
+// SOUS-TYPES RÉUTILISÉS (pour DTOs imbriqués)
+// ==========================================
+export interface UtilisateurInfo {
+  id: number;
+  nom: string;
+  prenom: string;
+  identifiant: string;
+}
+
+export interface LivreInfo {
+  id: number;
+  titre: string;
+  auteur: string;
+}
+
+// ==========================================
+// INTERFACES (Entités — reflètent la sérialisation Jackson des entités JPA)
 // ==========================================
 export interface Utilisateur {
   id?: number;
   nom: string;
   prenom: string;
-  dateNaissance: string; // Format YYYY-MM-DD
+  dateNaissance: string;
   sexe: string;
   email: string;
   identifiant: string;
@@ -84,7 +106,7 @@ export interface Exemplaire {
   etatPhysique: EtatPhysique;
   statutDisponibilite: StatutDisponibilite;
   livreId: number;
-  livre?: Livre; // Pour l'affichage frontend
+  livre?: Livre;
 }
 
 export interface Emprunt {
@@ -108,13 +130,19 @@ export interface Reservation {
   livre?: Livre;
 }
 
+export interface AmendeEmpruntInfo {
+  id: number;
+  utilisateur: { id: number; nom: string; prenom: string };
+  exemplaire?: { numExemplaire: string; livre?: { titre: string } };
+}
+
 export interface Amende {
   id?: number;
   montant: number;
   raison?: string;
   date: string;
   statut: StatutAmende;
-  empruntId: number;
+  emprunt: AmendeEmpruntInfo;
 }
 
 export interface Paiement {
@@ -134,8 +162,7 @@ export interface Abonnement {
   dateFin: string;
   statutPaiement: 'EN_ATTENTE' | 'PAYE' | 'EXPIRE';
   montant: number;
-  utilisateurId: number;
-  utilisateur?: Utilisateur;
+  utilisateur?: UtilisateurInfo;
 }
 
 export interface Notification {
@@ -144,7 +171,6 @@ export interface Notification {
   contenu?: string;
   date: string;
   statut: 'LU' | 'NON_LU';
-  utilisateurId: number;
   utilisateur?: Utilisateur;
 }
 
@@ -158,4 +184,36 @@ export interface Historique {
   empruntId?: number;
   livreId?: number;
   reservationId?: number;
+}
+
+// ==========================================
+// DTOs (types des réponses API — une seule source de vérité dans core)
+// ==========================================
+export interface EmpruntResponse {
+  id: number;
+  dateDebut: string;
+  dateRetourPrevue: string;
+  dateRetourReelle: string | null;
+  statut: StatutEmprunt;
+  utilisateurId: number;
+  utilisateurNom: string;
+  utilisateurPrenom: string;
+  livreId: number;
+  livreTitre: string;
+  livreAuteur: string;
+  exemplaireNumero: string;
+}
+
+export interface EmpruntRequest {
+  utilisateurId: number;
+  exemplaireId: number;
+}
+
+export interface ReservationResponse {
+  id: number;
+  dateReservation: string;
+  dateConfirmation: string | null;
+  statut: StatutReservation;
+  utilisateur: UtilisateurInfo;
+  livre: LivreInfo;
 }

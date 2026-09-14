@@ -8,18 +8,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
-
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  email: string;
-  identifiant: string;
-  contact: string;
-  dateNaissance: string;
-  sexe: string;
-  role: 'BIBLIOTHECAIRE' | 'ETUDIANT' | 'ENSEIGNANT' | 'PUBLIC';
-}
+import { Utilisateur } from '../../../core/models/entities.model';
 
 interface UtilisateurForm {
   nom: string;
@@ -122,7 +111,7 @@ export class UsersListPage implements OnInit {
 
   ouvrirModalModif(u: Utilisateur): void {
     this.modeEdition.set(true);
-    this.userEnCours.set(u.id);
+    this.userEnCours.set(u.id ?? null);
     this.form = {
       nom: u.nom,
       prenom: u.prenom,

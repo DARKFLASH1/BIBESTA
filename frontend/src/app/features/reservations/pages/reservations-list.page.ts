@@ -5,20 +5,13 @@ import {
   LucideCalendarClock, LucideClock, LucideCheckCircle2,
   LucideX, LucidePlus, LucideBell
 } from '@lucide/angular';
-import { ReservationService, Reservation } from './services/reservation.service';
+import { ReservationService, type Reservation } from './services/reservation.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LivreService } from '../../books/books-list/service/livre.service';
-import { Livre } from '../../../core/models/entities.model';
+import { Livre, Utilisateur } from '../../../core/models/entities.model';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
-
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  identifiant: string;
-}
 
 @Component({
   selector: 'app-reservations-list',
