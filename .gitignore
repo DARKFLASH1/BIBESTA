@@ -1,4 +1,3 @@
-```
 # Compiled and build artifacts
 *.class
 target/
@@ -19,11 +18,15 @@ node_modules/
 .env.local
 *.env.*
 
-# Maven
+# Maven wrapper (regenerated on demand)
 .mvn/
 mvnw
 mvnw.cmd
 
 # Test reports
 **/surefire-reports/
-```
+
+# IDE tools
+.claude/
+# Plan local (non versionné)
+PLAN_CORRECTIONS_AUDIT.md

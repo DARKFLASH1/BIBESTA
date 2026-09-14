@@ -25,13 +25,10 @@ class AmendeServiceTest {
     private AmendeRepository amendeRepository;
 
     @Mock
-    private UtilisateurRepository utilisateurRepository;
-
-    @Mock
     private EmpruntRepository empruntRepository;
 
     @Mock
-    private PaiementService paiementService;
+    private NotificationService notificationService;
 
     @InjectMocks
     private AmendeService amendeService;
@@ -43,65 +40,68 @@ class AmendeServiceTest {
     @BeforeEach
     void setUp() {
         utilisateur = new Utilisateur();
-        utilisateur.setId(1L);
+        utilisateur.setId(1);
         utilisateur.setNom("Test");
         utilisateur.setEmail("test@example.com");
 
         emprunt = new Emprunt();
-        emprunt.setId(1L);
+        emprunt.setId(1);
         emprunt.setUtilisateur(utilisateur);
-        emprunt.setDateRetourPrevu(LocalDate.now().minusDays(5));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(5));
 
         amende = new Amende();
-        amende.setId(1L);
-        amende.setMontant(new BigDecimal("10.00"));
-        amende.setStatut(Amende.Statut.NON_PAYEE);
-        amende.setUtilisateur(utilisateur);
+        amende.setId(1);
+        amende.setMontant(new BigDecimal("500.00")); // 5 jours × 100 FCFA
+        amende.setStatut(Amende.Statut.EN_ATTENTE);
+        amende.setEmprunt(emprunt);
     }
 
     @Test
-    void testCreerAmendePourRetard() {
-        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+    void testCreerAmende() {
+        when(empruntRepository.findById(1)).thenReturn(Optional.of(emprunt));
+        when(amendeRepository.existsByEmpruntId(1)).thenReturn(false);
         when(amendeRepository.save(any(Amende.class))).thenReturn(amende);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
 
-        Amende result = amendeService.creerAmendePourRetard(1L);
+        Amende result = amendeService.creerAmende(1);
 
         assertNotNull(result);
-        assertEquals(utilisateur, result.getUtilisateur());
         assertTrue(result.getMontant().compareTo(BigDecimal.ZERO) > 0);
         verify(amendeRepository, times(1)).save(any(Amende.class));
     }
 
     @Test
-    void testMarquerCommePayee() {
-        when(amendeRepository.findById(1L)).thenReturn(Optional.of(amende));
+    void testMarquerPayee() {
+        when(amendeRepository.findById(1)).thenReturn(Optional.of(amende));
         when(amendeRepository.save(any(Amende.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(notificationService.creer(any(), any(), any())).thenReturn(new Notification());
 
-        amendeService.marquerCommePayee(1L);
+        amendeService.marquerPayee(1);
 
         assertEquals(Amende.Statut.PAYEE, amende.getStatut());
         verify(amendeRepository, times(1)).save(amende);
     }
 
     @Test
-    void testGetAmendesParUtilisateur() {
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
-        when(amendeRepository.findByUtilisateurAndStatut(utilisateur, Amende.Statut.NON_PAYEE))
-                .thenReturn(List.of(amende));
+    void testAnnulerAmende() {
+        when(amendeRepository.findById(1)).thenReturn(Optional.of(amende));
+        when(amendeRepository.save(any(Amende.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        List<Amende> result = amendeService.getAmendesParUtilisateur(1L, Amende.Statut.NON_PAYEE);
+        Amende result = amendeService.annuler(1);
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(Amende.Statut.ANNULEE, result.getStatut());
+        verify(amendeRepository, times(1)).save(amende);
     }
 
     @Test
-    void testCalculerTotalAmendesImpayees() {
-        when(amendeRepository.findByUtilisateurAndStatut(utilisateur, Amende.Statut.NON_PAYEE))
+    void testFindEnAttenteByUtilisateurId() {
+        when(amendeRepository.findByEmpruntUtilisateurIdAndStatut(1, Amende.Statut.EN_ATTENTE))
                 .thenReturn(List.of(amende));
 
-        BigDecimal total = amendeService.calculerTotalAmendesImpayees(utilisateur);
+        List<Amende> result = amendeService.findEnAttenteByUtilisateurId(1);
 
-        assertEquals(new BigDecimal("10.00"), total);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(Amende.Statut.EN_ATTENTE, result.get(0).getStatut());
     }
 }

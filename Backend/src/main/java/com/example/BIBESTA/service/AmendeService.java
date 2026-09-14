@@ -60,7 +60,7 @@ public class AmendeService {
 
                 // 2. Vérifie qu'il n'y a pas déjà une amende pour cet emprunt
                 if (amendeRepository.existsByEmpruntId(empruntId)) {
-                        throw new ResourceNotFoundException(
+                        throw new BusinessException(
                                         "Une amende existe déjà pour cet emprunt");
                 }
 
@@ -75,7 +75,7 @@ public class AmendeService {
                                 dateRetourReelle);
 
                 if (joursRetard <= 0) {
-                        throw new ResourceNotFoundException(
+                        throw new BusinessException(
                                         "Pas de retard détecté pour cet emprunt");
                 }
 
