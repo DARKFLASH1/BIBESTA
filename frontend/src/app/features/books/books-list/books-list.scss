@@ -203,11 +203,6 @@
   border-radius: 6px;
 }
 
-/* Désactivé si l'utilisateur préfère moins de mouvement */
-@media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; background: var(--bg-secondary); }
-}
-
 .skeleton-title { height: 18px; width: 80%; margin-bottom: 0.75rem; }
 .skeleton-line  { height: 14px; width: 60%; margin-bottom: 0.5rem; }
 .skeleton-line.short { width: 40%; }

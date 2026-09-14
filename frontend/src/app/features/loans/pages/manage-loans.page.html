@@ -212,7 +212,7 @@
         <label>Livre *</label>
         <select class="form-control"
           [ngModel]="livreSelectionne()"
-          (ngModelChange)="onLivreChange(+$event)">
+          (ngModelChange)="onLivreChange($event)">
           <option [ngValue]="null">-- Sélectionner un livre --</option>
           <option *ngFor="let l of livres()" [value]="l.id">
             {{ l.titre }} — {{ l.auteur }}
@@ -255,7 +255,7 @@
 @if (empruntARetourner()) {
   <app-confirmation-dialog
     title="Confirmer le retour"
-    [message]="'Confirmer le retour de \u00ab\u00a0' + empruntARetourner()!.livreTitre + '\u00a0\u00bb ?'"
+    [message]="'Confirmer le retour de « ' + empruntARetourner()!.livreTitre + ' » ?'"
     confirmLabel="Confirmer le retour"
     cancelLabel="Annuler"
     (confirmed)="onConfirmationRetour($event)">

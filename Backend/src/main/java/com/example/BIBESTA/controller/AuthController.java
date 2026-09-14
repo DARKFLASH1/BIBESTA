@@ -85,7 +85,9 @@ public class AuthController {
                 String token = jwtUtil.genererToken(
                                 utilisateur.getIdentifiant(),
                                 utilisateur.getRole().name(),
-                                utilisateur.getId());
+                                utilisateur.getId(),
+                                utilisateur.getNom(),
+                                utilisateur.getPrenom());
 
                 // 4. Retourne le token et les infos
                 LoginResponse reponse = new LoginResponse(

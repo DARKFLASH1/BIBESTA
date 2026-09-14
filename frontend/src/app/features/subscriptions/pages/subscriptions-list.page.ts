@@ -9,21 +9,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationDialogComponent } from '../../../shared/confirmation-dialog/confirmation-dialog.component';
-
-interface Abonnement {
-  id: number;
-  type: string;
-  dateDebut: string;
-  dateFin: string;
-  montant: number;
-  statutPaiement: 'PAYE' | 'EN_ATTENTE' | 'EXPIRE';
-  utilisateur: {
-    id: number;
-    nom: string;
-    prenom: string;
-    identifiant: string;
-  };
-}
+import { Abonnement, Utilisateur } from '../../../core/models/entities.model';
 
 interface AbonnementForm {
   type: string;
@@ -31,13 +17,6 @@ interface AbonnementForm {
   dateFin: string;
   montant: number;
   statutPaiement: string;
-}
-
-interface Utilisateur {
-  id: number;
-  nom: string;
-  prenom: string;
-  identifiant: string;
 }
 
 @Component({

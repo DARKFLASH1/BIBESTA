@@ -125,19 +125,16 @@
     </div>
 
     <div class="modal-body">
-      <div class="modal-body">
       <div class="erreur-banner" *ngIf="erreurModal()">
         ⚠️ {{ erreurModal() }}
       </div>
       <div class="form-grid">
-      <div class="form-grid">
         <div class="form-group full-width">
-            <label>Titre *</label>
-            <input class="form-control"
-              [ngModel]="livreEnCours().titre"
-              (ngModelChange)="livreEnCours.update(l => ({...l, titre: $event}))"
-              placeholder="ex: Les Misérables" />
-          </div>
+          <label>Titre *</label>
+          <input class="form-control"
+            [ngModel]="livreEnCours().titre"
+            (ngModelChange)="livreEnCours.update(l => ({...l, titre: $event}))"
+            placeholder="ex: Les Misérables" />
         </div>
         <div class="form-group full-width">
           <label>Auteur *</label>
@@ -188,14 +185,14 @@
             (ngModelChange)="livreEnCours.update(l => ({...l, isbn: $event}))"
             placeholder="ex: 978-2-07-040850-4" />
         </div>
-      </div>
-      <div class="form-group">
+        <div class="form-group">
           <label>Nombre de pages</label>
           <input class="form-control" type="number" min="1"
             [ngModel]="livreEnCours().nombrePages"
             (ngModelChange)="livreEnCours.update(l => ({...l, nombrePages: $event}))"
             placeholder="ex: 320" />
         </div>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -213,7 +210,7 @@
   <app-confirmation-dialog
     variant="danger"
     title="Supprimer le livre"
-    [message]="'Supprimer \u00ab\u00a0' + livreASupprimer()!.titre + '\u00a0\u00bb ?\nCette action est irr\u00e9versible.'"
+    [message]="'Supprimer « ' + livreASupprimer()!.titre + ' » ?\nCette action est irréversible.'"
     confirmLabel="Supprimer"
     cancelLabel="Annuler"
     (confirmed)="onConfirmationSupprimer($event)">

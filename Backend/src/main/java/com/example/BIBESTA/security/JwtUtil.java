@@ -28,11 +28,14 @@ public class JwtUtil {
     }
 
     // GÉNÈRE un token JWT
-    public String genererToken(String identifiant, String role, Integer id) {
+    public String genererToken(String identifiant, String role, Integer id,
+            String nom, String prenom) {
         return Jwts.builder()
                 .setSubject(identifiant)
                 .claim("role", role)
                 .claim("id", id) // ← ajoute l'id numérique
+                .claim("nom", nom)
+                .claim("prenom", prenom)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(getKey())
