@@ -53,38 +53,25 @@ public class AbonnementController {
 
     @PostMapping("/utilisateur/{utilisateurId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> save(
+    public ResponseEntity<Abonnement> save(
             @PathVariable Integer utilisateurId,
             @RequestBody Abonnement abonnement) {
-        try {
-            Abonnement saved = abonnementService.save(utilisateurId, abonnement);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Abonnement saved = abonnementService.save(utilisateurId, abonnement);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PatchMapping("/{id}/statut")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> updateStatut(
+    public ResponseEntity<Abonnement> updateStatut(
             @PathVariable Integer id,
             @RequestParam StatutPaiement nouveauStatut) {
-        try {
-            Abonnement updated = abonnementService.updateStatut(id, nouveauStatut);
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok(abonnementService.updateStatut(id, nouveauStatut));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> deleteById(@PathVariable Integer id) {
-        try {
-            abonnementService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+        abonnementService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

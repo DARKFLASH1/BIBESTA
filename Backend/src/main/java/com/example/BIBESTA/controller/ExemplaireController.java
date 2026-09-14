@@ -46,41 +46,28 @@ public class ExemplaireController {
     // POST /api/exemplaires/livre/1 → crée un exemplaire pour le livre 1
     @PostMapping("/livre/{livreId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> save(
+    public ResponseEntity<Exemplaire> save(
             @PathVariable Integer livreId,
             @RequestBody Exemplaire exemplaire) {
-        try {
-            Exemplaire saved = exemplaireService.save(livreId, exemplaire);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Exemplaire saved = exemplaireService.save(livreId, exemplaire);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     // PATCH /api/exemplaires/1/etat?nouvelEtat=EMPRUNTE → change l'état
     @PatchMapping("/{id}/etat")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     // @PatchMapping = modification partielle (juste l'état, pas tout l'objet)
-    public ResponseEntity<?> updateEtat(
+    public ResponseEntity<Exemplaire> updateEtat(
             @PathVariable Integer id,
             @RequestParam Etat nouvelEtat) {
-        try {
-            Exemplaire updated = exemplaireService.updateEtat(id, nouvelEtat);
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok(exemplaireService.updateEtat(id, nouvelEtat));
     }
 
     // DELETE /api/exemplaires/1 → supprime un exemplaire
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> deleteById(@PathVariable Integer id) {
-        try {
-            exemplaireService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+        exemplaireService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

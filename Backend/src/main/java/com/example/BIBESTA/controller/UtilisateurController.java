@@ -49,35 +49,23 @@ public class UtilisateurController {
 
     @PostMapping
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> save(@RequestBody UtilisateurRequest request) {
-        try {
-            Utilisateur saved = utilisateurService.save(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Utilisateur> save(@RequestBody UtilisateurRequest request) {
+        Utilisateur saved = utilisateurService.save(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> update(
+    public ResponseEntity<Utilisateur> update(
             @PathVariable Integer id,
             @RequestBody UtilisateurRequest request) {
-        try {
-            return ResponseEntity.ok(utilisateurService.update(id, request));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok(utilisateurService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> deleteById(@PathVariable Integer id) {
-        try {
-            utilisateurService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+        utilisateurService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.BIBESTA.controller;
 
+import com.example.BIBESTA.exception.ResourceNotFoundException;
 import com.example.BIBESTA.model.Notification;
 import com.example.BIBESTA.security.SecurityUtils; // ← import ajouté
 import com.example.BIBESTA.service.NotificationService;
@@ -46,52 +47,39 @@ public class NotificationController {
 
     @PostMapping("/utilisateur/{utilisateurId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> creer(
+    public ResponseEntity<Notification> creer(
             @PathVariable Integer utilisateurId,
             @RequestParam String type,
             @RequestParam String contenu) {
-        try {
-            Notification saved = notificationService.creer(
-                    utilisateurId, type, contenu);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Notification saved = notificationService.creer(
+                utilisateurId, type, contenu);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     // Marquer une notification comme lue
     // L'utilisateur marque ses propres notifications
     @PatchMapping("/{id}/lue")
-    public ResponseEntity<?> marquerCommeLue(@PathVariable Integer id) {
-        try {
-            Notification updated = notificationService.marquerCommeLue(id);
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Notification> marquerCommeLue(@PathVariable Integer id) {
+        // IDOR : on vérifie que la notification appartient bien à l'utilisateur
+        Notification notification = notificationService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification non trouvée"));
+        SecurityUtils.verifierAccesPropriete(notification.getUtilisateur().getId());
+        return ResponseEntity.ok(notificationService.marquerCommeLue(id));
     }
 
     // Marquer toutes les notifications comme lues
     @PatchMapping("/utilisateur/{utilisateurId}/toutes-lues")
-    public ResponseEntity<?> marquerToutesCommeLues(
+    public ResponseEntity<String> marquerToutesCommeLues(
             @PathVariable Integer utilisateurId) {
         SecurityUtils.verifierAccesPropriete(utilisateurId); // ← ajouté
-        try {
-            notificationService.marquerToutesCommeLues(utilisateurId);
-            return ResponseEntity.ok("Toutes les notifications marquées comme lues");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        notificationService.marquerToutesCommeLues(utilisateurId);
+        return ResponseEntity.ok("Toutes les notifications marquées comme lues");
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> deleteById(@PathVariable Integer id) {
-        try {
-            notificationService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
+        notificationService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

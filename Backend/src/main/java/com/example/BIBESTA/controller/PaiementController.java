@@ -43,40 +43,27 @@ public class PaiementController {
 
     @PostMapping("/abonnement/{abonnementId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> payerAbonnement(
+    public ResponseEntity<Paiement> payerAbonnement(
             @PathVariable Integer abonnementId,
             @RequestParam String methodePaiement) {
-        try {
-            Paiement paiement = paiementService
-                    .payerAbonnement(abonnementId, methodePaiement);
-            return ResponseEntity.status(HttpStatus.CREATED).body(paiement);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Paiement paiement = paiementService
+                .payerAbonnement(abonnementId, methodePaiement);
+        return ResponseEntity.status(HttpStatus.CREATED).body(paiement);
     }
 
     @PostMapping("/amende/{amendeId}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> payerAmende(
+    public ResponseEntity<Paiement> payerAmende(
             @PathVariable Integer amendeId,
             @RequestParam String methodePaiement) {
-        try {
-            Paiement paiement = paiementService
-                    .payerAmende(amendeId, methodePaiement);
-            return ResponseEntity.status(HttpStatus.CREATED).body(paiement);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Paiement paiement = paiementService
+                .payerAmende(amendeId, methodePaiement);
+        return ResponseEntity.status(HttpStatus.CREATED).body(paiement);
     }
 
     @PatchMapping("/{id}/annuler")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> annuler(@PathVariable Integer id) {
-        try {
-            Paiement paiement = paiementService.annuler(id);
-            return ResponseEntity.ok(paiement);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Paiement> annuler(@PathVariable Integer id) {
+        return ResponseEntity.ok(paiementService.annuler(id));
     }
 }

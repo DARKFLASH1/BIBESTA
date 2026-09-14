@@ -97,39 +97,26 @@ public class EmpruntController {
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
     public ResponseEntity<?> creerEmprunt(
             @RequestBody EmpruntRequest request) {
-        try {
-            Emprunt emprunt = empruntService.creerEmprunt(
-                    request.utilisateurId(),
-                    request.exemplaireId());
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(mapper.toEmpruntResponse(emprunt));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Emprunt emprunt = empruntService.creerEmprunt(
+                request.utilisateurId(),
+                request.exemplaireId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(mapper.toEmpruntResponse(emprunt));
     }
 
     // PUT /api/emprunts/1/retour → enregistre le retour d'un livre
     @PutMapping("/{id}/retour")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> enregistrerRetour(@PathVariable Integer id) {
-        try {
-            Emprunt emprunt = empruntService.enregistrerRetour(id);
-            return ResponseEntity.ok(emprunt);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Emprunt> enregistrerRetour(@PathVariable Integer id) {
+        return ResponseEntity.ok(empruntService.enregistrerRetour(id));
     }
 
     // PUT /api/emprunts/retards/update
     // Met à jour tous les emprunts en retard
     @PutMapping("/retards/update")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<?> mettreAJourRetards() {
-        try {
-            empruntService.mettreAJourRetards();
-            return ResponseEntity.ok("Retards mis à jour avec succès");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<String> mettreAJourRetards() {
+        empruntService.mettreAJourRetards();
+        return ResponseEntity.ok("Retards mis à jour avec succès");
     }
 }

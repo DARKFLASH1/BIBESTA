@@ -14,11 +14,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.TextStyle;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor // Lombok génère le constructeur avec tous les "final" ci-dessous
@@ -71,18 +72,19 @@ public class StatistiqueService {
     private List<EmpruntsParMois> calculerEmpruntsParMois() {
         LocalDate ilYA6Mois = LocalDate.now().minusMonths(5).withDayOfMonth(1);
 
-        // On récupère TOUS les emprunts puis on les regroupe en mémoire.
-        // Sur un petit projet académique, c'est largement suffisant et
-        // beaucoup plus lisible qu'une requête SQL de groupement par date.
-        Map<String, Long> comptageParMois = empruntRepository.findAll().stream()
-                .filter(e -> !e.getDateDebut().isBefore(ilYA6Mois))
-                .collect(Collectors.groupingBy(
-                        e -> cleMois(e.getDateDebut()),
-                        Collectors.counting()));
+        // L'agrégation se fait en base (GROUP BY YEAR/MONTH) : une seule requête
+        // SQL au lieu du chargement de TOUS les emprunts en mémoire.
+        Map<String, Long> comptageParMois = empruntRepository
+                .countEmpruntsParMois(ilYA6Mois)
+                .stream()
+                .collect(Collectors.toMap(
+                        ligne -> ligne[0] + "-" + String.format("%02d", ((Number) ligne[1]).intValue()),
+                        ligne -> ((Number) ligne[2]).longValue(),
+                        Long::sum));
 
         // On force l'affichage des 6 derniers mois même s'il y a 0 emprunt
         // certains mois (sinon un mois sans emprunt disparaîtrait du graphique)
-        return java.util.stream.IntStream.range(0, 6)
+        return IntStream.range(0, 6)
                 .mapToObj(i -> ilYA6Mois.plusMonths(i))
                 .map(date -> new EmpruntsParMois(
                         libelleMois(date),
@@ -102,14 +104,13 @@ public class StatistiqueService {
 
     // ── Graphique 2 : les 5 livres les plus empruntés (tous statuts) ─────
     private List<LivrePopulaire> calculerTopLivres() {
-        return empruntRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        e -> e.getExemplaire().getLivre().getTitre(),
-                        Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
-                .map(entry -> new LivrePopulaire(entry.getKey(), entry.getValue()))
+        // Tri + limite(5) directement en SQL : plus de chargement en mémoire de
+        // tous les emprunts pour les regrouper côté Java.
+        return empruntRepository.findTopLivresEmpruntes(PageRequest.of(0, 5))
+                .stream()
+                .map(ligne -> new LivrePopulaire(
+                        (String) ligne[0],
+                        ((Number) ligne[1]).longValue()))
                 .toList();
     }
 }

@@ -3,29 +3,38 @@ package com.example.BIBESTA.repository;
 import com.example.BIBESTA.model.Reservation;
 import com.example.BIBESTA.model.Reservation.Statut;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
 
-        // Toutes les réservations d'un utilisateur
+        // ── Fetch joins : charger utilisateur + livre en une requête ─────────
+        // Mapper.toReservationResponse lit r.getUtilisateur() et r.getLivre() :
+        // sans ça, une requête SQL par ligne serait nécessaire (N+1).
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
+        List<Reservation> findAll();
+
+        @Override
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
+        Optional<Reservation> findById(Integer id);
+
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
         List<Reservation> findByUtilisateurId(Integer utilisateurId);
 
-        // Réservations d'un utilisateur par statut
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
         List<Reservation> findByUtilisateurIdAndStatut(
                         Integer utilisateurId,
                         Statut statut);
 
-        // Réservations EN_ATTENTE pour un livre
-        // Utile quand un exemplaire est rendu :
-        // on cherche qui attend ce livre
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
         List<Reservation> findByLivreIdAndStatut(
                         Integer livreId,
                         Statut statut);
 
-        // Réservations EN_ATTENTE pour un livre, triées par date (FIFO)
-        // Premier arrivé, premier servi
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
         List<Reservation> findByLivreIdAndStatutOrderByDateReservationAsc(
                         Integer livreId,
                         Statut statut);
@@ -36,7 +45,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
                         Integer livreId,
                         Statut statut);
 
-        // Toutes les réservations par statut
+        @EntityGraph(attributePaths = {"utilisateur", "livre"})
         List<Reservation> findByStatut(Statut statut);
 
         // Compte les réservations par statut
