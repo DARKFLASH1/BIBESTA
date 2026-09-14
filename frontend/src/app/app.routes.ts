@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { authGuard } from './core/guards/auth.guard';
-import { roleGuard } from './core/guards/role.guard'; // ← nouvel import
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -10,6 +10,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'books', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        canActivate: [roleGuard],
+        data: { roles: ['BIBLIOTHECAIRE'] },
+        loadComponent: () => import('./features/bibliothecaire/dashboard/dashboard').then(m => m.DashboardPage)
+      },
       {
         path: 'books',
         loadComponent: () => import('./features/books/books-list/books-list').then(m => m.BooksListPage)

@@ -30,6 +30,9 @@
           (click)="closeSidebar()">
           
           @switch (item.icon) {
+            @case ('layoutDashboard') {
+              <svg lucideLayoutDashboard size="20"></svg>
+            }
             @case ('bookOpen') {
               <svg lucideBookOpen size="20"></svg>
             }

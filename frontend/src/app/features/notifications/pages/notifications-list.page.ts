@@ -81,7 +81,8 @@ export class NotificationsListPage implements OnInit {
         this.notifications.update(list =>
           list.map(n => n.id === updated.id ? updated : n)
         );
-      }
+      },
+      error: () => this.erreur.set('Impossible de marquer la notification comme lue.')
     });
   }
 
@@ -94,7 +95,8 @@ export class NotificationsListPage implements OnInit {
         this.notifications.update(list =>
           list.map(n => ({ ...n, statut: 'LU' as const }))
         );
-      }
+      },
+      error: () => this.erreur.set('Impossible de marquer les notifications comme lues.')
     });
   }
 
@@ -106,7 +108,8 @@ export class NotificationsListPage implements OnInit {
         this.notifications.update(list =>
           list.filter(n => n.id !== notification.id)
         );
-      }
+      },
+      error: () => this.erreur.set('Impossible de supprimer la notification.')
     });
   }
 

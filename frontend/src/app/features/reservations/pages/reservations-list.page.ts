@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucideCalendarClock, LucideClock, LucideCheckCircle2,
-  LucideX, LucidePlus, LucideAlertTriangle, LucideBell
+  LucideX, LucidePlus, LucideBell
 } from '@lucide/angular';
 import { ReservationService, Reservation } from './services/reservation.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -27,7 +27,7 @@ interface Utilisateur {
     ConfirmationDialogComponent,
     CommonModule, FormsModule,
     LucideCalendarClock, LucideClock, LucideCheckCircle2,
-    LucideX, LucidePlus, LucideAlertTriangle, LucideBell
+LucideX, LucidePlus, LucideBell
   ],
   templateUrl: './reservations-list.page.html',
   styleUrl: './reservations-list.page.scss'
@@ -96,13 +96,15 @@ export class ReservationsListPage implements OnInit {
 
   chargerLivres(): void {
     this.livreService.getTousLesLivres().subscribe({
-      next: (data) => this.livres.set(data)
+      next: (data) => this.livres.set(data),
+      error: () => this.erreur.set('Impossible de charger les livres.')
     });
   }
 
   chargerUtilisateurs(): void {
     this.http.get<Utilisateur[]>(`${environment.apiUrl}/utilisateurs`).subscribe({
-      next: (data) => this.utilisateurs.set(data)
+      next: (data) => this.utilisateurs.set(data),
+      error: () => this.erreur.set('Impossible de charger les utilisateurs.')
     });
   }
 
@@ -144,7 +146,8 @@ export class ReservationsListPage implements OnInit {
     this.reservationAAnnuler.set(null);
     if (!confirme || !r) return;
     this.reservationService.annuler(r.id).subscribe({
-      next: (updated) => this.reservations.update(list => list.map(x => x.id === updated.id ? updated : x))
+      next: (updated) => this.reservations.update(list => list.map(x => x.id === updated.id ? updated : x)),
+      error: (err) => this.erreur.set(err.error?.message || 'Erreur lors de l\'annulation.')
     });
   }
 

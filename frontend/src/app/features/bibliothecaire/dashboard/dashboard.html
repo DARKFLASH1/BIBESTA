@@ -120,9 +120,6 @@
                     <div class="chart-bar emprunts"
                          [style.height.%]="(mois.emprunts / calculerMaxEmprunts()) * 100"
                          [title]="'Emprunts: ' + mois.emprunts"></div>
-                    <div class="chart-bar retours"
-                         [style.height.%]="(mois.retours / calculerMaxEmprunts()) * 100"
-                         [title]="'Retours: ' + mois.retours"></div>
                   </div>
                   <span class="chart-label">{{ mois.mois }}</span>
                 </div>
@@ -131,9 +128,6 @@
             <div class="chart-legend">
               <span class="legend-item">
                 <span class="legend-color emprunts"></span> Emprunts
-              </span>
-              <span class="legend-item">
-                <span class="legend-color retours"></span> Retours
               </span>
             </div>
           </div>
@@ -182,12 +176,11 @@
             <div class="empty-state"><p>Aucune donnée disponible</p></div>
           } @else {
             <div class="livres-list">
-              @for (livre of livresPopulaires(); track livre.id; let i = $index) {
+              @for (livre of livresPopulaires(); track livre.titre; let i = $index) {
                 <div class="livre-item">
                   <span class="livre-rang">{{ i + 1 }}</span>
                   <div class="livre-info">
                     <span class="livre-titre">{{ livre.titre }}</span>
-                    <span class="livre-auteur">{{ livre.auteur }}</span>
                   </div>
                   <div class="livre-bar-container">
                     <div class="livre-bar"

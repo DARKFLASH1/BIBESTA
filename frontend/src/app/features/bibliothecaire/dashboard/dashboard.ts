@@ -22,6 +22,7 @@ export class DashboardPage implements OnInit {
 
   // États de chargement
   loading = signal(true);
+  erreur = signal<string | null>(null);
 
   // Données
   stats = signal<DashboardStats | null>(null);
@@ -42,27 +43,34 @@ export class DashboardPage implements OnInit {
   }
 
   chargerDonnees(): void {
+    // Un seul appel /statistiques/dashboard alimente stats, graphiques et top.
     this.loading.set(true);
+    this.erreur.set(null);
 
-    this.dashboardService.getStats().subscribe(data => {
-      this.stats.set(data);
+    this.dashboardService.getStats().subscribe({
+      next: (data) => this.stats.set(data),
+      error: () => this.erreur.set('Impossible de charger les statistiques.'),
+      complete: () => this.loading.set(false)
     });
 
-    this.dashboardService.getActiviteRecente().subscribe(data => {
-      this.activiteRecente.set(data);
+    this.dashboardService.getStatistiquesMensuelles().subscribe({
+      next: (data) => this.statsMensuelles.set(data),
+      error: () => this.erreur.set('Impossible de charger les statistiques mensuelles.')
     });
 
-    this.dashboardService.getEmpruntsEnRetard().subscribe(data => {
-      this.empruntsRetard.set(data);
+    this.dashboardService.getLivresPopulaires().subscribe({
+      next: (data) => this.livresPopulaires.set(data),
+      error: () => this.erreur.set('Impossible de charger les livres populaires.')
     });
 
-    this.dashboardService.getStatistiquesMensuelles().subscribe(data => {
-      this.statsMensuelles.set(data);
-      this.loading.set(false);
+    this.dashboardService.getActiviteRecente().subscribe({
+      next: (data) => this.activiteRecente.set(data),
+      error: () => this.activiteRecente.set([])
     });
 
-    this.dashboardService.getLivresPopulaires().subscribe(data => {
-      this.livresPopulaires.set(data);
+    this.dashboardService.getEmpruntsEnRetard().subscribe({
+      next: (data) => this.empruntsRetard.set(data),
+      error: () => this.empruntsRetard.set([])
     });
   }
 
@@ -107,7 +115,7 @@ export class DashboardPage implements OnInit {
   }
 
   calculerMaxEmprunts(): number {
-    const max = Math.max(...this.statsMensuelles().map(s => Math.max(s.emprunts, s.retours)));
+    const max = Math.max(...this.statsMensuelles().map(s => s.emprunts));
     return max || 1;
   }
 

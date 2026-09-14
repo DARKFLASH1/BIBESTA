@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   LucideBookmark, LucideClock, LucideCheckCircle2,
   LucideAlertTriangle, LucideCalendar, LucideUndo2,
-  LucidePlus, LucideX, LucideSearch, LucideRefreshCw
+  LucidePlus, LucideX, LucideRefreshCw
 } from '@lucide/angular';
 import { EmpruntService, EmpruntResponse } from './services/emprunt.service';
 import { LivreService } from '../../books/books-list/service/livre.service';
@@ -36,7 +36,7 @@ interface Utilisateur {
     CommonModule, FormsModule,
     LucideBookmark, LucideClock, LucideCheckCircle2,
     LucideAlertTriangle, LucideCalendar, LucideUndo2,
-    LucidePlus, LucideX, LucideSearch, LucideRefreshCw
+LucidePlus, LucideX, LucideRefreshCw
   ],
   templateUrl: './manage-loans.page.html',
   styleUrl: './manage-loans.page.scss'
@@ -102,13 +102,15 @@ export class ManageLoansPage implements OnInit {
 
   chargerUtilisateurs(): void {
     this.http.get<Utilisateur[]>(`${environment.apiUrl}/utilisateurs`).subscribe({
-      next: (data) => this.utilisateurs.set(data)
+      next: (data) => this.utilisateurs.set(data),
+      error: () => this.erreur.set('Impossible de charger les utilisateurs.')
     });
   }
 
   chargerLivres(): void {
     this.livreService.getTousLesLivres().subscribe({
-      next: (data) => this.livres.set(data)
+      next: (data) => this.livres.set(data),
+      error: () => this.erreur.set('Impossible de charger les livres.')
     });
   }
 
@@ -123,7 +125,8 @@ export class ManageLoansPage implements OnInit {
     this.http.get<Exemplaire[]>(
       `${environment.apiUrl}/exemplaires/livre/${livreId}/disponibles`
     ).subscribe({
-      next: (data) => this.exemplaires.set(data)
+      next: (data) => this.exemplaires.set(data),
+      error: () => this.exemplaires.set([])
     });
   }
 
@@ -178,7 +181,8 @@ export class ManageLoansPage implements OnInit {
 
   mettreAJourRetards(): void {
     this.empruntService.mettreAJourRetards().subscribe({
-      next: () => this.charger()
+      next: () => this.charger(),
+      error: () => this.erreur.set('Impossible de mettre à jour les retards.')
     });
   }
 
