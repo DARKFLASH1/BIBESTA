@@ -16,7 +16,8 @@ node_modules/
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
+!.env.example
 
 # Maven wrapper (regenerated on demand)
 .mvn/

@@ -59,6 +59,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- 4.2 Actuator : endpoint /actuator/health pour le healthcheck Docker / orchestration -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- 5. Lombok : génère automatiquement getters/setters/constructeurs -->
         <dependency>
             <groupId>org.projectlombok</groupId>
