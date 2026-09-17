@@ -15,7 +15,7 @@
   .header-left { display: flex; align-items: center; gap: 1rem; }
 
   h1 {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.6rem;
     font-weight: 600;
     color: var(--text-main);
@@ -27,7 +27,7 @@
   .compteur {
     background: var(--accent-light);
     color: var(--accent);
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.85rem;
     font-weight: 500;
     padding: 0.25rem 0.75rem;
@@ -62,7 +62,7 @@
   min-width: 140px;
 
   div { display: flex; flex-direction: column; }
-  .stat-nb { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+  .stat-nb { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; line-height: 1; }
   .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
 
   &.success { svg { color: var(--success); } .stat-nb { color: var(--success); } }
@@ -87,7 +87,7 @@
   border-radius: 20px;
   background: var(--surface);
   color: var(--text-muted);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
@@ -141,7 +141,7 @@
 }
 
 .type-label {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-main);
@@ -200,7 +200,7 @@
 .montant-row { margin-top: 0.25rem; }
 
 .montant {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--accent);
@@ -221,7 +221,7 @@
   gap: 0.35rem;
   padding: 0.2rem 0.65rem;
   border-radius: 20px;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 500;
   white-space: nowrap;
@@ -240,7 +240,7 @@
   padding: 0.6rem 1.1rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -259,7 +259,7 @@
 /* ── Skeleton ────────────────────────────────────── */
 .skeleton-card { padding: 1.25rem; flex-direction: column; gap: 0.75rem; }
 .skeleton {
-  background: linear-gradient(90deg, #F5F2EA 25%, #EFEBE0 50%, #F5F2EA 75%);
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
@@ -278,7 +278,7 @@
   align-items: center;
   gap: 0.75rem;
   .empty-icon { color: var(--accent); }
-  h3 { font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: var(--text-main); }
+  h3 { font-family: var(--font-display); font-size: 1.2rem; color: var(--text-main); }
 }
 
 /* ── Modal ───────────────────────────────────────── */
@@ -310,7 +310,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 1.5rem 0;
-  h2 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: var(--text-main); }
+  h2 { font-family: var(--font-display); font-size: 1.25rem; color: var(--text-main); }
 }
 
 .modal-body {
@@ -343,7 +343,7 @@
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-muted);
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-display);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
@@ -387,7 +387,7 @@
   gap: 0.25rem;
 
   .type-nom {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-main);
