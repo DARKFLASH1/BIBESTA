@@ -33,7 +33,10 @@
     "@angular/compiler-cli": "22.1.7",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
+    "jsdom": "^26.1.0",
     "prettier": "^3.8.1",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.11",
+    "zone.js": "^0.15.1"
   }
 }
