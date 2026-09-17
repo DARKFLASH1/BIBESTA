@@ -1,17 +1,13 @@
-version: '3.8'
-
 services:
   # Base de données MySQL
   mysql:
     image: mysql:8.0
     container_name: bibesta_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ***REMOVED***
-      MYSQL_DATABASE: bibliotheque
-      MYSQL_USER: ***REMOVED***
-      MYSQL_PASSWORD: ***REMOVED***
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD requis (voir .env)}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE requis (voir .env)}
+      MYSQL_USER: ${MYSQL_USERNAME:?MYSQL_USERNAME requis (voir .env)}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis (voir .env)}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./Backend/src/main/resources/db:/docker-entrypoint-initdb.d
@@ -33,21 +29,21 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bibliotheque?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull
-      SPRING_DATASOURCE_USERNAME: ***REMOVED***
-      SPRING_DATASOURCE_PASSWORD: ***REMOVED***
-      JWT_SECRET: ***REMOVED***
-      DB_USERNAME: ***REMOVED***
-      DB_PASSWORD: ***REMOVED***
+      APP_PROFILE: ${APP_PROFILE:-prod}
+      DB_USERNAME: ${MYSQL_USERNAME:?MYSQL_USERNAME requis (voir .env)}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis (voir .env)}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (voir .env)}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull
     ports:
       - "8080:8080"
     networks:
       - bibesta_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
 
   # Frontend Angular
@@ -57,7 +53,8 @@ services:
       dockerfile: Dockerfile
     container_name: bibesta_frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "4200:80"
     networks:
