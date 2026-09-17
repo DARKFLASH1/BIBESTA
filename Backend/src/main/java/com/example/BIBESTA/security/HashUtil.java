@@ -2,6 +2,7 @@ package com.example.BIBESTA.security;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 
 public class HashUtil {
 
@@ -10,7 +11,7 @@ public class HashUtil {
     public static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes());
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
 
             // Convertit les bytes en chaîne hexadécimale
             StringBuilder hexString = new StringBuilder();

@@ -13,12 +13,25 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
         private final UtilisateurRepository utilisateurRepository;
         private final JwtUtil jwtUtil;
         private final PasswordEncoder passwordEncoder;
+
+        // Hash BCrypt factice, généré une seule fois à l'init (P2.7) :
+        // sert uniquement à égaliser le temps de réponse quand l'identifiant
+        // n'existe pas (évite le timing side-channel), sans secret hardcodé.
+        private final String dummyBcrypt;
+
+        public AuthController(UtilisateurRepository utilisateurRepository,
+                        JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+                this.utilisateurRepository = utilisateurRepository;
+                this.jwtUtil = jwtUtil;
+                this.passwordEncoder = passwordEncoder;
+                this.dummyBcrypt = passwordEncoder.encode(
+                                java.util.UUID.randomUUID().toString());
+        }
 
         // Un hash SHA-256 hexadécimal fait toujours 64 caractères [0-9a-f].
         // Sert uniquement à détecter les anciens comptes pour migration transparente.
@@ -65,20 +78,18 @@ public class AuthController {
                 } else {
                         motDePasseValide = passwordEncoder.matches(
                                         request.motDePasse(),
-                                        "$2a$10$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuuabcdefghijkl");
+                                        dummyBcrypt);
                 }
 
-                if (!utilisateurTrouve || !motDePasseValide) {
+                // P2.6 : réponse 401 UNIFORME quel que soit le motif d'échec
+                // (identifiant inconnu, mot de passe faux, compte inactif/verrouillé).
+                // Un 403 distinct révélerait l'existence et l'état du compte.
+                boolean compteActif = utilisateurTrouve &&
+                                utilisateur.getStatut() == Utilisateur.Statut.ACTIF;
+
+                if (!utilisateurTrouve || !motDePasseValide || !compteActif) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body("Identifiant ou mot de passe incorrect");
-                }
-
-                // 2.1 Vérifie que le compte est ACTIF — après vérification du mot de passe,
-                // donc sans réveller l'existence du compte à un inconnu (RG5)
-                if (utilisateur.getStatut() != Utilisateur.Statut.ACTIF) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body("Ce compte est " + utilisateur.getStatut().name().toLowerCase() +
-                                                        ". Contactez le bibliothécaire.");
                 }
 
                 // 3. Génère le token JWT

@@ -29,7 +29,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      APP_PROFILE: ${APP_PROFILE:-prod}
+      SPRING_PROFILES_ACTIVE: ${APP_PROFILE:-prod}
       DB_USERNAME: ${MYSQL_USERNAME:?MYSQL_USERNAME requis (voir .env)}
       DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis (voir .env)}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (voir .env)}
