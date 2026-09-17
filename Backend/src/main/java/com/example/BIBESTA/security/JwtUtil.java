@@ -12,14 +12,18 @@ public class JwtUtil {
 
     // Clé secrète pour signer les tokens, injectée depuis application.properties
     // (elle-même lue depuis la variable d'env JWT_SECRET). Ne jamais commiter
-    // une vraie valeur : voir application.properties.example.
+    // une vraie valeur : voir .env.example.
     private final String SECRET;
 
-    // Durée de validité : 24h en millisecondes
-    private final long EXPIRATION = 86400000;
+    // Durée de validité du token, configurable via app.jwt.expiration (ms).
+    // Défaut : 60 minutes — pas de "remember me" donc TTL court (P2.5).
+    private final long EXPIRATION;
 
-    public JwtUtil(@Value("${app.jwt.secret}") String secret) {
+    public JwtUtil(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.expiration:3600000}") long expiration) {
         this.SECRET = secret;
+        this.EXPIRATION = expiration;
     }
 
     // Génère la clé de signature

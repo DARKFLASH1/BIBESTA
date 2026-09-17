@@ -36,8 +36,9 @@ public class EmpruntController {
     // GET /api/emprunts/1 → un emprunt par id
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<Emprunt> findById(@PathVariable Integer id) {
+    public ResponseEntity<EmpruntResponse> findById(@PathVariable Integer id) {
         return empruntService.findById(id)
+                .map(mapper::toEmpruntResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -108,8 +109,8 @@ public class EmpruntController {
     // PUT /api/emprunts/1/retour → enregistre le retour d'un livre
     @PutMapping("/{id}/retour")
     @PreAuthorize("hasRole('BIBLIOTHECAIRE')")
-    public ResponseEntity<Emprunt> enregistrerRetour(@PathVariable Integer id) {
-        return ResponseEntity.ok(empruntService.enregistrerRetour(id));
+    public ResponseEntity<EmpruntResponse> enregistrerRetour(@PathVariable Integer id) {
+        return ResponseEntity.ok(mapper.toEmpruntResponse(empruntService.enregistrerRetour(id)));
     }
 
     // PUT /api/emprunts/retards/update

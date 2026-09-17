@@ -1,6 +1,7 @@
 package com.example.BIBESTA.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,6 +23,12 @@ import java.util.List;
 public class SecurityConfig {
 
         private final JwtFilter jwtFilter;
+        private final RateLimitFilter rateLimitFilter;
+
+        // Origines CORS autorisées, configurables via env :
+        // app.cors.allowed-origins (lire APP_PROFILE / application-prod.properties).
+        @Value("${app.cors.allowed-origins:http://localhost:4200}")
+        private String allowedOrigins;
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -68,6 +75,9 @@ public class SecurityConfig {
                                                 .authenticated()
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(
+                                                rateLimitFilter,
+                                                UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(
                                                 jwtFilter,
                                                 UsernamePasswordAuthenticationFilter.class);
 
@@ -78,8 +88,8 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
 
-                // Autorise Angular
-                config.setAllowedOrigins(List.of("http://localhost:4200"));
+                // Origines autorisées depuis la config (env en prod, défaut localhost:4200)
+                config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
 
                 // Autorise toutes les méthodes HTTP
                 config.setAllowedMethods(List.of(
