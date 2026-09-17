@@ -37,7 +37,9 @@ export class LoginComponent {
 
     this.authService.login(this.credentials).subscribe({
       next: () => {
-        this.router.navigate(['/books']);
+        // P3.4 : redirect selon rôle — bibliothécaire → dashboard, utilisateur → books
+        const role = this.authService.getCurrentUserRole();
+        this.router.navigate([role === 'BIBLIOTHECAIRE' ? '/dashboard' : '/books']);
       },
       error: (err) => {
         this.chargement.set(false);

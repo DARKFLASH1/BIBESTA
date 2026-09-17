@@ -76,7 +76,10 @@
               "outputHashing": "all",
               "optimization": {
                 "scripts": true,
-                "styles": { "minify": true, "inlineCritical": true },
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": true
+                },
                 "fonts": false
               }
             },
@@ -107,6 +110,22 @@
             }
           },
           "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest",
+            "include": [
+              "src/**/*.spec.ts"
+            ]
+          },
+          "configurations": {
+            "ci": {
+              "watch": false,
+              "browsers": []
+            }
+          }
         }
       }
     }

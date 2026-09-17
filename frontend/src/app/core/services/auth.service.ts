@@ -5,13 +5,14 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
 
-// Source unique de vérité : le token JWT (id, rôle, nom, prénom).
-// localStorage ne stocke QUE le token ; plus aucune clé "role"/"id"/"nom"
-// dupliquée qu'on pourrait désynchroniser (P2.16).
+// P3.1 : le JWT n'est PLUS jamais stocké dans localStorage (exposition XSS).
+// Il vit uniquement en mémoire, attaché au service (header Authorization).
+// Conséquence voulue : rafraîchir la page = reconnexion (pas de session persistée).
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
   private apiUrl = `${environment.apiUrl}/auth`;
+  private token: string | null = null;
 
   constructor(
     private http: HttpClient,
@@ -25,46 +26,50 @@ export class AuthService {
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, request).pipe(
       tap(response => {
-        if (!this.isBrowser()) return;
-        localStorage.setItem('token', response.token);
+        // Stockage en mémoire uniquement (P3.1). Jamais dans localStorage.
+        if (this.isBrowser()) this.token = response.token;
       })
     );
   }
 
   logout(): void {
-    if (this.isBrowser()) localStorage.clear();
+    this.token = null;
     this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
-    if (!this.isBrowser()) return false;
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const estExpire = payload.exp * 1000 < Date.now();
-      if (estExpire) { localStorage.clear(); return false; }
-      return true;
-    } catch {
-      localStorage.clear();
-      return false;
-    }
+    return !!this.token && !!this.decodePayload();
   }
 
   getToken(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem('token');
+    return this.token;
   }
 
-  // Décode le token JWT en UNE fois. Retourne null si absent/invalide.
-  private decodePayload(): any {
-    const token = this.getToken();
-    if (!token) return null;
+  // Décode un segment JWT encodé en base64url (RFC 4648 §5).
+  // `atob` ne gère PAS les caractères '-' et '_' du base64url → remplacement
+  // propre par l'alphabet base64 standard avant décodage (P3.2).
+  private decodeSegment(segment: string): string | null {
     try {
-      return JSON.parse(atob(token.split('.')[1]));
+      let s = segment.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = s.length % 4;
+      if (pad === 2) s += '==';
+      else if (pad === 3) s += '=';
+      const json = atob(s);
+      // Vérifie que c'est bien du JSON (évite les payloads invalides)
+      const payload = JSON.parse(json);
+      return payload;
     } catch {
       return null;
     }
+  }
+
+  // Décode le payload JWT en UNE fois. Retourne null si absent/invalide.
+  private decodePayload(): any {
+    const token = this.getToken();
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    return this.decodeSegment(parts[1]);
   }
 
   getId(): number {
