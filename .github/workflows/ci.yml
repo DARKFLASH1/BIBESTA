@@ -55,6 +55,9 @@ jobs:
     name: Scan vulnérabilités (Trivy)
     runs-on: ubuntu-latest
     needs: [backend, frontend]
+    permissions:
+      contents: read
+      security-events: write
     env:
       # mirror.gcr.io (défaut Trivy) est inaccessible de façon intermittente
       # depuis les runners GitHub → fallback ghcr.io puis docker.io
