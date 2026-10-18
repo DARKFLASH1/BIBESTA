@@ -34,7 +34,10 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis (voir .env)}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (voir .env)}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true
+      # Bootstrap du schéma pour l'environnement Docker (pas de scripts initdb versionnés).
+      # Défaut : update. Passer à validate (+ migrations Flyway) quand les migrations seront en place.
+      DDL_AUTO: ${DDL_AUTO:-update}
     ports:
       - "8080:8080"
     networks:

@@ -29,6 +29,7 @@ mvnw.cmd
 
 # IDE tools
 .claude/
+.opencode/
 # Plan local (non versionné)
 PLAN_CORRECTIONS_AUDIT.md
 
