@@ -58,7 +58,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan Trivy image backend
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: ${{ fromJSON(steps.meta-backend.outputs.json).tags[0] }}
           format: 'sarif'
@@ -105,7 +105,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan Trivy image frontend
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: ${{ fromJSON(steps.meta-frontend.outputs.json).tags[0] }}
           format: 'sarif'
