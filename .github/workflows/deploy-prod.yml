@@ -49,9 +49,12 @@ jobs:
 
       - name: Résoudre le tag d'image à déployer
         id: resolve
+        env:
+          # github context : disponible sur tous les événements (inputs n'existe QUE pour workflow_dispatch)
+          IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
         run: |
-          if [ -n "${{ inputs.image_tag }}" ]; then
-            echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          if [ -n "$IMAGE_TAG_INPUT" ]; then
+            echo "tag=$IMAGE_TAG_INPUT" >> "$GITHUB_OUTPUT"
           else
             # type=sha,format=long de build-push.yml tag les images au SHA complet
             echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
