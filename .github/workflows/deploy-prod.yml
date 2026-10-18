@@ -39,7 +39,8 @@ jobs:
     # dans Settings → Environments (revue manuelle obligatoire recommandée).
     environment:
       name: production
-      url: ${{ secrets.PROD_URL }}
+      # NOTE: environment.url n'autorise pas le contexte secrets — à éditer
+      # manuellement dans Settings → Environments → production si un lien est voulu.
     permissions:
       contents: read
       packages: read
