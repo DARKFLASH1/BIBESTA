@@ -20,6 +20,9 @@ jobs:
       contents: read
       packages: write
       security-events: write
+    env:
+      # mirror.gcr.io (défaut Trivy) inaccessible de façon intermittente depuis les runners
+      TRIVY_DB_REPOSITORY: "ghcr.io/aquasecurity/trivy-db:2,docker.io/aquasec/trivy-db:2"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,6 +67,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-backend.sarif'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
 
       - name: Upload SARIF backend to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
@@ -111,6 +115,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-frontend.sarif'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
 
       - name: Upload SARIF frontend to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
