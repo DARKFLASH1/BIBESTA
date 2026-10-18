@@ -12,7 +12,7 @@
 |------|--------|--------------|
 | **P0.1** | Retirer les secrets en clair de `docker-compose.yml` (MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, JWT_SECRET, DB_USERNAME) → variables d'environnement via un fichier `.env` non versionné + placeholder `${...}` | `docker-compose.yml:9,12,37-41` |
 | **P0.2** | Ajouter `.env` aux `.gitignore` (déjà partiellement couvert par `*.env.*`) + créer un `.env.example` versionné | racine |
-| **P0.3** | **Rotation immédiate** des secrets exposés dans git history : `[RETIRE-P0]`, `[RETIRE-P0]_en_dev...`, noyau git. S'ils ont été utilisés hors dev local, révoquer. | historique commits `456690c`→`fbd34f2` |
+| **P0.3** | **Rotation immédiate** des secrets exposés dans git history : les valeurs exactes (mot de passe DB et JWT secret) ont été **retirées de ce document** le 2026-10-18 car compromises — voir `PLAN_CONSOLIDÉ_BIBESTA.md` P0.1. Révoquer partout où ils ont pu être utilisés hors dev local. | historique commits `456690c`→`fbd34f2` |
 | **P0.4** | Supprimer les credentials commités de `application-dev.properties` et le basculer sur `${ENV}` + `.env` dev uniquement | `application-dev.properties:7-10` |
 | **P0.5** | Ne plus publier le port MySQL sur l'hôte : retirer `ports: 3306:3306` (accès uniquement via réseau Docker interne) | `docker-compose.yml:14` |
 | **P0.6** | Réparer le healthcheck backend : ajouter `spring-boot-starter-actuator` au pom + corriger `curl` (utiliser `wget`/`sh -c` comme l'image alpine n'a pas `curl`) | `pom.xml`, `docker-compose.yml:47` |
