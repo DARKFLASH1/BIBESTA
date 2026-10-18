@@ -62,7 +62,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Scan images Docker
+      - name: Scan backend (sources + dépendances)
         uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: 'fs'
@@ -71,7 +71,7 @@ jobs:
           output: 'trivy-backend.sarif'
           severity: 'CRITICAL,HIGH'
 
-      - name: Scan images Docker (frontend)
+      - name: Scan frontend (sources + dépendances)
         uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: 'fs'
@@ -80,8 +80,14 @@ jobs:
           output: 'trivy-frontend.sarif'
           severity: 'CRITICAL,HIGH'
 
-      - name: Upload SARIF to GitHub Security
+      - name: Upload SARIF backend to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: '.'
+          sarif_file: 'trivy-backend.sarif'
+        continue-on-error: true
+
+      - name: Upload SARIF frontend to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-frontend.sarif'
         continue-on-error: true

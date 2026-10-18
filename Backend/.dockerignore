@@ -1,11 +1,32 @@
+# Artefacts de build Maven
 target/
+*.jar.orig
+
+# Dépendances (par sécurité si du tooling Node est ajouté)
+node_modules/
+dist/
+
+# Logs
 *.log
 logs/
+
+# Git / IDE
 .git
 .gitignore
+.gitattributes
 .idea/
 .vscode/
 *.iml
+
+# Secrets / env — jamais dans l'image
 .env
 .env.*
+!.env.example
+
+# Wrapper Maven (le tag maven:* embarque Maven)
 .mvn/wrapper/maven-wrapper.jar
+
+# Docker / docs
+Dockerfile
+.dockerignore
+README.md

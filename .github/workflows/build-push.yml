@@ -1,5 +1,7 @@
-name: Build & Push images (GHCR)
+name: Build & Scan & Push images (GHCR)
 
+# Déclenché sur push vers main et sur les tags v*.
+# Flux : build local -> scan Trivy (avant push) -> push GHCR -> upload SARIF.
 on:
   push:
     branches: [main]
@@ -12,11 +14,12 @@ env:
 
 jobs:
   build-push:
-    name: Build & push Docker images
+    name: Build, scan & push Docker images
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+      security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,7 +34,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags)
+      # ---------- BACKEND ----------
+      - name: Extract metadata (tags) backend
         id: meta-backend
         uses: docker/metadata-action@v5
         with:
@@ -42,7 +46,32 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build & push backend
+      - name: Build backend (local, scan avant push)
+        uses: docker/build-push-action@v6
+        with:
+          context: Backend
+          load: true
+          push: false
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Trivy image backend
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta-backend.outputs.json).tags[0] }}
+          format: 'sarif'
+          output: 'trivy-backend.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload SARIF backend to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-backend.sarif'
+        continue-on-error: true
+
+      - name: Build & push backend (GHCR)
         uses: docker/build-push-action@v6
         with:
           context: Backend
@@ -52,6 +81,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # ---------- FRONTEND ----------
       - name: Extract metadata (tags) frontend
         id: meta-frontend
         uses: docker/metadata-action@v5
@@ -63,7 +93,32 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build & push frontend
+      - name: Build frontend (local, scan avant push)
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          load: true
+          push: false
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Trivy image frontend
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ fromJSON(steps.meta-frontend.outputs.json).tags[0] }}
+          format: 'sarif'
+          output: 'trivy-frontend.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload SARIF frontend to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-frontend.sarif'
+        continue-on-error: true
+
+      - name: Build & push frontend (GHCR)
         uses: docker/build-push-action@v6
         with:
           context: frontend
@@ -72,18 +127,3 @@ jobs:
           labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Scan images avec Trivy
-        uses: aquasecurity/trivy-action@0.29.0
-        with:
-          scan-type: 'fs'
-          scan-ref: 'Backend/'
-          format: 'sarif'
-          output: 'trivy-backend.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-backend.sarif'
-        continue-on-error: true

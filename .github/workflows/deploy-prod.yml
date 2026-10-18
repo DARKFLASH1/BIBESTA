@@ -1,0 +1,175 @@
+name: Deploy production
+
+# Déploiement production BIBESTA.
+# - Automatique : push d'un tag `v*` (images taguées SHA + semver par build-push.yml)
+# - Manuel : workflow_dispatch avec un tag d'image au choix (SHA complet ou semver)
+#
+# Secrets GitHub requis (aucune valeur réelle n'est jamais commitée) :
+#   PROD_SSH_HOST          — hôte du serveur de production
+#   PROD_SSH_USER          — utilisateur SSH (doit avoir accès à Docker)
+#   PROD_SSH_KEY           — clé privée SSH (Format PEM, sans passphrase ou via agent)
+#   PROD_URL               — URL publique (affichée comme lien de l'environnement)
+#   MYSQL_ROOT_PASSWORD    — mot de passe root MySQL prod
+#   MYSQL_DATABASE         — nom de la base prod
+#   MYSQL_USERNAME         — utilisateur applicatif MySQL prod
+#   MYSQL_PASSWORD         — mot de passe applicatif MySQL prod
+#   JWT_SECRET_PROD        — secret JWT prod (différent du secret dev !)
+#   CORS_ALLOWED_ORIGINS   — origines autorisées prod (ex: https://bibesta.example.org)
+#   FRONTEND_HTTP_PORT     — port hôte exposé pour le frontend (défaut 80)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Tag d'image à déployer (SHA complet du commit, ou tag semver type 1.2.3). Vide = SHA du contexte courant."
+        required: false
+        default: ''
+
+env:
+  REGISTRY: ghcr.io
+  DEPLOY_DIR: /opt/bibesta
+
+jobs:
+  deploy:
+    name: Déployer en production
+    runs-on: ubuntu-latest
+    # Environnement GitHub "production" : à protéger par règles d'approbation
+    # dans Settings → Environments (revue manuelle obligatoire recommandée).
+    environment:
+      name: production
+      url: ${{ secrets.PROD_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Résoudre le tag d'image à déployer
+        id: resolve
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            # type=sha,format=long de build-push.yml tag les images au SHA complet
+            echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Calculer les noms d'images (lowercase pour GHCR)
+        id: images
+        run: |
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "backend_image=${REGISTRY}/${REPO_LC}/backend:${{ steps.resolve.outputs.tag }}" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=${REGISTRY}/${REPO_LC}/frontend:${{ steps.resolve.outputs.tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Préparer .env.prod (valeurs uniquement depuis les secrets GitHub)
+        id: env
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_PROD }}
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          FRONTEND_HTTP_PORT: ${{ secrets.FRONTEND_HTTP_PORT }}
+          BACKEND_IMAGE: ${{ steps.images.outputs.backend_image }}
+          FRONTEND_IMAGE: ${{ steps.images.outputs.frontend_image }}
+        run: |
+          umask 077
+          # printf %s : passage sécurisé des secrets (pas d'expansion shell des $ contenus dans les valeurs)
+          {
+            printf 'MYSQL_ROOT_PASSWORD=%s\n' "$MYSQL_ROOT_PASSWORD"
+            printf 'MYSQL_DATABASE=%s\n' "$MYSQL_DATABASE"
+            printf 'MYSQL_USERNAME=%s\n' "$MYSQL_USERNAME"
+            printf 'MYSQL_PASSWORD=%s\n' "$MYSQL_PASSWORD"
+            printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
+            printf 'CORS_ALLOWED_ORIGINS=%s\n' "$CORS_ALLOWED_ORIGINS"
+            if [ -n "$FRONTEND_HTTP_PORT" ]; then printf 'FRONTEND_HTTP_PORT=%s\n' "$FRONTEND_HTTP_PORT"; else printf 'FRONTEND_HTTP_PORT=80\n'; fi
+            printf 'BACKEND_IMAGE=%s\n' "$BACKEND_IMAGE"
+            printf 'FRONTEND_IMAGE=%s\n' "$FRONTEND_IMAGE"
+            printf 'APP_PROFILE=prod\n'
+            printf 'DDL_AUTO=update\n'
+          } > bibesta.env.prod
+          chmod 600 bibesta.env.prod
+
+      - name: Configurer la clé SSH
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519_prod
+          chmod 600 ~/.ssh/id_ed25519_prod
+          ssh-keyscan -H "${{ secrets.PROD_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copier l'artefact de déploiement vers le serveur
+        run: |
+          ssh -i ~/.ssh/id_ed25519_prod "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
+            "mkdir -p $DEPLOY_DIR/backend-db-init"
+          scp -i ~/.ssh/id_ed25519_prod docker-compose.prod.yml \
+            "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:$DEPLOY_DIR/"
+          scp -i ~/.ssh/id_ed25519_prod Backend/src/main/resources/db/* \
+            "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:$DEPLOY_DIR/backend-db-init/" || true
+          scp -i ~/.ssh/id_ed25519_prod bibesta.env.prod \
+            "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:$DEPLOY_DIR/.env.prod"
+
+      - name: Pull & up (docker compose)
+        run: |
+          ssh -i ~/.ssh/id_ed25519_prod "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" bash -s <<'REMOTE'
+          set -euo pipefail
+          cd /opt/bibesta
+          # Authentification GHCR : token valable uniquement durant cette session SSH
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+          docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
+          docker logout ghcr.io
+          REMOTE
+
+      - name: Healthcheck backend
+        run: |
+          ssh -i ~/.ssh/id_ed25519_prod "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" bash -s <<'REMOTE'
+          set -euo pipefail
+          cd /opt/bibesta
+          for i in $(seq 1 30); do
+            if docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T backend \
+                 wget -q --spider http://localhost:8080/api/actuator/health; then
+              echo "✅ Backend healthy (après ${i} tentative(s))"
+              exit 0
+            fi
+            echo "⏳ Backend pas encore prêt (tentative ${i}/30)..."
+            sleep 10
+          done
+          echo "❌ Backend introuvable après 5 min — rollback recommandé (redéployer l'image SHA précédente)"
+          docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+          docker logs bibesta_prod_backend --tail 50
+          exit 1
+          REMOTE
+
+      - name: Healthcheck frontend
+        run: |
+          ssh -i ~/.ssh/id_ed25519_prod "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" bash -s <<'REMOTE'
+          set -euo pipefail
+          PORT=$(grep -E '^FRONTEND_HTTP_PORT=' /opt/bibesta/.env.prod | cut -d= -f2)
+          for i in $(seq 1 15); do
+            if curl -fsS "http://localhost:${PORT}/" > /dev/null; then
+              echo "✅ Frontend HTTP 200 (après ${i} tentative(s))"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ Frontend non joignable sur le port ${PORT}"
+          docker logs bibesta_prod_frontend --tail 50
+          exit 1
+          REMOTE
+
+      - name: Nettoyage secrets locaux du runner
+        if: always()
+        run: |
+          rm -f bibesta.env.prod ~/.ssh/id_ed25519_prod
+
+  # NOTE :
+  # - Les secrets sont injectés uniquement via secrets GitHub et jamais commités.
+  # - En cas d'échec du healthcheck backend, redéployer le SHA précédent :
+  #   Actions → Deploy production → Run workflow → image_tag=<SHA précédent>.
+  # - GHCR + GITHUB_TOKEN : le package doit être accessible depuis le serveur
+  #   (droit read sur le package avec le même token de session).

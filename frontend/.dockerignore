@@ -1,11 +1,36 @@
-node_modules/
+# Artefacts de build Angular
 dist/
+.angular/
+node_modules/
+
+# Artefacts backend (par sécurité)
+target/
+logs/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git / IDE
 .git
 .gitignore
+.gitattributes
 .idea/
 .vscode/
-*.log
+
+# Tests / coverage
+coverage/
+.vitest/
+
+# Secrets / env — jamais dans l'image
 .env
 .env.*
-npm-debug.log*
-coverage/
+!.env.example
+
+# Docker / docs
+Dockerfile
+.dockerignore
+nginx.conf.orig
+README.md
